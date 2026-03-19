@@ -3,13 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Storing — Sales Intelligence</title>
+<title>APEX — Sales Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=Instrument+Sans:wght@300;400;500&display=swap');
 :root{--bg:#0c0c0e;--surface:#131316;--surface2:#1a1a1f;--border:#242428;--border2:#2e2e35;--text:#e8e8ec;--muted:#6b6b78;--muted2:#4a4a55;--accent:#e8ff47;--ad:rgba(232,255,71,.08);--ad2:rgba(232,255,71,.15);--red:#ff5c5c;--green:#3dffa0;--blue:#5ca8ff;--orange:#ffaa3d;--purple:#c084fc;--fd:'Syne',sans-serif;--fm:'IBM Plex Mono',monospace;--fb:'Instrument Sans',sans-serif;}
+body.light{--bg:#f4f4f6;--surface:#ffffff;--surface2:#f0f0f4;--border:#e0e0e8;--border2:#d0d0dc;--text:#1a1a2e;--muted:#6b6b88;--muted2:#9090aa;--accent:#5b5ef4;--ad:rgba(91,94,244,.08);--ad2:rgba(91,94,244,.15);--red:#e03535;--green:#1a9e5a;--blue:#2070d0;--orange:#d07020;--purple:#8040c0;}
+body.light .ld,body.light .ldot{box-shadow:0 0 10px var(--accent)}
+body.light .kpi::after{background:radial-gradient(circle at top right,var(--ad),transparent 70%)}
+body.light .logo-dot{box-shadow:0 0 8px var(--accent)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--fb);display:flex;min-height:100vh;overflow-x:hidden}
 /* LOGIN */
@@ -215,8 +219,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);display:flex;m
 <!-- LOGIN -->
 <div class="ls" id="ls">
   <div class="lb">
-    <div class="llogo"><div class="ldot"></div>Storing Médical</div>
-    <div class="lsub">Sals CRM · Compartido en tiempo real</div>
+    <div class="llogo"><div class="ldot"></div>APEX</div>
+    <div class="lsub">Sales Intelligence · Compartido en tiempo real</div>
     <div class="ltitle">Iniciar sesión con Google</div>
     <div class="ldesc">Los datos se guardan automáticamente en Google Sheets y todos los miembros del equipo ven los mismos datos en tiempo real.</div>
     <div class="sinput-wrap">
@@ -270,6 +274,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);display:flex;m
       <div class="syncbtn" id="syncind" onclick="syncNow()"><div class="sdot" id="sdot"></div><span id="stxt">Sheets</span></div>
       <div class="ibtn" title="Sincronizar" onclick="syncNow()"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 8A6 6 0 1 1 8 2M14 2v4h-4"/></svg></div>
       <div class="ibtn" title="Ver en Drive" onclick="openSheet()"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/><path d="M1 5h14M5 5v9"/></svg></div>
+      <div class="ibtn" id="theme-btn" title="Cambiar tema" onclick="toggleTheme()"><svg id="theme-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg></div>
     </div>
   </div>
 
@@ -482,7 +487,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);display:flex;m
 <script>
 // ═══ CONSTANTS ═══
 const CID='184623131866-jvbjpqmife1pvsdbkumitvgf7fomislc.apps.googleusercontent.com';
-const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive';
 const TABS={v:'Ventas',h:'Historicas',d:'Pipeline',t:'Tareas',m:'Members'};
 const STAGES=[{id:'lead',lbl:'Lead',col:'var(--muted)'},{id:'propuesta',lbl:'Propuesta',col:'var(--blue)'},{id:'negociacion',lbl:'Negociación',col:'var(--orange)'},{id:'cierre',lbl:'Cierre',col:'var(--green)'}];
 const TICOS={llamada:'📞',visita:'🚗',reunion:'📅',propuesta:'📄',seguimiento:'🔄',otro:'📌'};
@@ -612,29 +617,37 @@ async function readTab(tab){
 async function writeTab(tab,headers,rows){
   try{
     const vals=[headers,...rows.map(r=>headers.map(h=>String(r[h]===undefined?'':r[h]||'')))];
-    const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=RAW`,{
-      method:'PUT',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
+    console.log('[writeTab] Escribiendo',tab,'filas:',vals.length,'token:',tok?tok.slice(0,20)+'...':'NULL');
+    const url=`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=USER_ENTERED`;
+    const res=await fetch(url,{
+      method:'PUT',
+      headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
       body:JSON.stringify({range:tab,majorDimension:'ROWS',values:vals})
     });
-    if(!res.ok){const e=await res.text();console.error('[writeTab] HTTP error',res.status,e);}
-  }catch(e){console.error('[writeTab]',e);}
+    const resText=await res.text();
+    if(!res.ok){
+      console.error('[writeTab] FALLO HTTP',res.status,resText);
+      toast('Error al guardar ('+res.status+'): verificá permisos de la Sheet','error');
+    } else {
+      console.log('[writeTab] OK',tab,resText.slice(0,100));
+    }
+  }catch(e){console.error('[writeTab] EXCEPTION',e);toast('Error de red al guardar','error');}
 }
 
 async function appendRow(tab,headers,row){
   try{
-    // Siempre usar writeTab para asegurar que headers existan
-    // Primero leemos para no perder datos existentes
+    console.log('[appendRow] Agregando a',tab,'id:',row.id);
     const existing=await readTab(tab);
     if(existing===null){
-      console.error('[appendRow] No se pudo leer tab',tab);return;
+      console.error('[appendRow] readTab devolvió null para',tab);
+      toast('No se pudo leer la Sheet para guardar','error');
+      return;
     }
-    // Si ya existe el mismo ID, no duplicar
     if(existing.some(r=>r.id===row.id)){
-      console.warn('[appendRow] ID duplicado, ignorando',row.id);return;
+      console.warn('[appendRow] ID duplicado ignorado',row.id);return;
     }
-    // Escribir todos los datos existentes + la nueva fila
     await writeTab(tab,headers,[...existing,row]);
-  }catch(e){console.error('[appendRow]',e);}
+  }catch(e){console.error('[appendRow] EXCEPTION',e);}
 }
 
 // ═══ SYNC ═══
@@ -644,20 +657,36 @@ async function loadAll(){
     const[vr,hr,dr,tr]=await Promise.all([
       readTab(TABS.v),readTab(TABS.h),readTab(TABS.d),readTab(TABS.t)
     ]);
-    // Solo actualizar si readTab NO devolvió null (null = error de red/api)
-    if(vr!==null) S.v=vr.filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
-    if(hr!==null) S.h=hr.filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
-    if(dr!==null) S.d=dr.filter(r=>r.id).map(r=>({...r,valor:parseFloat(r.valor)||0,prob:parseInt(r.prob)||50}));
-    if(tr!==null) S.t=tr.filter(r=>r.id).map(r=>({...r,done:r.done==='true',alarm24:r.alarm24!=='false',alarm48:r.alarm48!=='false',alerted24:r.alerted24==='true',alerted48:r.alerted48==='true'}));
-    const errs=[vr,hr,dr,tr].filter(x=>x===null).length;
-    if(errs>0){setSI('','Sync parcial');toast(`⚠️ ${errs} tab(s) no respondieron, datos anteriores conservados`,'warning');}
-    else{setSI('ok','Sincronizado');}
+    console.log('[loadAll] Resultados — V:',vr?.length,'H:',hr?.length,'D:',dr?.length,'T:',tr?.length);
+
+    // REGLA: solo reemplazar estado si la Sheet devuelve datos reales
+    // null = error de API → no tocar
+    // [] vacío = Sheet vacía → no tocar si ya tenemos datos en memoria
+    function safeUpdate(sheetData, current){
+      if(sheetData===null) return current; // error de API
+      if(sheetData.length===0 && current.length>0){
+        console.warn('[loadAll] Sheet devolvió vacío pero hay datos en memoria — ignorando');
+        return current; // protección contra borrado accidental
+      }
+      return sheetData;
+    }
+
+    const rawV=safeUpdate(vr,S.v);
+    const rawH=safeUpdate(hr,S.h);
+    const rawD=safeUpdate(dr,S.d);
+    const rawT=safeUpdate(tr,S.t);
+
+    S.v=rawV.filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
+    S.h=rawH.filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
+    S.d=rawD.filter(r=>r.id).map(r=>({...r,valor:parseFloat(r.valor)||0,prob:parseInt(r.prob)||50}));
+    S.t=rawT.filter(r=>r.id).map(r=>({...r,done:r.done==='true',alarm24:r.alarm24!=='false',alarm48:r.alarm48!=='false',alerted24:r.alerted24==='true',alerted48:r.alerted48==='true'}));
+
+    setSI('ok','Sincronizado');
     renderAll();
   }catch(e){
     setSI('','Error');
-    console.error('[loadAll]',e);
+    console.error('[loadAll] EXCEPTION',e);
     toast('Error de sincronización: '+e.message,'error');
-    // NO limpiar el estado — mantener lo que había
   }
 }
 
@@ -1005,6 +1034,20 @@ document.querySelectorAll('.mo').forEach(x=>x.addEventListener('click',e=>{if(e.
 function renderAll(){renderV();updKPI();renderK();renderHist();renderT();}
 
 // ═══ UTILS ═══
+function toggleTheme(){
+  const isLight=document.body.classList.toggle('light');
+  localStorage.setItem('apxtheme',isLight?'light':'dark');
+  // Cambiar ícono: sol = modo oscuro disponible, luna = modo claro disponible
+  document.getElementById('theme-icon').innerHTML=isLight
+    ?'<path d="M8 3a5 5 0 1 0 0 10A5 5 0 0 0 8 3z" fill="currentColor" stroke="none"/><path d="M8 1v1M8 14v1M1 8H2M14 8h1M3.22 3.22l.7.7M12.08 12.08l.7.7M3.22 12.78l.7-.7M12.08 3.92l.7-.7" stroke="currentColor"/>'
+    :'<circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/>';
+  // Resetear gráficos si están visibles
+  if(hch){hch.destroy();hch=null;}
+  if(hpi){hpi.destroy();hpi=null;}
+  const hv=document.getElementById('view-historicas');
+  if(hv&&hv.classList.contains('active')){renderHist();renderHC();}
+}
+
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function today(){return new Date().toISOString().slice(0,10);}
 function v(id){return document.getElementById(id)?.value||'';}
@@ -1070,6 +1113,14 @@ function tryAutoLogin(){
 
 document.addEventListener('DOMContentLoaded',()=>{
   loadCfg();
+  // Aplicar tema guardado
+  if(localStorage.getItem('apxtheme')==='light'){
+    document.body.classList.add('light');
+    setTimeout(()=>{
+      const icon=document.getElementById('theme-icon');
+      if(icon)icon.innerHTML='<path d="M8 3a5 5 0 1 0 0 10A5 5 0 0 0 8 3z" fill="currentColor" stroke="none"/><path d="M8 1v1M8 14v1M1 8H2M14 8h1M3.22 3.22l.7.7M12.08 12.08l.7.7M3.22 12.78l.7-.7M12.08 3.92l.7-.7" stroke="currentColor"/>';
+    },100);
+  }
   const s=localStorage.getItem('apex_sid');
   if(s)document.getElementById('sid').value=s;
   // Intentar auto-login si hay sesión previa
