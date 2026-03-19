@@ -7,6 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=Instrument+Sans:wght@300;400;500&display=swap');
 :root{--bg:#0c0c0e;--surface:#131316;--surface2:#1a1a1f;--border:#242428;--border2:#2e2e35;--text:#e8e8ec;--muted:#6b6b78;--muted2:#4a4a55;--accent:#e8ff47;--ad:rgba(232,255,71,.08);--ad2:rgba(232,255,71,.15);--red:#ff5c5c;--green:#3dffa0;--blue:#5ca8ff;--orange:#ffaa3d;--purple:#c084fc;--fd:'Syne',sans-serif;--fm:'IBM Plex Mono',monospace;--fb:'Instrument Sans',sans-serif;}
@@ -82,8 +83,30 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);display:flex;m
 .wgtbtn{background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--muted);font-family:var(--fm);font-size:.58rem;letter-spacing:.07em;padding:4px 12px;cursor:pointer;transition:all .15s;text-transform:uppercase}
 .wgtbtn:hover{border-color:var(--border2);color:var(--text)}
 .wgtbtn.active{background:var(--ad2);border-color:var(--accent);color:var(--accent)}
-.wgt{transition:all .2s}
+.wgt{transition:opacity .2s}
 .wgt.hidden{display:none!important}
+/* DRAG GRID */
+#dash-grid{display:flex;flex-direction:column;gap:16px}
+.dash-row{display:flex;gap:16px}
+.dash-row-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dash-item{flex:1;min-width:0}
+/* drag handle */
+.drag-handle{color:var(--muted2);cursor:default;font-size:1rem;padding:0 6px 0 0;user-select:none;display:none;align-items:center;line-height:1;flex-shrink:0}
+/* drag mode active */
+body.drag-mode .drag-handle{display:flex;cursor:grab}
+body.drag-mode .drag-handle:active{cursor:grabbing}
+body.drag-mode .dash-item{cursor:default}
+body.drag-mode .dash-item .card{outline:2px dashed var(--accent);outline-offset:2px;transition:outline .15s,box-shadow .15s}
+body.drag-mode .dash-item:hover .card{box-shadow:0 0 0 3px var(--ad2)}
+body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:var(--accent)}
+.sortable-ghost .card{opacity:.3;background:var(--accent-dim)}
+.sortable-chosen .card{box-shadow:0 8px 32px rgba(0,0,0,.4)!important}
+/* MOBILE */
+@media(max-width:700px){
+  .dash-row,.dash-row-2{flex-direction:column;grid-template-columns:1fr}
+  .dash-item{width:100%}
+  #dash-grid{gap:12px}
+}
 /* VIEWS */
 .view{display:none;padding:26px;animation:fi .2s ease}
 .view.active{display:block}
@@ -279,6 +302,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);display:flex;m
       <div class="syncbtn" id="syncind" onclick="syncNow()"><div class="sdot" id="sdot"></div><span id="stxt">Sheets</span></div>
       <div class="ibtn" title="Sincronizar" onclick="syncNow()"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 8A6 6 0 1 1 8 2M14 2v4h-4"/></svg></div>
       <div class="ibtn" title="Ver en Drive" onclick="openSheet()"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/><path d="M1 5h14M5 5v9"/></svg></div>
+      <div class="ibtn" id="drag-btn" title="Reorganizar widgets" onclick="toggleDragMode()" style="position:relative">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2v12M10 2v12M2 6h12M2 10h12"/></svg>
+      </div>
       <div class="ibtn" id="theme-btn" title="Cambiar tema" onclick="toggleTheme()"><svg id="theme-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg></div>
     </div>
   </div>
@@ -291,9 +317,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);display:flex;m
       <div class="kpi"><div class="klbl">Ticket promedio</div><div class="kval" id="ktick">$0</div><div class="kdelta" id="ktickd">─</div></div>
       <div class="kpi"><div class="klbl">Mejor cliente</div><div class="kval" style="font-size:1rem;padding-top:4px" id="kcli">─</div><div class="kdelta" id="kcliv">sin ventas</div></div>
     </div>
-    <!-- WIDGETS TOGGLE BAR -->
+
+    <!-- TOOLBAR -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
-      <div class="st">Dashboard</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="st">Dashboard</div>
+        <div id="drag-mode-badge" style="display:none;background:var(--accent);color:var(--bg);font-family:var(--fm);font-size:.58rem;padding:2px 10px;border-radius:20px;letter-spacing:.08em;text-transform:uppercase">Modo edición</div>
+      </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span style="font-family:var(--fm);font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Mostrar:</span>
         <button class="wgtbtn active" data-w="ventas-mes" onclick="toggleWidget(this)">Ventas del mes</button>
@@ -306,83 +336,111 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);display:flex;m
       </div>
     </div>
 
-    <!-- WIDGET: Ventas del mes (barras mensuales) -->
-    <div class="wgt" id="wgt-ventas-mes" style="margin-bottom:18px">
-      <div class="card">
-        <div class="ch">
-          <div><div class="ct">Ventas por mes</div><div class="cs">Ingresos reales · últimos 6 meses</div></div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <select class="fsel" id="db-year" onchange="renderDashboard()" style="width:auto;padding:5px 28px 5px 10px;font-size:.72rem">
-              <option value="2025">2025</option><option value="2026" selected>2026</option>
-            </select>
+    <!-- DRAG GRID -->
+    <div id="dash-grid">
+
+      <!-- full-width row -->
+      <div class="dash-row" id="row-full">
+        <div class="wgt dash-item" id="wgt-ventas-mes" data-size="full">
+          <div class="card">
+            <div class="ch">
+              <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div><div class="ct">Ventas por mes</div><div class="cs">Ingresos reales · período</div></div>
+              <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
+                <select class="fsel" id="db-year" onchange="renderDashboard()" style="width:auto;padding:5px 28px 5px 10px;font-size:.72rem">
+                  <option value="2025">2025</option><option value="2026" selected>2026</option>
+                </select>
+              </div>
+            </div>
+            <div class="cb"><div style="position:relative;height:220px"><canvas id="chartVentasMes"></canvas></div></div>
           </div>
         </div>
-        <div class="cb"><div style="position:relative;height:220px"><canvas id="chartVentasMes"></canvas></div></div>
       </div>
-    </div>
 
-    <!-- WIDGET: Forecast -->
-    <div class="wgt" id="wgt-forecast" style="margin-bottom:18px">
-      <div class="card">
-        <div class="ch">
-          <div><div class="ct">Ventas reales vs Forecast</div><div class="cs">Comparativo mensual · año actual</div></div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-family:var(--fm);font-size:.6rem;color:var(--muted)">Meta mensual:</span>
-            <input id="db-meta" type="number" placeholder="100000" style="width:110px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--fm);font-size:.7rem;padding:4px 8px;outline:none" oninput="renderDashboard()">
+      <!-- full-width row -->
+      <div class="dash-row" id="row-forecast">
+        <div class="wgt dash-item" id="wgt-forecast" data-size="full">
+          <div class="card">
+            <div class="ch">
+              <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div><div class="ct">Ventas reales vs Forecast</div><div class="cs">Comparativo mensual</div></div>
+              <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+                <span style="font-family:var(--fm);font-size:.6rem;color:var(--muted)">Meta:</span>
+                <input id="db-meta" type="number" placeholder="100000" style="width:100px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--fm);font-size:.7rem;padding:4px 8px;outline:none" oninput="renderDashboard()">
+              </div>
+            </div>
+            <div class="cb"><div style="position:relative;height:220px"><canvas id="chartForecast"></canvas></div></div>
           </div>
         </div>
-        <div class="cb"><div style="position:relative;height:220px"><canvas id="chartForecast"></canvas></div></div>
       </div>
-    </div>
 
-    <!-- WIDGET: Categorias + Estado side by side -->
-    <div class="wgt" id="wgt-categorias" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
-      <div class="card">
-        <div class="ch"><div class="ct">Ventas por categoría</div><div class="cs">% del total · período actual</div></div>
-        <div class="cb"><div style="position:relative;height:200px"><canvas id="chartCats"></canvas></div></div>
-      </div>
-      <div class="wgt" id="wgt-estado-ventas">
-        <div class="card">
-          <div class="ch"><div class="ct">Estados de ventas</div><div class="cs">Cobradas · pendientes · canceladas</div></div>
-          <div class="cb"><div style="position:relative;height:200px"><canvas id="chartEstados"></canvas></div></div>
+      <!-- 2-col row -->
+      <div class="dash-row dash-row-2" id="row-cats">
+        <div class="wgt dash-item" id="wgt-categorias" data-size="half">
+          <div class="card">
+            <div class="ch">
+              <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div><div class="ct">Ventas por categoría</div><div class="cs">% del total</div></div>
+            </div>
+            <div class="cb"><div style="position:relative;height:200px"><canvas id="chartCats"></canvas></div></div>
+          </div>
+        </div>
+        <div class="wgt dash-item" id="wgt-estado-ventas" data-size="half">
+          <div class="card">
+            <div class="ch">
+              <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div><div class="ct">Estados de ventas</div><div class="cs">Cobradas · pendientes · canceladas</div></div>
+            </div>
+            <div class="cb"><div style="position:relative;height:200px"><canvas id="chartEstados"></canvas></div></div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- WIDGET: Tareas chart + Top clientes -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
-      <div class="wgt" id="wgt-tareas-chart">
-        <div class="card">
-          <div class="ch"><div class="ct">Estado de tareas</div><div class="cs">Completadas vs pendientes por tipo</div></div>
-          <div class="cb"><div style="position:relative;height:200px"><canvas id="chartTareas"></canvas></div></div>
+      <!-- 2-col row -->
+      <div class="dash-row dash-row-2" id="row-tasks">
+        <div class="wgt dash-item" id="wgt-tareas-chart" data-size="half">
+          <div class="card">
+            <div class="ch">
+              <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div><div class="ct">Estado de tareas</div><div class="cs">Por tipo</div></div>
+            </div>
+            <div class="cb"><div style="position:relative;height:200px"><canvas id="chartTareas"></canvas></div></div>
+          </div>
+        </div>
+        <div class="wgt dash-item" id="wgt-top-clientes" data-size="half">
+          <div class="card">
+            <div class="ch">
+              <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div><div class="ct">Top 5 clientes</div><div class="cs">Por monto facturado</div></div>
+            </div>
+            <div class="cb"><div style="position:relative;height:200px"><canvas id="chartClientes"></canvas></div></div>
+          </div>
         </div>
       </div>
-      <div class="wgt" id="wgt-top-clientes">
-        <div class="card">
-          <div class="ch"><div class="ct">Top 5 clientes</div><div class="cs">Por monto total facturado</div></div>
-          <div class="cb"><div style="position:relative;height:200px"><canvas id="chartClientes"></canvas></div></div>
-        </div>
-      </div>
-    </div>
 
-    <!-- WIDGET: Tabla ventas -->
-    <div class="wgt" id="wgt-tabla-ventas">
-      <div class="sh" style="margin-bottom:12px">
-        <div class="st" style="font-size:.9rem">Registro de Ventas</div>
-        <div class="sa">
-          <input class="srch" id="vsrch" placeholder="Buscar..." oninput="fVentas()">
-          <button class="btn bts sm" onclick="om('miv')"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v9M4 8l4 4 4-4"/><path d="M2 14h12"/></svg>Importar Excel</button>
-          <button class="btn btp sm" onclick="om('mnv')">+ Nueva Venta</button>
+      <!-- full-width row -->
+      <div class="dash-row" id="row-tabla">
+        <div class="wgt dash-item" id="wgt-tabla-ventas" data-size="full">
+          <div class="card" style="overflow:visible">
+            <div class="ch">
+              <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div class="st" style="font-size:.9rem">Registro de Ventas</div>
+              <div class="sa" style="margin-left:auto">
+                <input class="srch" id="vsrch" placeholder="Buscar..." oninput="fVentas()">
+                <button class="btn bts sm" onclick="om('miv')"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v9M4 8l4 4 4-4"/><path d="M2 14h12"/></svg>Importar</button>
+                <button class="btn btp sm" onclick="om('mnv')">+ Nueva Venta</button>
+              </div>
+            </div>
+            <div class="cb" style="padding:0"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Fecha</th><th>Cliente</th><th>Producto/Servicio</th><th>Categoría</th><th>Monto</th><th>Estado</th><th>Vendedor</th><th>Usuario</th><th></th></tr></thead><tbody id="vtbody"></tbody></table></div>
+              <div id="ver-mas-wrap" style="display:none;padding:12px 16px;border-top:1px solid var(--border);justify-content:center">
+                <button id="ver-mas-btn" class="btn bts sm" onclick="verMas()" style="width:100%;justify-content:center">Ver más</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="card"><div class="cb" style="padding:0"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Fecha</th><th>Cliente</th><th>Producto/Servicio</th><th>Categoría</th><th>Monto</th><th>Estado</th><th>Vendedor</th><th>Usuario</th><th></th></tr></thead><tbody id="vtbody"></tbody></table></div>
-        <div id="ver-mas-wrap" style="display:none;padding:12px 16px;border-top:1px solid var(--border);justify-content:center">
-          <button id="ver-mas-btn" class="btn bts sm" onclick="verMas()" style="width:100%;justify-content:center;gap:8px">
-            Ver más
-          </button>
-        </div>
-      </div></div>
-    </div>
+
+    </div><!-- end dash-grid -->
   </div>
 
   <!-- PIPELINE -->
@@ -591,7 +649,7 @@ function showApp(){
   document.getElementById('cemp').value=cfg.emp;
   document.getElementById('crol').value=cfg.rol;
   document.getElementById('caut').value=cfg.aut;
-  popCats();restoreWidgets();renderAll();setSI('ok','Sheets listo');
+  popCats();restoreWidgets();restoreDashLayout();renderAll();setSI('ok','Sheets listo');
   setupAS();checkAlarms();atimer=setInterval(checkAlarms,60000);
 }
 
@@ -1210,6 +1268,91 @@ function renderDashboard(){
                 y:{grid:{display:false},ticks:{color:C.tick,font:{size:11}}}}}
     });
   }
+}
+
+
+// ═══ DRAG & DROP DASHBOARD ═══
+let sortableInstances=[];
+let dragModeOn=false;
+
+function toggleDragMode(){
+  dragModeOn=!dragModeOn;
+  document.body.classList.toggle('drag-mode',dragModeOn);
+  document.getElementById('drag-mode-badge').style.display=dragModeOn?'inline-flex':'none';
+  if(dragModeOn){
+    initSortable();
+    toast('Modo edición activo — arrastrá los widgets','info');
+  } else {
+    destroySortable();
+    saveDashLayout();
+    toast('Layout guardado ✓','success');
+  }
+}
+
+function initSortable(){
+  destroySortable();
+  // Make each row sortable (items within row)
+  document.querySelectorAll('.dash-row').forEach(row=>{
+    const s=Sortable.create(row,{
+      group:'dash-items',
+      animation:200,
+      handle:'.drag-handle',
+      ghostClass:'sortable-ghost',
+      chosenClass:'sortable-chosen',
+      dragClass:'sortable-drag',
+      onEnd:()=>{
+        setTimeout(()=>{destroyDashCharts();renderDashboard();},100);
+      }
+    });
+    sortableInstances.push(s);
+  });
+  // Make rows themselves sortable within dash-grid
+  const gridSort=Sortable.create(document.getElementById('dash-grid'),{
+    animation:200,
+    handle:'.drag-handle',
+    ghostClass:'sortable-ghost',
+    chosenClass:'sortable-chosen',
+    filter:'.dash-item', // only drag rows, not items
+    onEnd:()=>{
+      setTimeout(()=>{destroyDashCharts();renderDashboard();},100);
+    }
+  });
+  sortableInstances.push(gridSort);
+}
+
+function destroySortable(){
+  sortableInstances.forEach(s=>{try{s.destroy();}catch(e){}});
+  sortableInstances=[];
+}
+
+function saveDashLayout(){
+  const rows=[];
+  document.querySelectorAll('#dash-grid .dash-row').forEach(row=>{
+    const items=[];
+    row.querySelectorAll('.dash-item[id]').forEach(item=>items.push(item.id));
+    rows.push({rowId:row.id,items});
+  });
+  localStorage.setItem('apxlayout',JSON.stringify(rows));
+}
+
+function restoreDashLayout(){
+  try{
+    const saved=localStorage.getItem('apxlayout');
+    if(!saved)return;
+    const rows=JSON.parse(saved);
+    const grid=document.getElementById('dash-grid');
+    rows.forEach(({rowId,items})=>{
+      const row=document.getElementById(rowId);
+      if(!row)return;
+      items.forEach(id=>{
+        const el=document.getElementById(id);
+        if(el&&el.parentElement!==row)row.appendChild(el);
+      });
+    });
+    // Restore row order
+    const orderedRows=rows.map(r=>document.getElementById(r.rowId)).filter(Boolean);
+    orderedRows.forEach(row=>grid.appendChild(row));
+  }catch(e){console.warn('restoreDashLayout',e);}
 }
 
 // ═══ CONFIG ═══
