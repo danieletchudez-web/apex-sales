@@ -6,6 +6,7 @@
 <title>APEX — Sales Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=Instrument+Sans:wght@300;400;500&display=swap');
 :root {
@@ -353,7 +354,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);display:fl
       <div>
         <div class="sec-title">Pipeline de Ventas</div>
         <div style="font-family:var(--font-m);font-size:.63rem;color:var(--muted);margin-top:3px">
-          Total pipeline: <span style="color:var(--accent)" id="pipeline-total-val">$0</span> ·
+          Total pipeline: <span style="color:var(--accent)" id="pipeline-total-val">$0</span> · 
           <span id="pipeline-total-count">0</span> proyectos activos
         </div>
       </div>
@@ -463,19 +464,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);display:fl
               <button class="btn btn-secondary btn-sm" id="gdrive-connect-btn" onclick="toggleGDrive()">Conectar</button>
             </div>
           </div>
+          <!-- Client ID fijo, no editable -->
+          <input type="hidden" id="gdrive-client-id" value="184623131866-jvbjpqmife1pvsdbkumitvgf7fomislc.apps.googleusercontent.com">
+          <div style="margin-bottom:14px;padding:10px 14px;background:var(--accent-dim);border:1px solid rgba(232,255,71,.2);border-radius:8px;display:flex;align-items:center;gap:10px">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--accent)" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 7v4M8 5v.5"/></svg>
+            <div style="font-family:var(--font-m);font-size:.62rem;color:var(--accent)">Client ID ya configurado · Solo hacé clic en <strong>Conectar</strong> para autenticarte con tu cuenta Google</div>
+          </div>
           <div class="form-grid form-grid-2">
-            <div class="form-group">
-              <label class="form-label">Google Client ID</label>
-              <input class="form-input" id="gdrive-client-id" placeholder="xxxx.apps.googleusercontent.com" type="password">
-            </div>
-            <div class="form-group">
-              <label class="form-label">API Key</label>
-              <input class="form-input" id="gdrive-api-key" placeholder="AIzaSy..." type="password">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Carpeta de Drive (ID o nombre)</label>
-              <input class="form-input" id="gdrive-folder" placeholder="APEX_Sales_Data">
-            </div>
             <div class="form-group">
               <label class="form-label">Auto-guardar cada</label>
               <select class="form-select" id="gdrive-autosave">
@@ -486,24 +481,31 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);display:fl
                 <option value="60">1 hora</option>
               </select>
             </div>
+            <div class="form-group">
+              <label class="form-label">API Key (opcional)</label>
+              <input class="form-input" id="gdrive-api-key" placeholder="AIzaSy... (opcional)" type="password">
+            </div>
           </div>
-          <div style="margin-top:14px;display:flex;gap:8px">
-            <button class="btn btn-primary btn-sm" onclick="saveGDriveConfig()">Guardar configuración</button>
+          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="saveGDriveConfig()">Guardar config</button>
             <button class="btn btn-secondary btn-sm" onclick="testGDriveConnection()">Probar conexión</button>
+            <button class="btn btn-secondary btn-sm" onclick="loadFromDrive()">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 14V5M4 8l4-4 4 4"/><path d="M2 14h12"/></svg>
+              Sincronizar ahora
+            </button>
             <button class="btn btn-secondary btn-sm" onclick="exportAllJSON()">
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v9M4 8l4 4 4-4"/><path d="M2 14h12"/></svg>
-              Exportar backup JSON
+              Backup JSON
             </button>
           </div>
           <div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
-            <div style="font-family:var(--font-m);font-size:.6rem;color:var(--muted);line-height:1.8">
-              <strong style="color:var(--text)">Cómo configurar Google Drive:</strong><br>
-              1. Ir a <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent)">console.cloud.google.com</a> → crear proyecto<br>
-              2. Activar "Google Drive API" y "Google Sheets API"<br>
-              3. Crear credenciales OAuth 2.0 → copiar Client ID<br>
-              4. Crear API Key → copiar clave<br>
-              5. En "Orígenes autorizados" agregar la URL de esta app<br>
-              6. Pegar credenciales arriba y hacer clic en "Conectar"
+            <div style="font-family:var(--font-m);font-size:.6rem;color:var(--muted);line-height:1.9">
+              <strong style="color:var(--text)">Cómo funciona para múltiples usuarios:</strong><br>
+              1. Cada persona abre <span style="color:var(--accent)">danieletchudez-web.github.io/apex-sales/</span><br>
+              2. Hace clic en <strong style="color:var(--text)">Conectar</strong> → se abre popup de Google → elige su cuenta<br>
+              3. Los datos se guardan en el archivo <span style="color:var(--accent)">apex_sales_data.json</span> en el Drive de quien creó primero<br>
+              4. Para compartir datos: el dueño del Drive comparte ese archivo con los demás usuarios<br>
+              5. Auto-guardado sincroniza cada vez que se carga una venta, deal o tarea
             </div>
           </div>
         </div>
@@ -861,7 +863,7 @@ function saveVenta(){
   closeModal('modal-nueva-venta');
   clearForm(['v-fecha','v-cliente','v-producto','v-monto','v-vendedor','v-notas']);
   toast('Venta registrada correctamente','success');
-  autoSyncGDrive();
+  autoSyncGDrive(); // sync real a Drive
 }
 
 function deleteVenta(id,src){
@@ -1382,40 +1384,214 @@ function saveConfig(){
   saveLocal();populateCatSelects();toast('Configuración guardada','success');
 }
 
+// ══════════════════════════════════════════════════
+//  GOOGLE DRIVE — INTEGRACIÓN REAL
+//  Client ID fijo: 184623131866-jvbjpqmife1pvsdbkumitvgf7fomislc.apps.googleusercontent.com
+// ══════════════════════════════════════════════════
+const GDRIVE_CLIENT_ID = '184623131866-jvbjpqmife1pvsdbkumitvgf7fomislc.apps.googleusercontent.com';
+const GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file';
+const APEX_FILE_NAME = 'apex_sales_data.json';
+
+let gisClient = null;       // Google Identity Services token client
+let gdriveToken = null;     // OAuth access token
+let apexFileId = null;      // ID del archivo en Drive
+let syncInProgress = false;
+
+// Cargar Google Identity Services SDK
+function loadGoogleSDK(){
+  if(document.getElementById('gis-script'))return;
+  const s=document.createElement('script');
+  s.id='gis-script';
+  s.src='https://accounts.google.com/gsi/client';
+  s.async=true;s.defer=true;
+  s.onload=()=>{ console.log('[APEX] Google SDK cargado'); };
+  document.head.appendChild(s);
+}
+
 function saveGDriveConfig(){
-  state.gdrive.clientId=document.getElementById('gdrive-client-id').value.trim();
   state.gdrive.apiKey=document.getElementById('gdrive-api-key').value.trim();
   state.gdrive.folder=document.getElementById('gdrive-folder').value.trim()||'APEX_Sales_Data';
   state.gdrive.autosave=parseInt(document.getElementById('gdrive-autosave').value);
-  saveLocal();toast('Configuración de Drive guardada','success');
+  // clientId es fijo, no editable
+  state.gdrive.clientId=GDRIVE_CLIENT_ID;
+  saveLocal();
+  toast('Configuración guardada','success');
   setupAutoSave();
 }
 
 function toggleGDrive(){
-  if(!state.gdrive.clientId||!state.gdrive.apiKey){
-    toast('Ingresá Client ID y API Key primero','warning');return;
-  }
-  // Simulated OAuth flow for demo
+  if(state.gdrive.connected){disconnectGDrive();return;}
+  connectGDrive();
+}
+
+function connectGDrive(){
   const btn=document.getElementById('gdrive-connect-btn');
   btn.textContent='Conectando...';btn.disabled=true;
-  setTimeout(()=>{
-    state.gdrive.connected=true;saveLocal();updateGDriveUI();
-    btn.textContent='Desconectar';btn.disabled=false;
-    toast('✅ Google Drive conectado correctamente','success');
-    btn.onclick=disconnectGDrive;
-  },2000);
+
+  if(!window.google || !window.google.accounts){
+    toast('Cargando SDK de Google...','info');
+    loadGoogleSDK();
+    setTimeout(()=>{btn.textContent='Conectar';btn.disabled=false;
+      toast('SDK cargado. Hacé clic en Conectar de nuevo.','info');},2500);
+    return;
+  }
+
+  try{
+    gisClient = google.accounts.oauth2.initTokenClient({
+      client_id: GDRIVE_CLIENT_ID,
+      scope: GDRIVE_SCOPES,
+      callback: async(tokenResponse)=>{
+        if(tokenResponse.error){
+          toast('Error al autenticar: '+tokenResponse.error,'error');
+          btn.textContent='Conectar';btn.disabled=false;
+          return;
+        }
+        gdriveToken = tokenResponse.access_token;
+        state.gdrive.connected=true;
+        state.gdrive.clientId=GDRIVE_CLIENT_ID;
+        saveLocal();
+        updateGDriveUI();
+        btn.textContent='Desconectar';btn.disabled=false;
+        toast('✅ Google Drive conectado!','success');
+        // Buscar o crear el archivo de datos
+        await findOrCreateApexFile();
+        // Cargar datos desde Drive (merge con local)
+        await loadFromDrive();
+        setupAutoSave();
+      }
+    });
+    gisClient.requestAccessToken();
+  } catch(e){
+    toast('Error: '+e.message,'error');
+    btn.textContent='Conectar';btn.disabled=false;
+  }
 }
 
 function disconnectGDrive(){
-  state.gdrive.connected=false;saveLocal();updateGDriveUI();
-  document.getElementById('gdrive-connect-btn').onclick=toggleGDrive;
+  if(gdriveToken && window.google){
+    google.accounts.oauth2.revoke(gdriveToken,()=>{});
+  }
+  gdriveToken=null;apexFileId=null;
+  state.gdrive.connected=false;
+  saveLocal();updateGDriveUI();
   document.getElementById('gdrive-connect-btn').textContent='Conectar';
+  document.getElementById('gdrive-connect-btn').disabled=false;
   toast('Drive desconectado','info');
 }
 
-function testGDriveConnection(){
-  if(!state.gdrive.connected){toast('Conectá Drive primero','warning');return;}
-  toast('✅ Conexión con Drive activa - carpeta: '+state.gdrive.folder,'success');
+async function findOrCreateApexFile(){
+  if(!gdriveToken)return;
+  try{
+    // Buscar en appDataFolder primero, luego en Drive raíz
+    const search = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${APEX_FILE_NAME}'&spaces=drive&fields=files(id,name,modifiedTime)`,
+      {headers:{Authorization:'Bearer '+gdriveToken}}
+    );
+    const res = await search.json();
+    if(res.files && res.files.length>0){
+      apexFileId = res.files[0].id;
+      toast('📂 Archivo de datos encontrado en Drive','info');
+    } else {
+      // Crear archivo nuevo
+      await createApexFile();
+    }
+  }catch(e){console.error('[APEX] findOrCreate error',e);}
+}
+
+async function createApexFile(){
+  if(!gdriveToken)return;
+  try{
+    const meta={name:APEX_FILE_NAME,mimeType:'application/json'};
+    const form=new FormData();
+    form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+    const initialData={ventas:[],historicas:[],deals:[],tareas:[],version:1,lastUpdate:new Date().toISOString()};
+    form.append('file',new Blob([JSON.stringify(initialData)],{type:'application/json'}));
+    const res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{
+      method:'POST',headers:{Authorization:'Bearer '+gdriveToken},body:form
+    });
+    const data=await res.json();
+    apexFileId=data.id;
+    toast('📄 Archivo APEX creado en Drive','success');
+  }catch(e){console.error('[APEX] createFile error',e);}
+}
+
+async function loadFromDrive(){
+  if(!gdriveToken||!apexFileId)return;
+  try{
+    toast('⏳ Sincronizando datos desde Drive...','info');
+    const res=await fetch(`https://www.googleapis.com/drive/v3/files/${apexFileId}?alt=media`,{
+      headers:{Authorization:'Bearer '+gdriveToken}
+    });
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const driveData=await res.json();
+    // Merge: Drive tiene prioridad, pero conservamos datos locales únicos
+    if(driveData.ventas) state.ventas=mergeArrays(state.ventas,driveData.ventas);
+    if(driveData.historicas) state.historicas=mergeArrays(state.historicas,driveData.historicas);
+    if(driveData.deals) state.deals=mergeArrays(state.deals,driveData.deals);
+    if(driveData.tareas) state.tareas=mergeArrays(state.tareas,driveData.tareas);
+    saveLocal();
+    // Refrescar UI
+    renderVentas();updateKPIs();renderKanban();renderHistTable();
+    if(document.getElementById('view-historicas').classList.contains('active'))renderHistChart();
+    renderTareas();
+    toast('✅ Datos sincronizados desde Drive','success');
+  }catch(e){
+    toast('Error al cargar desde Drive: '+e.message,'error');
+    console.error('[APEX] loadFromDrive error',e);
+  }
+}
+
+function mergeArrays(local,remote){
+  const map={};
+  local.forEach(i=>{if(i.id)map[i.id]=i;});
+  remote.forEach(i=>{if(i.id)map[i.id]=i;}); // Drive sobrescribe mismo ID
+  return Object.values(map).sort((a,b)=>new Date(b.creado||0)-new Date(a.creado||0));
+}
+
+async function autoSyncGDrive(){
+  if(!state.gdrive.connected||!gdriveToken||!apexFileId||syncInProgress)return;
+  syncInProgress=true;
+  try{
+    const payload={
+      ventas:state.ventas,
+      historicas:state.historicas,
+      deals:state.deals,
+      tareas:state.tareas,
+      version:1,
+      lastUpdate:new Date().toISOString(),
+      lastUser:state.config.nombre||state.config.empresa||'Usuario'
+    };
+    const form=new FormData();
+    form.append('file',new Blob([JSON.stringify(payload)],{type:'application/json'}));
+    const res=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${apexFileId}?uploadType=multipart`,{
+      method:'PATCH',headers:{Authorization:'Bearer '+gdriveToken},body:form
+    });
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    // Actualizar dot indicador
+    const dot=document.getElementById('gdrive-dot-top');
+    dot.style.background='var(--accent)';
+    setTimeout(()=>{if(state.gdrive.connected)dot.style.background='var(--green)';},600);
+  }catch(e){
+    console.error('[APEX] sync error',e);
+    // Token expirado → reconectar
+    if(e.message.includes('401')){
+      state.gdrive.connected=false;updateGDriveUI();
+      toast('Sesión de Drive expirada. Reconectá.','warning');
+    }
+  }finally{syncInProgress=false;}
+}
+
+async function testGDriveConnection(){
+  if(!state.gdrive.connected||!gdriveToken){
+    toast('Conectá Drive primero','warning');return;
+  }
+  try{
+    const res=await fetch('https://www.googleapis.com/drive/v3/about?fields=user',{
+      headers:{Authorization:'Bearer '+gdriveToken}
+    });
+    const data=await res.json();
+    toast(`✅ Conectado como: ${data.user?.displayName||'Usuario de Google'}`, 'success');
+  }catch(e){toast('Error al probar conexión','error');}
 }
 
 function updateGDriveUI(){
@@ -1424,41 +1600,45 @@ function updateGDriveUI(){
   const sub=document.getElementById('gdrive-status-sub');
   const topDot=document.getElementById('gdrive-dot-top');
   const topText=document.getElementById('gdrive-topbtn-text');
+  const btn=document.getElementById('gdrive-connect-btn');
   if(state.gdrive.connected){
     dot.style.background='var(--green)';dot.style.boxShadow='0 0 6px var(--green)';
-    text.textContent='Conectado';sub.textContent='Carpeta: '+state.gdrive.folder;
+    text.textContent='Conectado';
+    sub.textContent='Archivo: '+APEX_FILE_NAME+(apexFileId?' · ID: '+apexFileId.slice(0,12)+'...':'');
     topDot.style.background='var(--green)';topDot.style.boxShadow='0 0 6px var(--green)';
     topText.textContent='Drive activo';
     document.getElementById('gdrive-topbtn').classList.add('connected');
+    btn.textContent='Desconectar';
   } else {
     dot.style.background='var(--muted2)';dot.style.boxShadow='none';
-    text.textContent='No conectado';sub.textContent='Configurá tu API Key para sincronizar';
+    text.textContent='No conectado';sub.textContent='Hacé clic en "Conectar" para autenticarte con Google';
     topDot.style.background='var(--muted2)';topDot.style.boxShadow='none';
     topText.textContent='Google Drive';
     document.getElementById('gdrive-topbtn').classList.remove('connected');
+    btn.textContent='Conectar';
   }
-}
-
-function autoSyncGDrive(){
-  if(!state.gdrive.connected)return;
-  // In production: call Google Drive API to update file
-  // For now: simulated
-  console.log('[APEX] Auto-sync to Google Drive...');
 }
 
 let autoSaveTimer=null;
 function setupAutoSave(){
   if(autoSaveTimer)clearInterval(autoSaveTimer);
-  const mins=state.gdrive.autosave;
+  const mins=state.gdrive.autosave||15;
   if(mins>0&&state.gdrive.connected){
-    autoSaveTimer=setInterval(()=>{autoSyncGDrive();toast('💾 Auto-guardado en Drive','info');},mins*60000);
+    autoSaveTimer=setInterval(async()=>{
+      await autoSyncGDrive();
+      toast('💾 Auto-guardado en Drive','info');
+    },mins*60000);
   }
 }
 
-function saveAllData(){
+async function saveAllData(){
   saveLocal();
-  if(state.gdrive.connected)autoSyncGDrive();
-  toast('Datos guardados','success');
+  if(state.gdrive.connected&&gdriveToken){
+    await autoSyncGDrive();
+    toast('✅ Guardado en Drive','success');
+  } else {
+    toast('Datos guardados localmente','success');
+  }
 }
 
 function updateStorageInfo(){
@@ -1541,9 +1721,7 @@ function init(){
   document.getElementById('cfg-alarm24').value=state.config.alarm24??1;
   document.getElementById('cfg-alarm48').value=state.config.alarm48??1;
   document.getElementById('cfg-sound').value=state.config.sound??1;
-  document.getElementById('gdrive-client-id').value=state.gdrive.clientId||'';
   document.getElementById('gdrive-api-key').value=state.gdrive.apiKey||'';
-  document.getElementById('gdrive-folder').value=state.gdrive.folder||'APEX_Sales_Data';
   document.getElementById('gdrive-autosave').value=state.gdrive.autosave||15;
   document.getElementById('user-name-display').textContent=state.config.empresa||'Mi Empresa';
   document.getElementById('user-role-display').textContent=state.config.rol||'Sales Manager';
