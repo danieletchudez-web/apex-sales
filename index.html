@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Storing Medical — CRM Sales</title>
+<title>APEX — Sales Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -570,27 +570,65 @@ async function ensureTabs(){
     const d=await sReq('/'+sid2+'?fields=sheets.properties.title');
     const ex=(d.sheets||[]).map(s=>s.properties.title);
     const need=Object.values(TABS).filter(t=>!ex.includes(t));
-    if(!need.length)return;
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}:batchUpdate`,{method:'POST',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({requests:need.map(t=>({addSheet:{properties:{title:t}}}))})});
-  }catch(e){console.error(e);}
+    if(need.length){
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}:batchUpdate`,{
+        method:'POST',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
+        body:JSON.stringify({requests:need.map(t=>({addSheet:{properties:{title:t}}}))})
+      });
+    }
+    // Escribir headers en cada tab si está vacía
+    const hmap={[TABS.v]:VH,[TABS.h]:HH,[TABS.d]:DH,[TABS.t]:TH,[TABS.m]:['email','name','lastLogin']};
+    for(const [tab,headers] of Object.entries(hmap)){
+      try{
+        const r=await sReq(`/${sid2}/values/${encodeURIComponent(tab)}!A1:A1`);
+        const first=(r.values||[])[0]?.[0]||'';
+        if(!first){
+          await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=RAW`,{
+            method:'PUT',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
+            body:JSON.stringify({range:tab,majorDimension:'ROWS',values:[headers]})
+          });
+        }
+      }catch(e){console.warn('[apex] header init',tab,e);}
+    }
+  }catch(e){console.error('[ensureTabs]',e);}
 }
 
 async function readTab(tab){
-  try{const d=await sReq(`/${sid2}/values/${encodeURIComponent(tab)}`);const rows=d.values||[];if(rows.length<2)return[];const h=rows[0].map(x=>String(x).toLowerCase().trim());return rows.slice(1).map(r=>{const o={};h.forEach((k,i)=>{o[k]=r[i]||'';});return o;});}catch{return[];}
+  try{
+    const d=await sReq(`/${sid2}/values/${encodeURIComponent(tab)}`);
+    const rows=d.values||[];
+    if(rows.length<2)return[];
+    const h=rows[0].map(x=>String(x).toLowerCase().trim());
+    return rows.slice(1).map(r=>{const o={};h.forEach((k,i)=>{o[k]=r[i]||'';});return o;});
+  }catch{return[];}
 }
 
 async function writeTab(tab,headers,rows){
   try{
     const vals=[headers,...rows.map(r=>headers.map(h=>String(r[h]===undefined?'':r[h]||'')))];
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=RAW`,{method:'PUT',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({range:tab,majorDimension:'ROWS',values:vals})});
-  }catch(e){console.error(e);}
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=RAW`,{
+      method:'PUT',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
+      body:JSON.stringify({range:tab,majorDimension:'ROWS',values:vals})
+    });
+  }catch(e){console.error('[writeTab]',e);}
 }
 
 async function appendRow(tab,headers,row){
   try{
+    // Verificar que hay headers antes de hacer append
+    const check=await sReq(`/${sid2}/values/${encodeURIComponent(tab)}!A1:A1`);
+    const first=(check.values||[])[0]?.[0]||'';
+    if(!first){
+      // Sin headers: escribir headers + fila juntos
+      await writeTab(tab,headers,[row]);
+      return;
+    }
     const vals=[headers.map(h=>String(row[h]===undefined?'':row[h]||''))];
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}!A1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{method:'POST',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({range:tab,majorDimension:'ROWS',values:vals})});
-  }catch(e){console.error(e);}
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}!A1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{
+      method:'POST',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
+      body:JSON.stringify({range:tab,majorDimension:'ROWS',values:vals})
+    });
+  }catch(e){console.error('[appendRow]',e);}
 }
 
 // ═══ SYNC ═══
