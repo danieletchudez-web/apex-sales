@@ -593,41 +593,47 @@ async function ensureTabs(){
   }catch(e){console.error('[ensureTabs]',e);}
 }
 
+// readTab: devuelve null si hay error (para distinguir "vacío" de "falla")
 async function readTab(tab){
   try{
     const d=await sReq(`/${sid2}/values/${encodeURIComponent(tab)}`);
     const rows=d.values||[];
-    if(rows.length<2)return[];
+    if(rows.length<2)return[]; // solo headers o vacío = legítimamente vacío
     const h=rows[0].map(x=>String(x).toLowerCase().trim());
-    return rows.slice(1).map(r=>{const o={};h.forEach((k,i)=>{o[k]=r[i]||'';});return o;});
-  }catch{return[];}
+    return rows.slice(1)
+      .filter(r=>r.some(c=>c&&String(c).trim())) // ignorar filas completamente vacías
+      .map(r=>{const o={};h.forEach((k,i)=>{o[k]=r[i]||'';});return o;});
+  }catch(e){
+    console.error('[readTab] ERROR en tab:',tab,e);
+    return null; // null = hubo error, NO tocar el estado actual
+  }
 }
 
 async function writeTab(tab,headers,rows){
   try{
     const vals=[headers,...rows.map(r=>headers.map(h=>String(r[h]===undefined?'':r[h]||'')))];
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=RAW`,{
+    const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=RAW`,{
       method:'PUT',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
       body:JSON.stringify({range:tab,majorDimension:'ROWS',values:vals})
     });
+    if(!res.ok){const e=await res.text();console.error('[writeTab] HTTP error',res.status,e);}
   }catch(e){console.error('[writeTab]',e);}
 }
 
 async function appendRow(tab,headers,row){
   try{
-    // Verificar que hay headers antes de hacer append
-    const check=await sReq(`/${sid2}/values/${encodeURIComponent(tab)}!A1:A1`);
-    const first=(check.values||[])[0]?.[0]||'';
-    if(!first){
-      // Sin headers: escribir headers + fila juntos
-      await writeTab(tab,headers,[row]);
-      return;
+    // Siempre usar writeTab para asegurar que headers existan
+    // Primero leemos para no perder datos existentes
+    const existing=await readTab(tab);
+    if(existing===null){
+      console.error('[appendRow] No se pudo leer tab',tab);return;
     }
-    const vals=[headers.map(h=>String(row[h]===undefined?'':row[h]||''))];
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}!A1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{
-      method:'POST',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
-      body:JSON.stringify({range:tab,majorDimension:'ROWS',values:vals})
-    });
+    // Si ya existe el mismo ID, no duplicar
+    if(existing.some(r=>r.id===row.id)){
+      console.warn('[appendRow] ID duplicado, ignorando',row.id);return;
+    }
+    // Escribir todos los datos existentes + la nueva fila
+    await writeTab(tab,headers,[...existing,row]);
   }catch(e){console.error('[appendRow]',e);}
 }
 
@@ -635,13 +641,24 @@ async function appendRow(tab,headers,row){
 async function loadAll(){
   setSI('go','Cargando...');
   try{
-    const[vr,hr,dr,tr]=await Promise.all([readTab(TABS.v),readTab(TABS.h),readTab(TABS.d),readTab(TABS.t)]);
-    S.v=vr.filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
-    S.h=hr.filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
-    S.d=dr.filter(r=>r.id).map(r=>({...r,valor:parseFloat(r.valor)||0,prob:parseInt(r.prob)||50}));
-    S.t=tr.filter(r=>r.id).map(r=>({...r,done:r.done==='true',alarm24:r.alarm24!=='false',alarm48:r.alarm48!=='false',alerted24:r.alerted24==='true',alerted48:r.alerted48==='true'}));
-    setSI('ok','Sincronizado');renderAll();
-  }catch(e){setSI('','Error');toast('Error al sincronizar: '+e.message,'error');}
+    const[vr,hr,dr,tr]=await Promise.all([
+      readTab(TABS.v),readTab(TABS.h),readTab(TABS.d),readTab(TABS.t)
+    ]);
+    // Solo actualizar si readTab NO devolvió null (null = error de red/api)
+    if(vr!==null) S.v=vr.filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
+    if(hr!==null) S.h=hr.filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
+    if(dr!==null) S.d=dr.filter(r=>r.id).map(r=>({...r,valor:parseFloat(r.valor)||0,prob:parseInt(r.prob)||50}));
+    if(tr!==null) S.t=tr.filter(r=>r.id).map(r=>({...r,done:r.done==='true',alarm24:r.alarm24!=='false',alarm48:r.alarm48!=='false',alerted24:r.alerted24==='true',alerted48:r.alerted48==='true'}));
+    const errs=[vr,hr,dr,tr].filter(x=>x===null).length;
+    if(errs>0){setSI('','Sync parcial');toast(`⚠️ ${errs} tab(s) no respondieron, datos anteriores conservados`,'warning');}
+    else{setSI('ok','Sincronizado');}
+    renderAll();
+  }catch(e){
+    setSI('','Error');
+    console.error('[loadAll]',e);
+    toast('Error de sincronización: '+e.message,'error');
+    // NO limpiar el estado — mantener lo que había
+  }
 }
 
 async function syncNow(){
