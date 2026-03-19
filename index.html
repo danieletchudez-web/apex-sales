@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Storing Insumos Médicos CRM</title>
+<title>Storing Medical — CRM Sales</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -606,7 +606,14 @@ async function loadAll(){
   }catch(e){setSI('','Error');toast('Error al sincronizar: '+e.message,'error');}
 }
 
-async function syncNow(){if(!tok||!sid2){toast('No hay sesión activa','warning');return;}await loadAll();toast('✅ Actualizado desde Sheets','success');}
+async function syncNow(){
+  if(!tok||!sid2){toast('No hay sesión activa','warning');return;}
+  setSI('go','Sincronizando...');
+  await loadAll();
+  const hm=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('stxt').textContent=`Sync ${hm}`;
+  toast('✅ Datos actualizados desde Sheets','success');
+}
 function setSI(s,t){const b=document.getElementById('syncind');b.className='syncbtn';if(s)b.classList.add(s);document.getElementById('stxt').textContent=t;}
 function openSheet(){if(sid2)window.open('https://docs.google.com/spreadsheets/d/'+sid2,'_blank');else toast('Sin Sheet conectada','warning');}
 
@@ -631,7 +638,13 @@ function renderMembers(rows){
 function setupAS(){
   if(stimer)clearInterval(stimer);
   const s=parseInt(cfg.aut)||30;
-  if(s>0)stimer=setInterval(loadAll,s*1000);
+  if(s>0){
+    stimer=setInterval(async()=>{
+      await loadAll();
+      const hm=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+      document.getElementById('stxt').textContent=`Sync ${hm}`;
+    },s*1000);
+  }
 }
 
 // ═══ VENTAS ═══
@@ -947,10 +960,73 @@ function fn(n){if(!n&&n!==0)return '0';return Number(n).toLocaleString('es-AR',{
 function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function toast(msg,type='success'){const c=document.getElementById('tc');const t=document.createElement('div');const i={success:'✓',warning:'⚠',error:'✕',info:'ℹ'};t.className=`toast t${type[0]}`;t.innerHTML=`<div class="toi">${i[type]||'ℹ'}</div><div style="flex:1">${msg}</div>`;c.appendChild(t);setTimeout(()=>{t.classList.add('hide');setTimeout(()=>t.remove(),300);},4000);}
 
+// ═══ AUTO-LOGIN AL RECARGAR ═══
+// El token OAuth dura ~1 hora. Lo renovamos silenciosamente si el usuario
+// ya había iniciado sesión antes (apex_sid guardado en localStorage).
+function tryAutoLogin(){
+  const savedSid=localStorage.getItem('apex_sid');
+  if(!savedSid)return; // nunca inició sesión, mostrar login normal
+  if(!window.google){
+    // SDK aún cargando, esperar
+    setTimeout(tryAutoLogin,500);return;
+  }
+  // Mostrar pantalla de carga mientras renovamos token
+  document.getElementById('ls').classList.add('hidden');
+  document.getElementById('app').style.display='flex';
+  document.getElementById('sidebar').style.display='flex';
+  document.getElementById('ptitle').textContent='Reconectando...';
+  document.getElementById('syncind').className='syncbtn go';
+  document.getElementById('stxt').textContent='Reconectando...';
+
+  try{
+    google.accounts.oauth2.initTokenClient({
+      client_id:CID,
+      scope:SCOPES,
+      prompt:'none', // ← NO muestra popup, renueva silenciosamente
+      callback:async(r)=>{
+        if(r.error){
+          // Token no renovable, volver al login
+          document.getElementById('ls').classList.remove('hidden');
+          document.getElementById('app').style.display='none';
+          document.getElementById('sidebar').style.display='none';
+          document.getElementById('sid').value=savedSid;
+          return;
+        }
+        tok=r.access_token;
+        // Obtener info del usuario
+        try{
+          const ui=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+tok}});
+          cu=await ui.json();
+        }catch(e){cu={name:'Usuario',email:''};}
+        sid2=savedSid;
+        await ensureTabs();
+        await loadAll();
+        showApp();
+        toast('Sesión restaurada ✓','success');
+      }
+    }).requestAccessToken();
+  }catch(e){
+    // Fallback: mostrar login
+    document.getElementById('ls').classList.remove('hidden');
+    document.getElementById('app').style.display='none';
+    document.getElementById('sidebar').style.display='none';
+  }
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   loadCfg();
   const s=localStorage.getItem('apex_sid');
   if(s)document.getElementById('sid').value=s;
+  // Intentar auto-login si hay sesión previa
+  if(window.google){tryAutoLogin();}
+  else{
+    // Esperar que cargue el SDK de Google
+    const gsi=document.createElement('script');
+    gsi.src='https://accounts.google.com/gsi/client';
+    gsi.onload=()=>tryAutoLogin();
+    gsi.async=true;gsi.defer=true;
+    document.head.appendChild(gsi);
+  }
 });
 </script>
 </body>
