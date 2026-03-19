@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX — Sales Intelligence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=Instrument+Sans:wght@300;400;500&display=swap');
+:root {
+  --bg:#0c0c0e;--surface:#131316;--surface2:#1a1a1f;--border:#242428;--border2:#2e2e35;
+  --text:#e8e8ec;--muted:#6b6b78;--muted2:#4a4a55;
+  --accent:#e8ff47;--accent-dim:rgba(232,255,71,0.08);--accent-dim2:rgba(232,255,71,0.15);
+  --red:#ff5c5c;--green:#3dffa0;--blue:#5ca8ff;--orange:#ffaa3d;--purple:#c084fc;
+  --font-d:'Syne',sans-serif;--font-m:'IBM Plex Mono',monospace;--font-b:'Instrument Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);display:flex;min-height:100vh;overflow-x:hidden}
+
+/* SIDEBAR */
+.sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto}
+.sidebar-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border)}
+.logo-mark{font-family:var(--font-d);font-weight:800;font-size:1.35rem;letter-spacing:-0.02em;display:flex;align-items:center;gap:8px}
+.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;flex-shrink:0;box-shadow:0 0 8px var(--accent)}
+.logo-sub{font-family:var(--font-m);font-size:0.58rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:4px}
+.sidebar-nav{padding:14px 0;flex:1}
+.nav-section{padding:0 12px;margin-bottom:6px}
+.nav-label{font-family:var(--font-m);font-size:0.57rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);padding:8px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:6px;cursor:pointer;transition:all .15s;font-size:0.82rem;color:var(--muted);border:1px solid transparent;margin-bottom:1px;user-select:none}
+.nav-item:hover{color:var(--text);background:var(--surface2)}
+.nav-item.active{color:var(--accent);background:var(--accent-dim);border-color:rgba(232,255,71,.12)}
+.nav-icon{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item.active .nav-icon{opacity:1}
+.nav-badge{margin-left:auto;background:var(--accent);color:var(--bg);font-family:var(--font-m);font-size:.57rem;font-weight:500;padding:1px 6px;border-radius:10px}
+.nav-badge.red{background:var(--red);color:#fff}
+.sidebar-footer{padding:14px 12px;border-top:1px solid var(--border)}
+.user-card{display:flex;align-items:center;gap:10px;padding:8px;border-radius:6px;cursor:pointer;transition:background .15s}
+.user-card:hover{background:var(--surface2)}
+.avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent) 0%,#a8cc00 100%);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:700;font-size:.7rem;color:var(--bg);flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:.78rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-family:var(--font-m);font-size:.6rem;color:var(--muted)}
+
+/* MAIN */
+.main{flex:1;margin-left:220px;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:54px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 26px;gap:14px;position:sticky;top:0;background:var(--bg);z-index:50}
+.page-title{font-family:var(--font-d);font-weight:700;font-size:.95rem;letter-spacing:-.01em}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.icon-btn{width:32px;height:32px;background:var(--surface);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;color:var(--muted)}
+.icon-btn:hover{border-color:var(--border2);color:var(--text)}
+.gdrive-btn{display:flex;align-items:center;gap:6px;padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-family:var(--font-m);font-size:.63rem;letter-spacing:.06em;color:var(--muted);cursor:pointer;transition:all .15s;text-transform:uppercase}
+.gdrive-btn:hover,.gdrive-btn.connected{border-color:var(--green);color:var(--green)}
+.gdrive-dot{width:6px;height:6px;border-radius:50%;background:var(--muted2);flex-shrink:0}
+.gdrive-btn.connected .gdrive-dot{background:var(--green);box-shadow:0 0 6px var(--green)}
+
+/* VIEWS */
+.view{display:none;padding:26px;animation:fadeIn .2s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s}
+.card:hover{border-color:var(--border2)}
+.card-header{padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.card-title{font-family:var(--font-d);font-weight:600;font-size:.85rem;letter-spacing:-.01em}
+.card-subtitle{font-family:var(--font-m);font-size:.59rem;color:var(--muted);letter-spacing:.06em;margin-top:2px}
+.card-body{padding:20px}
+
+/* PILLS */
+.pill{font-family:var(--font-m);font-size:.59rem;padding:2px 8px;border-radius:20px;letter-spacing:.04em;white-space:nowrap}
+.pill-green{background:rgba(61,255,160,.1);color:var(--green)}
+.pill-red{background:rgba(255,92,92,.1);color:var(--red)}
+.pill-orange{background:rgba(255,170,61,.1);color:var(--orange)}
+.pill-blue{background:rgba(92,168,255,.1);color:var(--blue)}
+.pill-purple{background:rgba(192,132,252,.1);color:var(--purple)}
+.pill-accent{background:var(--accent-dim2);color:var(--accent)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;font-family:var(--font-m);font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:all .15s;border:none;font-weight:500}
+.btn-primary{background:var(--accent);color:var(--bg)}
+.btn-primary:hover{opacity:.85;transform:translateY(-1px)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(255,92,92,.12);color:var(--red);border:1px solid rgba(255,92,92,.2)}
+.btn-danger:hover{background:rgba(255,92,92,.2)}
+.btn-sm{padding:5px 12px;font-size:.6rem}
+.btn-icon{width:28px;height:28px;padding:0;justify-content:center}
+
+/* FORMS */
+.form-grid{display:grid;gap:14px}
+.form-grid-2{grid-template-columns:1fr 1fr}
+.form-grid-3{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-family:var(--font-m);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.form-input,.form-select,.form-textarea{background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font-b);font-size:.83rem;padding:9px 13px;outline:none;transition:border-color .15s;width:100%}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--muted2)}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent)}
+.form-select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6b78'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.form-select option{background:var(--surface2);color:var(--text)}
+.form-textarea{resize:vertical;min-height:80px}
+
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-family:var(--font-m);font-size:.59rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);font-weight:400;white-space:nowrap}
+.tbl td{padding:10px 12px;font-size:.8rem;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr:hover td{background:rgba(255,255,255,.015)}
+.tbl-mono{font-family:var(--font-m);font-size:.75rem}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fadeIn .15s}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:slideUp .2s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal-header{padding:20px 22px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:var(--font-d);font-weight:700;font-size:.95rem;letter-spacing:-.01em}
+.modal-close{width:28px;height:28px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);transition:all .15s;font-size:1rem;line-height:1}
+.modal-close:hover{color:var(--text);border-color:var(--border2)}
+.modal-body{padding:22px}
+.modal-footer{padding:16px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--surface);border:1px solid var(--border2);border-radius:9px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:.8rem;min-width:260px;max-width:340px;pointer-events:all;animation:toastIn .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.toast.hide{animation:toastOut .3s ease forwards}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(20px)}}
+.toast-icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0}
+.toast-success .toast-icon{background:rgba(61,255,160,.15);color:var(--green)}
+.toast-warning .toast-icon{background:rgba(255,170,61,.15);color:var(--orange)}
+.toast-error .toast-icon{background:rgba(255,92,92,.15);color:var(--red)}
+.toast-info .toast-icon{background:rgba(92,168,255,.15);color:var(--blue)}
+
+/* SECTION HEADER */
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:14px;flex-wrap:wrap}
+.sec-title{font-family:var(--font-d);font-weight:700;font-size:1.05rem;letter-spacing:-.02em}
+.sec-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* SEARCH */
+.search-input{background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--font-b);font-size:.82rem;padding:7px 13px;outline:none;transition:border-color .15s;min-width:200px}
+.search-input::placeholder{color:var(--muted)}
+.search-input:focus{border-color:var(--accent)}
+
+/* IMPORT DROP ZONE */
+.dropzone{border:2px dashed var(--border2);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2)}
+.dropzone:hover,.dropzone.drag{border-color:var(--accent);background:var(--accent-dim)}
+.dropzone-icon{font-size:2rem;margin-bottom:10px;opacity:.5}
+.dropzone-text{font-size:.82rem;color:var(--muted)}
+.dropzone-sub{font-family:var(--font-m);font-size:.62rem;color:var(--muted2);margin-top:4px}
+
+/* GESTIÓN VENTAS */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;position:relative;overflow:hidden;transition:border-color .2s}
+.kpi:hover{border-color:var(--border2)}
+.kpi::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle at top right,var(--accent-dim) 0%,transparent 70%);pointer-events:none}
+.kpi-label{font-family:var(--font-m);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.kpi-value{font-family:var(--font-d);font-weight:700;font-size:1.75rem;letter-spacing:-.03em;line-height:1;margin-bottom:7px}
+.kpi-delta{font-family:var(--font-m);font-size:.67rem;display:flex;align-items:center;gap:4px}
+.delta-up{color:var(--green)}
+.delta-down{color:var(--red)}
+
+/* KANBAN */
+.kanban-board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start}
+.kanban-col{background:var(--surface);border:1px solid var(--border);border-radius:10px;min-height:200px;display:flex;flex-direction:column}
+.kanban-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.kanban-col-title{font-family:var(--font-m);font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500}
+.kanban-count{font-family:var(--font-m);font-size:.6rem;background:var(--surface2);color:var(--muted);padding:2px 7px;border-radius:10px}
+.kanban-total{font-family:var(--font-m);font-size:.6rem;color:var(--accent)}
+.kanban-cards{padding:10px;display:flex;flex-direction:column;gap:8px;flex:1}
+.kanban-add{padding:8px 10px;border-top:1px solid var(--border)}
+.kanban-add-btn{width:100%;background:transparent;border:1px dashed var(--border2);border-radius:6px;color:var(--muted);font-family:var(--font-m);font-size:.62rem;padding:6px;cursor:pointer;transition:all .15s;letter-spacing:.06em}
+.kanban-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.deal-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:13px;cursor:pointer;transition:all .15s;position:relative}
+.deal-card:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.deal-card-name{font-size:.82rem;font-weight:500;margin-bottom:3px}
+.deal-card-company{font-size:.72rem;color:var(--muted);margin-bottom:9px}
+.deal-card-footer{display:flex;align-items:center;justify-content:space-between}
+.deal-card-value{font-family:var(--font-m);font-size:.72rem;color:var(--accent)}
+.deal-card-date{font-family:var(--font-m);font-size:.6rem;color:var(--muted2)}
+.deal-card-drag{position:absolute;top:8px;right:8px;color:var(--muted2);font-size:.7rem;cursor:grab;opacity:0;transition:opacity .15s}
+.deal-card:hover .deal-card-drag{opacity:1}
+.deal-card.dragging{opacity:.4;border-style:dashed}
+.kanban-col.drag-over{background:var(--accent-dim);border-color:rgba(232,255,71,.3)}
+
+/* HISTORICAS */
+.chart-wrap{position:relative;height:240px}
+
+/* TAREAS */
+.task-filters{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.task-filter-btn{background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--muted);font-family:var(--font-m);font-size:.62rem;letter-spacing:.07em;padding:5px 14px;cursor:pointer;transition:all .15s;text-transform:uppercase}
+.task-filter-btn:hover{border-color:var(--border2);color:var(--text)}
+.task-filter-btn.active{background:var(--accent-dim);border-color:rgba(232,255,71,.3);color:var(--accent)}
+.task-item{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:14px 16px;display:flex;align-items:flex-start;gap:14px;transition:all .2s;cursor:pointer;margin-bottom:8px}
+.task-item:hover{border-color:var(--border2)}
+.task-item.done{opacity:.5}
+.task-item.alarm-24{border-left:3px solid var(--orange)}
+.task-item.alarm-48{border-left:3px solid var(--blue)}
+.task-item.overdue{border-left:3px solid var(--red)}
+.task-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);cursor:pointer;flex-shrink:0;margin-top:2px;transition:all .15s;display:flex;align-items:center;justify-content:center;font-size:.6rem}
+.task-check:hover{border-color:var(--accent)}
+.task-item.done .task-check{background:var(--green);border-color:var(--green);color:var(--bg)}
+.task-body{flex:1;min-width:0}
+.task-title{font-size:.85rem;font-weight:500;margin-bottom:4px}
+.task-item.done .task-title{text-decoration:line-through;color:var(--muted)}
+.task-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.task-meta-item{font-family:var(--font-m);font-size:.61rem;color:var(--muted);display:flex;align-items:center;gap:4px}
+.task-alarm-badge{font-family:var(--font-m);font-size:.59rem;padding:1px 7px;border-radius:10px}
+.task-alarm-24{background:rgba(255,170,61,.15);color:var(--orange)}
+.task-alarm-48{background:rgba(92,168,255,.15);color:var(--blue)}
+.task-overdue{background:rgba(255,92,92,.15);color:var(--red)}
+.task-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.priority-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.p-alta{background:var(--red)}
+.p-media{background:var(--orange)}
+.p-baja{background:var(--green)}
+.p-critica{background:var(--purple);box-shadow:0 0 6px var(--purple)}
+
+/* GDRIVE CONFIG */
+.gdrive-config{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px}
+.gdrive-config-title{font-family:var(--font-m);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.gdrive-status{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:12px}
+.gdrive-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-icon{font-size:2.5rem;margin-bottom:12px;opacity:.3}
+.empty-text{font-size:.85rem;color:var(--muted)}
+.empty-sub{font-family:var(--font-m);font-size:.62rem;color:var(--muted2);margin-top:4px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted2)}
+
+@media(max-width:900px){
+  .sidebar{transform:translateX(-220px)}.main{margin-left:0}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}.kanban-board{grid-template-columns:repeat(2,1fr)}
+  .form-grid-2,.form-grid-3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark"><div class="logo-dot"></div>APEX</div>
+    <div class="logo-sub">Sales Intelligence</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-label">Dashboard</div>
+      <div class="nav-item active" onclick="gotoView('gestion',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10l3-4 3 3 2-3 4 5"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>
+        Gestión de Ventas
+      </div>
+      <div class="nav-item" onclick="gotoView('pipeline',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="3" height="10" rx="1"/><rect x="6" y="5" width="3" height="8" rx="1"/><rect x="11" y="1" width="3" height="12" rx="1"/></svg>
+        Pipeline de Ventas
+        <span class="nav-badge" id="badge-pipeline">0</span>
+      </div>
+      <div class="nav-item" onclick="gotoView('historicas',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 2"/></svg>
+        Ventas Históricas
+      </div>
+      <div class="nav-item" onclick="gotoView('tareas',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8l2 2 4-4"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>
+        Tareas Diarias
+        <span class="nav-badge red" id="badge-tareas" style="display:none">!</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Config</div>
+      <div class="nav-item" onclick="gotoView('config',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
+        Configuración
+      </div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="avatar" id="user-avatar">MG</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name-display">Mi Empresa</div>
+        <div class="user-role" id="user-role-display">Sales Manager</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <span class="page-title" id="page-title">Gestión de Ventas</span>
+    <div class="topbar-right">
+      <div class="gdrive-btn" id="gdrive-topbtn" onclick="gotoView('config',document.querySelector('.nav-item:last-child'))">
+        <div class="gdrive-dot" id="gdrive-dot-top"></div>
+        <span id="gdrive-topbtn-text">Google Drive</span>
+      </div>
+      <div class="icon-btn" title="Guardar datos" onclick="saveAllData()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2h9l3 3v9H2V2z"/><rect x="5" y="9" width="6" height="5"/><rect x="4" y="2" width="7" height="4"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ GESTIÓN DE VENTAS ═══════════════ -->
+  <div class="view active" id="view-gestion">
+    <div class="kpi-row" id="gestion-kpis">
+      <div class="kpi"><div class="kpi-label">Ventas del mes</div><div class="kpi-value" id="kpi-mes">$0</div><div class="kpi-delta" id="kpi-mes-d">─ sin datos</div></div>
+      <div class="kpi"><div class="kpi-label">Total ventas</div><div class="kpi-value" id="kpi-total">0</div><div class="kpi-delta delta-up">registros cargados</div></div>
+      <div class="kpi"><div class="kpi-label">Ticket promedio</div><div class="kpi-value" id="kpi-ticket">$0</div><div class="kpi-delta" id="kpi-ticket-d">─</div></div>
+      <div class="kpi"><div class="kpi-label">Mejor cliente</div><div class="kpi-value" style="font-size:1rem;padding-top:4px" id="kpi-cliente">─</div><div class="kpi-delta" id="kpi-cliente-v">sin ventas aún</div></div>
+    </div>
+
+    <div class="sec-header">
+      <div class="sec-title">Registro de Ventas</div>
+      <div class="sec-actions">
+        <input class="search-input" id="venta-search" placeholder="Buscar venta..." oninput="filterVentas()">
+        <button class="btn btn-secondary btn-sm" onclick="openModal('modal-import-ventas')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v9M4 8l4 4 4-4"/><path d="M2 14h12"/></svg>
+          Importar Excel
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-nueva-venta')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v12M2 8h12"/></svg>
+          Nueva Venta
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body" style="padding:0 0 0">
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr>
+              <th>Fecha</th><th>Cliente</th><th>Producto/Servicio</th>
+              <th>Categoría</th><th>Monto</th><th>Estado</th><th>Vendedor</th><th></th>
+            </tr></thead>
+            <tbody id="ventas-tbody">
+              <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📊</div><div class="empty-text">No hay ventas registradas</div><div class="empty-sub">Cargá una venta manualmente o importá un Excel</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PIPELINE DE VENTAS ═══════════════ -->
+  <div class="view" id="view-pipeline">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">Pipeline de Ventas</div>
+        <div style="font-family:var(--font-m);font-size:.63rem;color:var(--muted);margin-top:3px">
+          Total pipeline: <span style="color:var(--accent)" id="pipeline-total-val">$0</span> ·
+          <span id="pipeline-total-count">0</span> proyectos activos
+        </div>
+      </div>
+      <div class="sec-actions">
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-nuevo-deal')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v12M2 8h12"/></svg>
+          Nuevo Proyecto
+        </button>
+      </div>
+    </div>
+    <div class="kanban-board" id="kanban-board"></div>
+  </div>
+
+  <!-- ═══════════════ VENTAS HISTÓRICAS ═══════════════ -->
+  <div class="view" id="view-historicas">
+    <div class="sec-header">
+      <div class="sec-title">Ventas Históricas 2024 – Hoy</div>
+      <div class="sec-actions">
+        <select class="form-select" id="hist-year-filter" onchange="renderHistChart()" style="width:auto;padding:6px 32px 6px 10px">
+          <option value="all">Todos los años</option>
+          <option value="2024">2024</option>
+          <option value="2025">2025</option>
+          <option value="2026">2026</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="openModal('modal-import-hist')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v9M4 8l4 4 4-4"/><path d="M2 14h12"/></svg>
+          Importar Excel
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-nueva-hist')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v12M2 8h12"/></svg>
+          Cargar Venta
+        </button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Evolución mensual</div><div class="card-subtitle" id="hist-chart-label">todos los períodos</div></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="histChart"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Por categoría</div></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="histPieChart"></canvas></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body" style="padding:0">
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Categoría</th><th>Monto</th><th>Canal</th><th>Notas</th><th></th></tr></thead>
+            <tbody id="hist-tbody">
+              <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📈</div><div class="empty-text">Sin ventas históricas</div><div class="empty-sub">Importá tu Excel de 2024 en adelante</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TAREAS DIARIAS ═══════════════ -->
+  <div class="view" id="view-tareas">
+    <div class="sec-header">
+      <div>
+        <div class="sec-title">Tareas Diarias</div>
+        <div style="font-family:var(--font-m);font-size:.63rem;color:var(--muted);margin-top:3px" id="tareas-resumen"></div>
+      </div>
+      <div class="sec-actions">
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-nueva-tarea')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v12M2 8h12"/></svg>
+          Nueva Tarea
+        </button>
+      </div>
+    </div>
+
+    <div class="task-filters">
+      <button class="task-filter-btn active" onclick="setTaskFilter('todas',this)">Todas</button>
+      <button class="task-filter-btn" onclick="setTaskFilter('pendiente',this)">Pendientes</button>
+      <button class="task-filter-btn" onclick="setTaskFilter('llamada',this)">📞 Llamadas</button>
+      <button class="task-filter-btn" onclick="setTaskFilter('visita',this)">🚗 Visitas</button>
+      <button class="task-filter-btn" onclick="setTaskFilter('reunion',this)">📅 Reuniones</button>
+      <button class="task-filter-btn" onclick="setTaskFilter('propuesta',this)">📄 Propuestas</button>
+      <button class="task-filter-btn" onclick="setTaskFilter('alarma',this)">🔔 Con alarma</button>
+      <button class="task-filter-btn" onclick="setTaskFilter('vencidas',this)">⚠️ Vencidas</button>
+    </div>
+
+    <div id="tareas-list"></div>
+  </div>
+
+  <!-- ═══════════════ CONFIGURACIÓN ═══════════════ -->
+  <div class="view" id="view-config">
+    <div class="sec-title" style="margin-bottom:22px">Configuración</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:880px">
+      <!-- Google Drive -->
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-header"><div><div class="card-title">Google Drive</div><div class="card-subtitle">Sincronización automática de datos</div></div></div>
+        <div class="card-body">
+          <div class="gdrive-config">
+            <div class="gdrive-config-title">Estado de conexión</div>
+            <div class="gdrive-status" id="gdrive-status-card">
+              <div class="gdrive-status-dot" id="gdrive-status-dot" style="background:var(--muted2)"></div>
+              <div style="flex:1">
+                <div style="font-size:.82rem;font-weight:500" id="gdrive-status-text">No conectado</div>
+                <div style="font-family:var(--font-m);font-size:.6rem;color:var(--muted)" id="gdrive-status-sub">Configurá tu API Key para sincronizar</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" id="gdrive-connect-btn" onclick="toggleGDrive()">Conectar</button>
+            </div>
+          </div>
+          <div class="form-grid form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Google Client ID</label>
+              <input class="form-input" id="gdrive-client-id" placeholder="xxxx.apps.googleusercontent.com" type="password">
+            </div>
+            <div class="form-group">
+              <label class="form-label">API Key</label>
+              <input class="form-input" id="gdrive-api-key" placeholder="AIzaSy..." type="password">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Carpeta de Drive (ID o nombre)</label>
+              <input class="form-input" id="gdrive-folder" placeholder="APEX_Sales_Data">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Auto-guardar cada</label>
+              <select class="form-select" id="gdrive-autosave">
+                <option value="0">Manual</option>
+                <option value="5">5 minutos</option>
+                <option value="15" selected>15 minutos</option>
+                <option value="30">30 minutos</option>
+                <option value="60">1 hora</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" onclick="saveGDriveConfig()">Guardar configuración</button>
+            <button class="btn btn-secondary btn-sm" onclick="testGDriveConnection()">Probar conexión</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAllJSON()">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v9M4 8l4 4 4-4"/><path d="M2 14h12"/></svg>
+              Exportar backup JSON
+            </button>
+          </div>
+          <div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+            <div style="font-family:var(--font-m);font-size:.6rem;color:var(--muted);line-height:1.8">
+              <strong style="color:var(--text)">Cómo configurar Google Drive:</strong><br>
+              1. Ir a <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent)">console.cloud.google.com</a> → crear proyecto<br>
+              2. Activar "Google Drive API" y "Google Sheets API"<br>
+              3. Crear credenciales OAuth 2.0 → copiar Client ID<br>
+              4. Crear API Key → copiar clave<br>
+              5. En "Orígenes autorizados" agregar la URL de esta app<br>
+              6. Pegar credenciales arriba y hacer clic en "Conectar"
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Perfil -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Perfil de usuario</div></div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="cfg-nombre" placeholder="Tu nombre"></div>
+            <div class="form-group"><label class="form-label">Empresa</label><input class="form-input" id="cfg-empresa" placeholder="Mi Empresa SRL"></div>
+            <div class="form-group"><label class="form-label">Rol</label><input class="form-input" id="cfg-rol" placeholder="Sales Manager"></div>
+            <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="cfg-email" placeholder="vos@empresa.com" type="email"></div>
+          </div>
+          <div style="margin-top:14px"><button class="btn btn-primary btn-sm" onclick="saveProfile()">Guardar perfil</button></div>
+        </div>
+      </div>
+
+      <!-- Notificaciones -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Notificaciones</div></div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Alarma 24h antes</label>
+              <select class="form-select" id="cfg-alarm24">
+                <option value="1" selected>Activada</option>
+                <option value="0">Desactivada</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Alarma 48h antes</label>
+              <select class="form-select" id="cfg-alarm48">
+                <option value="1" selected>Activada</option>
+                <option value="0">Desactivada</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sonido de notificación</label>
+              <select class="form-select" id="cfg-sound">
+                <option value="1" selected>Activado</option>
+                <option value="0">Desactivado</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Categorías de venta (separadas por coma)</label>
+              <input class="form-input" id="cfg-cats" placeholder="Software, Servicios, Hardware">
+            </div>
+          </div>
+          <div style="margin-top:14px"><button class="btn btn-primary btn-sm" onclick="saveConfig()">Guardar</button></div>
+        </div>
+      </div>
+
+      <!-- Datos -->
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-header"><div class="card-title">Gestión de datos locales</div></div>
+        <div class="card-body">
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm" onclick="exportAllJSON()">Exportar todo (JSON)</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportCSV('ventas')">Exportar Ventas (CSV)</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportCSV('historicas')">Exportar Históricas (CSV)</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmClearData()">Borrar todos los datos</button>
+          </div>
+          <div style="margin-top:12px;font-family:var(--font-m);font-size:.62rem;color:var(--muted)" id="storage-info"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ══════════════════ MODALES ══════════════════ -->
+
+<!-- Nueva Venta -->
+<div class="modal-overlay" id="modal-nueva-venta">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nueva Venta</div>
+      <div class="modal-close" onclick="closeModal('modal-nueva-venta')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid form-grid-2">
+        <div class="form-group"><label class="form-label">Fecha *</label><input class="form-input" id="v-fecha" type="date"></div>
+        <div class="form-group"><label class="form-label">Cliente *</label><input class="form-input" id="v-cliente" placeholder="Nombre del cliente"></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Producto / Servicio *</label><input class="form-input" id="v-producto" placeholder="Descripción del producto o servicio"></div>
+        <div class="form-group"><label class="form-label">Categoría</label><select class="form-select" id="v-categoria"><option value="">Seleccionar...</option></select></div>
+        <div class="form-group"><label class="form-label">Monto (ARS/USD) *</label><input class="form-input" id="v-monto" type="number" placeholder="0.00"></div>
+        <div class="form-group"><label class="form-label">Moneda</label><select class="form-select" id="v-moneda"><option value="ARS">ARS $</option><option value="USD">USD $</option><option value="EUR">EUR €</option></select></div>
+        <div class="form-group"><label class="form-label">Estado</label><select class="form-select" id="v-estado"><option value="cobrada">Cobrada</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option></select></div>
+        <div class="form-group"><label class="form-label">Vendedor</label><input class="form-input" id="v-vendedor" placeholder="Nombre del vendedor"></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Notas</label><textarea class="form-textarea" id="v-notas" placeholder="Observaciones..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-nueva-venta')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveVenta()">Guardar Venta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Importar Ventas Excel -->
+<div class="modal-overlay" id="modal-import-ventas">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Importar Ventas desde Excel</div>
+      <div class="modal-close" onclick="closeModal('modal-import-ventas')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="dropzone" id="drop-ventas" onclick="document.getElementById('file-ventas').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event,'drop-ventas')" ondrop="dropFile(event,'ventas')">
+        <div class="dropzone-icon">📂</div>
+        <div class="dropzone-text">Arrastrá tu archivo Excel o hacé clic aquí</div>
+        <div class="dropzone-sub">.xlsx · .xls · .csv</div>
+      </div>
+      <input type="file" id="file-ventas" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileImport(event,'ventas')">
+      <div style="margin-top:16px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+        <div style="font-family:var(--font-m);font-size:.61rem;color:var(--muted);line-height:1.9">
+          <strong style="color:var(--accent)">Columnas esperadas:</strong><br>
+          fecha · cliente · producto · categoria · monto · moneda · estado · vendedor · notas
+        </div>
+      </div>
+      <div id="import-ventas-preview" style="margin-top:14px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-import-ventas')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="btn-confirm-import-ventas" style="display:none" onclick="confirmImport('ventas')">Importar registros</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nuevo Deal Pipeline -->
+<div class="modal-overlay" id="modal-nuevo-deal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nuevo Proyecto / Deal</div>
+      <div class="modal-close" onclick="closeModal('modal-nuevo-deal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid form-grid-2">
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Nombre del proyecto *</label><input class="form-input" id="d-nombre" placeholder="Ej: Implementación ERP - TechCorp"></div>
+        <div class="form-group"><label class="form-label">Cliente / Empresa *</label><input class="form-input" id="d-cliente" placeholder="Nombre del cliente"></div>
+        <div class="form-group"><label class="form-label">Valor estimado *</label><input class="form-input" id="d-valor" type="number" placeholder="0.00"></div>
+        <div class="form-group"><label class="form-label">Moneda</label><select class="form-select" id="d-moneda"><option value="ARS">ARS $</option><option value="USD">USD $</option></select></div>
+        <div class="form-group"><label class="form-label">Probabilidad (%)</label><input class="form-input" id="d-prob" type="number" min="0" max="100" placeholder="50"></div>
+        <div class="form-group"><label class="form-label">Etapa</label><select class="form-select" id="d-etapa"><option value="lead">Lead</option><option value="propuesta">Propuesta</option><option value="negociacion">Negociación</option><option value="cierre">Cierre</option></select></div>
+        <div class="form-group"><label class="form-label">Fecha estimada cierre</label><input class="form-input" id="d-fecha" type="date"></div>
+        <div class="form-group"><label class="form-label">Responsable</label><input class="form-input" id="d-responsable" placeholder="Vendedor asignado"></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Descripción</label><textarea class="form-textarea" id="d-desc" placeholder="Detalles del proyecto..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-nuevo-deal')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveDeal()">Crear Proyecto</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nueva Venta Histórica -->
+<div class="modal-overlay" id="modal-nueva-hist">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Cargar Venta Histórica</div>
+      <div class="modal-close" onclick="closeModal('modal-nueva-hist')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid form-grid-2">
+        <div class="form-group"><label class="form-label">Fecha *</label><input class="form-input" id="h-fecha" type="date"></div>
+        <div class="form-group"><label class="form-label">Cliente *</label><input class="form-input" id="h-cliente" placeholder="Cliente"></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Producto / Servicio</label><input class="form-input" id="h-producto" placeholder="Producto o servicio vendido"></div>
+        <div class="form-group"><label class="form-label">Categoría</label><select class="form-select" id="h-categoria"><option value="">Seleccionar...</option></select></div>
+        <div class="form-group"><label class="form-label">Monto *</label><input class="form-input" id="h-monto" type="number" placeholder="0.00"></div>
+        <div class="form-group"><label class="form-label">Moneda</label><select class="form-select" id="h-moneda"><option value="ARS">ARS $</option><option value="USD">USD $</option><option value="EUR">EUR €</option></select></div>
+        <div class="form-group"><label class="form-label">Canal de venta</label><select class="form-select" id="h-canal"><option value="directo">Directo</option><option value="online">Online</option><option value="distribuidor">Distribuidor</option><option value="partner">Partner</option><option value="otro">Otro</option></select></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Notas</label><textarea class="form-textarea" id="h-notas" placeholder="Observaciones..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-nueva-hist')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveHist()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Importar Históricas Excel -->
+<div class="modal-overlay" id="modal-import-hist">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Importar Ventas Históricas</div>
+      <div class="modal-close" onclick="closeModal('modal-import-hist')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="dropzone" id="drop-hist" onclick="document.getElementById('file-hist').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event,'drop-hist')" ondrop="dropFile(event,'hist')">
+        <div class="dropzone-icon">📂</div>
+        <div class="dropzone-text">Arrastrá tu Excel de 2024 en adelante</div>
+        <div class="dropzone-sub">.xlsx · .xls · .csv</div>
+      </div>
+      <input type="file" id="file-hist" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileImport(event,'hist')">
+      <div style="margin-top:16px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+        <div style="font-family:var(--font-m);font-size:.61rem;color:var(--muted);line-height:1.9">
+          <strong style="color:var(--accent)">Columnas esperadas:</strong><br>
+          fecha · cliente · producto · categoria · monto · moneda · canal · notas
+        </div>
+      </div>
+      <div id="import-hist-preview" style="margin-top:14px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-import-hist')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="btn-confirm-import-hist" style="display:none" onclick="confirmImport('hist')">Importar registros</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nueva Tarea -->
+<div class="modal-overlay" id="modal-nueva-tarea">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nueva Tarea</div>
+      <div class="modal-close" onclick="closeModal('modal-nueva-tarea')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid form-grid-2">
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Título de la tarea *</label><input class="form-input" id="t-titulo" placeholder="Describí la actividad..."></div>
+        <div class="form-group"><label class="form-label">Tipo de actividad</label><select class="form-select" id="t-tipo"><option value="llamada">📞 Llamada</option><option value="visita">🚗 Visita</option><option value="reunion">📅 Reunión</option><option value="propuesta">📄 Propuesta</option><option value="seguimiento">🔄 Seguimiento</option><option value="otro">📌 Otro</option></select></div>
+        <div class="form-group"><label class="form-label">Prioridad</label><select class="form-select" id="t-prioridad"><option value="critica">🔴 Crítica</option><option value="alta">Alta</option><option value="media" selected>Media</option><option value="baja">Baja</option></select></div>
+        <div class="form-group"><label class="form-label">Fecha inicio *</label><input class="form-input" id="t-inicio" type="datetime-local"></div>
+        <div class="form-group"><label class="form-label">Fecha vencimiento *</label><input class="form-input" id="t-fin" type="datetime-local"></div>
+        <div class="form-group"><label class="form-label">Cliente / Empresa</label><input class="form-input" id="t-cliente" placeholder="Asociar a un cliente"></div>
+        <div class="form-group"><label class="form-label">Responsable</label><input class="form-input" id="t-responsable" placeholder="Quién realiza la tarea"></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Notas</label><textarea class="form-textarea" id="t-notas" placeholder="Detalle o instrucciones..."></textarea></div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Alarmas</label>
+          <div style="display:flex;gap:10px;margin-top:4px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer;color:var(--text)"><input type="checkbox" id="t-alarm24" checked style="accent-color:var(--accent)"> Alerta 24h antes</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer;color:var(--text)"><input type="checkbox" id="t-alarm48" checked style="accent-color:var(--accent)"> Alerta 48h antes</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-nueva-tarea')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveTarea()">Crear Tarea</button>
+    </div>
+  </div>
+</div>
+
+<!-- Deal Detail -->
+<div class="modal-overlay" id="modal-deal-detail">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-title" id="dd-title">Detalle del proyecto</div>
+      <div class="modal-close" onclick="closeModal('modal-deal-detail')">✕</div>
+    </div>
+    <div class="modal-body" id="dd-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="dd-delete-btn">Eliminar</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-deal-detail')">Cerrar</button>
+      <button class="btn btn-primary btn-sm" id="dd-move-btn">Mover etapa →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  STATE & STORAGE
+// ══════════════════════════════════════════════════
+let state = {
+  ventas: [],
+  historicas: [],
+  deals: [],
+  tareas: [],
+  config: {
+    nombre:'',empresa:'Mi Empresa',rol:'Sales Manager',email:'',
+    categorias:'Software,Servicios,Hardware,Consultoría,Soporte',
+    alarm24:1,alarm48:1,sound:1
+  },
+  gdrive: {clientId:'',apiKey:'',folder:'APEX_Sales_Data',autosave:15,connected:false}
+};
+
+let pendingImport = {ventas:[],hist:[]};
+let histChart=null, histPie=null;
+let taskFilterCurrent='todas';
+let alarmCheckInterval=null;
+
+function saveLocal(){
+  try{localStorage.setItem('apex_data',JSON.stringify(state));}catch(e){}
+}
+function loadLocal(){
+  try{const d=localStorage.getItem('apex_data');if(d)state=JSON.parse(d);}catch(e){}
+}
+
+// ══════════════════════════════════════════════════
+//  NAV
+// ══════════════════════════════════════════════════
+function gotoView(view,el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  el.classList.add('active');
+  const titles={gestion:'Gestión de Ventas',pipeline:'Pipeline de Ventas',historicas:'Ventas Históricas',tareas:'Tareas Diarias',config:'Configuración'};
+  document.getElementById('page-title').textContent=titles[view]||view;
+  if(view==='gestion')renderVentas();
+  if(view==='pipeline')renderKanban();
+  if(view==='historicas'){renderHistTable();renderHistChart();}
+  if(view==='tareas'){checkAlarms();renderTareas();}
+  if(view==='config')updateStorageInfo();
+}
+
+// ══════════════════════════════════════════════════
+//  MODALES
+// ══════════════════════════════════════════════════
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='modal-nueva-venta'){
+    document.getElementById('v-fecha').value=todayStr();
+    populateCatSelects();
+  }
+  if(id==='modal-nueva-hist'){
+    document.getElementById('h-fecha').value=todayStr();
+    populateCatSelects();
+  }
+  if(id==='modal-nueva-tarea'){
+    const now=new Date();
+    document.getElementById('t-inicio').value=toDateTimeLocal(now);
+    const tomorrow=new Date(now);tomorrow.setDate(tomorrow.getDate()+1);
+    document.getElementById('t-fin').value=toDateTimeLocal(tomorrow);
+  }
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
+});
+
+// ══════════════════════════════════════════════════
+//  GESTIÓN VENTAS
+// ══════════════════════════════════════════════════
+function saveVenta(){
+  const fecha=document.getElementById('v-fecha').value;
+  const cliente=document.getElementById('v-cliente').value.trim();
+  const producto=document.getElementById('v-producto').value.trim();
+  const monto=parseFloat(document.getElementById('v-monto').value)||0;
+  if(!fecha||!cliente||!producto||!monto){toast('Completá los campos obligatorios','warning');return;}
+  const v={
+    id:uid(),fecha,cliente,producto,
+    categoria:document.getElementById('v-categoria').value,
+    monto,moneda:document.getElementById('v-moneda').value,
+    estado:document.getElementById('v-estado').value,
+    vendedor:document.getElementById('v-vendedor').value.trim(),
+    notas:document.getElementById('v-notas').value.trim(),
+    creado:new Date().toISOString()
+  };
+  state.ventas.unshift(v);
+  saveLocal();renderVentas();updateKPIs();
+  closeModal('modal-nueva-venta');
+  clearForm(['v-fecha','v-cliente','v-producto','v-monto','v-vendedor','v-notas']);
+  toast('Venta registrada correctamente','success');
+  autoSyncGDrive();
+}
+
+function deleteVenta(id,src){
+  if(!confirm('¿Eliminar esta venta?'))return;
+  if(src==='ventas')state.ventas=state.ventas.filter(v=>v.id!==id);
+  else state.historicas=state.historicas.filter(v=>v.id!==id);
+  saveLocal();
+  if(src==='ventas'){renderVentas();updateKPIs();}
+  else{renderHistTable();renderHistChart();}
+  toast('Venta eliminada','info');
+}
+
+let ventaFilter='';
+function filterVentas(){ventaFilter=document.getElementById('venta-search').value.toLowerCase();renderVentas();}
+
+function renderVentas(){
+  const tbody=document.getElementById('ventas-tbody');
+  let data=state.ventas;
+  if(ventaFilter)data=data.filter(v=>v.cliente.toLowerCase().includes(ventaFilter)||v.producto.toLowerCase().includes(ventaFilter));
+  if(!data.length){
+    tbody.innerHTML='<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📊</div><div class="empty-text">No hay ventas registradas</div><div class="empty-sub">Cargá una venta manualmente o importá un Excel</div></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML=data.map(v=>`
+    <tr>
+      <td class="tbl-mono">${fmtDate(v.fecha)}</td>
+      <td style="font-weight:500">${esc(v.cliente)}</td>
+      <td style="color:var(--muted)">${esc(v.producto)}</td>
+      <td>${v.categoria?`<span class="pill pill-blue">${esc(v.categoria)}</span>`:'─'}</td>
+      <td class="tbl-mono" style="color:var(--accent)">${v.moneda} ${fmtNum(v.monto)}</td>
+      <td><span class="pill ${v.estado==='cobrada'?'pill-green':v.estado==='pendiente'?'pill-orange':'pill-red'}">${v.estado}</span></td>
+      <td style="color:var(--muted);font-size:.75rem">${esc(v.vendedor)||'─'}</td>
+      <td><button class="btn btn-danger btn-icon btn-sm" onclick="deleteVenta('${v.id}','ventas')" title="Eliminar">✕</button></td>
+    </tr>`).join('');
+}
+
+function updateKPIs(){
+  const now=new Date();const mes=now.getMonth();const year=now.getFullYear();
+  const mesVentas=state.ventas.filter(v=>{const d=new Date(v.fecha);return d.getMonth()===mes&&d.getFullYear()===year&&v.estado!=='cancelada';});
+  const total=state.ventas.filter(v=>v.estado!=='cancelada').reduce((s,v)=>s+v.monto,0);
+  const mesMonto=mesVentas.reduce((s,v)=>s+v.monto,0);
+  document.getElementById('kpi-mes').textContent='$'+fmtNum(mesMonto);
+  document.getElementById('kpi-total').textContent=state.ventas.length;
+  const ticket=state.ventas.length?total/state.ventas.filter(v=>v.estado!=='cancelada').length:0;
+  document.getElementById('kpi-ticket').textContent='$'+fmtNum(ticket);
+  const clienteMap={};
+  state.ventas.filter(v=>v.estado==='cobrada').forEach(v=>{clienteMap[v.cliente]=(clienteMap[v.cliente]||0)+v.monto;});
+  const top=Object.entries(clienteMap).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('kpi-cliente').textContent=top?top[0].split(' ')[0]:'─';
+  document.getElementById('kpi-cliente-v').textContent=top?'$'+fmtNum(top[1]):'sin ventas';
+}
+
+// IMPORT EXCEL
+function dragOver(e){e.preventDefault();e.currentTarget.classList.add('drag');}
+function dragLeave(e,id){document.getElementById(id).classList.remove('drag');}
+function dropFile(e,type){e.preventDefault();const files=e.dataTransfer.files;if(files[0])processExcel(files[0],type);}
+function handleFileImport(e,type){if(e.target.files[0])processExcel(e.target.files[0],type);}
+
+function processExcel(file,type){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const data=new Uint8Array(e.target.result);
+    const wb=XLSX.read(data,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+    if(!rows.length){toast('El archivo está vacío','warning');return;}
+    const normalized=rows.map(r=>normalizeRow(r,type));
+    pendingImport[type===type?type:'ventas']=normalized;
+    showImportPreview(normalized,type);
+    toast(`${rows.length} filas detectadas. Revisá y confirmá.`,'info');
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function normalizeRow(r,type){
+  const keys=Object.keys(r).map(k=>k.toLowerCase().trim());
+  const get=(names)=>{
+    for(const n of names){const k=keys.find(k=>k.includes(n));if(k!==undefined)return String(r[Object.keys(r)[keys.indexOf(k)]]||'').trim();}
+    return '';
+  };
+  const monto=parseFloat(get(['monto','importe','total','precio','amount','value'])||0)||0;
+  const base={
+    id:uid(),
+    fecha:normalizeDate(get(['fecha','date','fec'])),
+    cliente:get(['cliente','client','empresa','company','customer']),
+    producto:get(['producto','product','servicio','service','item','descripcion','description']),
+    categoria:get(['categoria','category','cat','rubro','tipo']),
+    monto,
+    moneda:get(['moneda','currency','cur'])||'ARS',
+    notas:get(['notas','notes','obs','observaciones','comentarios']),
+    creado:new Date().toISOString()
+  };
+  if(type==='ventas'){
+    base.estado=get(['estado','status','estado'])||'cobrada';
+    base.vendedor=get(['vendedor','seller','asesor','comercial','responsable']);
+  } else {
+    base.canal=get(['canal','channel','origen','origin'])||'directo';
+  }
+  return base;
+}
+
+function normalizeDate(d){
+  if(!d)return todayStr();
+  if(/^\d{4}-\d{2}-\d{2}/.test(d))return d.slice(0,10);
+  const parts=d.split(/[\/\-\.]/);
+  if(parts.length===3){
+    if(parts[2].length===4)return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+    return `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
+  }
+  const dt=new Date(d);
+  return isNaN(dt)?todayStr():dt.toISOString().slice(0,10);
+}
+
+function showImportPreview(rows,type){
+  const pid=`import-${type}-preview`;
+  const bid=`btn-confirm-import-${type}`;
+  const preview=document.getElementById(pid);
+  const btnConfirm=document.getElementById(bid);
+  preview.innerHTML=`
+    <div style="font-family:var(--font-m);font-size:.62rem;color:var(--accent);margin-bottom:8px">${rows.length} registros listos para importar</div>
+    <div style="overflow-x:auto;max-height:200px;overflow-y:auto">
+      <table class="tbl" style="font-size:.72rem">
+        <thead><tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Monto</th></tr></thead>
+        <tbody>${rows.slice(0,5).map(r=>`<tr><td>${r.fecha}</td><td>${esc(r.cliente)}</td><td>${esc(r.producto)}</td><td class="tbl-mono">${r.moneda} ${fmtNum(r.monto)}</td></tr>`).join('')}
+        ${rows.length>5?`<tr><td colspan="4" style="color:var(--muted);font-family:var(--font-m);font-size:.6rem">...y ${rows.length-5} registros más</td></tr>`:''}
+        </tbody>
+      </table>
+    </div>`;
+  btnConfirm.style.display='inline-flex';
+  btnConfirm.textContent=`Importar ${rows.length} registros`;
+}
+
+function confirmImport(type){
+  if(type==='ventas'){
+    state.ventas=[...pendingImport.ventas,...state.ventas];
+    pendingImport.ventas=[];
+    saveLocal();renderVentas();updateKPIs();
+    closeModal('modal-import-ventas');
+    toast(`${state.ventas.length} ventas importadas`,'success');
+  } else {
+    state.historicas=[...pendingImport.hist,...state.historicas];
+    pendingImport.hist=[];
+    saveLocal();renderHistTable();renderHistChart();
+    closeModal('modal-import-hist');
+    toast(`Ventas históricas importadas`,'success');
+  }
+  autoSyncGDrive();
+}
+
+// ══════════════════════════════════════════════════
+//  PIPELINE KANBAN
+// ══════════════════════════════════════════════════
+const STAGES=[
+  {id:'lead',label:'Lead',color:'var(--muted)'},
+  {id:'propuesta',label:'Propuesta',color:'var(--blue)'},
+  {id:'negociacion',label:'Negociación',color:'var(--orange)'},
+  {id:'cierre',label:'Cierre',color:'var(--green)'}
+];
+
+function saveDeal(){
+  const nombre=document.getElementById('d-nombre').value.trim();
+  const cliente=document.getElementById('d-cliente').value.trim();
+  const valor=parseFloat(document.getElementById('d-valor').value)||0;
+  if(!nombre||!cliente||!valor){toast('Completá nombre, cliente y valor','warning');return;}
+  const deal={
+    id:uid(),nombre,cliente,valor,
+    moneda:document.getElementById('d-moneda').value,
+    prob:parseInt(document.getElementById('d-prob').value)||50,
+    etapa:document.getElementById('d-etapa').value,
+    fecha:document.getElementById('d-fecha').value,
+    responsable:document.getElementById('d-responsable').value.trim(),
+    desc:document.getElementById('d-desc').value.trim(),
+    creado:new Date().toISOString()
+  };
+  state.deals.unshift(deal);
+  saveLocal();renderKanban();updateBadgePipeline();
+  closeModal('modal-nuevo-deal');
+  clearForm(['d-nombre','d-cliente','d-valor','d-prob','d-fecha','d-responsable','d-desc']);
+  toast('Proyecto creado','success');
+  autoSyncGDrive();
+}
+
+function renderKanban(){
+  const board=document.getElementById('kanban-board');
+  board.innerHTML=STAGES.map(st=>{
+    const deals=state.deals.filter(d=>d.etapa===st.id);
+    const total=deals.reduce((s,d)=>s+d.valor,0);
+    return `
+    <div class="kanban-col" id="kcol-${st.id}" ondragover="kDragOver(event,'${st.id}')" ondragleave="kDragLeave('${st.id}')" ondrop="kDrop(event,'${st.id}')">
+      <div class="kanban-header">
+        <span class="kanban-col-title" style="color:${st.color}">${st.label}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="kanban-count">${deals.length}</span>
+          <span class="kanban-total">$${fmtNum(total)}</span>
+        </div>
+      </div>
+      <div class="kanban-cards" id="kcards-${st.id}">
+        ${deals.map(d=>dealCardHTML(d)).join('')}
+        ${!deals.length?'<div style="text-align:center;padding:20px 0;font-family:var(--font-m);font-size:.62rem;color:var(--muted2)">Arrastrá deals aquí</div>':''}
+      </div>
+      <div class="kanban-add">
+        <button class="kanban-add-btn" onclick="openModalNewDealInStage('${st.id}')">+ Agregar</button>
+      </div>
+    </div>`;
+  }).join('');
+  updatePipelineTotal();
+  updateBadgePipeline();
+}
+
+function dealCardHTML(d){
+  return `<div class="deal-card" draggable="true" id="deal-${d.id}" ondragstart="kDragStart(event,'${d.id}')" onclick="openDealDetail('${d.id}')">
+    <div class="deal-card-drag">⠿</div>
+    <div class="deal-card-name">${esc(d.nombre)}</div>
+    <div class="deal-card-company">${esc(d.cliente)}</div>
+    <div class="deal-card-footer">
+      <span class="deal-card-value">${d.moneda} ${fmtNum(d.valor)}</span>
+      <span class="deal-card-date">${d.prob}% · ${d.fecha?fmtDate(d.fecha):'─'}</span>
+    </div>
+  </div>`;
+}
+
+function openModalNewDealInStage(etapa){
+  openModal('modal-nuevo-deal');
+  setTimeout(()=>{document.getElementById('d-etapa').value=etapa;},50);
+}
+
+let dragId=null;
+function kDragStart(e,id){dragId=id;document.getElementById('deal-'+id).classList.add('dragging');}
+function kDragOver(e,col){e.preventDefault();document.getElementById('kcol-'+col).classList.add('drag-over');}
+function kDragLeave(col){document.getElementById('kcol-'+col).classList.remove('drag-over');}
+function kDrop(e,col){
+  e.preventDefault();
+  document.getElementById('kcol-'+col).classList.remove('drag-over');
+  if(!dragId)return;
+  const deal=state.deals.find(d=>d.id===dragId);
+  if(deal){deal.etapa=col;saveLocal();renderKanban();toast(`Movido a ${STAGES.find(s=>s.id===col)?.label}`,'info');}
+  const el=document.getElementById('deal-'+dragId);
+  if(el)el.classList.remove('dragging');
+  dragId=null;
+}
+
+function openDealDetail(id){
+  const d=state.deals.find(x=>x.id===id);
+  if(!d)return;
+  document.getElementById('dd-title').textContent=d.nombre;
+  document.getElementById('dd-body').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div><div class="form-label" style="margin-bottom:4px">Cliente</div><div style="font-weight:500">${esc(d.cliente)}</div></div>
+      <div><div class="form-label" style="margin-bottom:4px">Valor</div><div style="font-family:var(--font-m);color:var(--accent);font-size:1rem;font-weight:600">${d.moneda} ${fmtNum(d.valor)}</div></div>
+      <div><div class="form-label" style="margin-bottom:4px">Etapa</div><span class="pill pill-blue">${STAGES.find(s=>s.id===d.etapa)?.label||d.etapa}</span></div>
+      <div><div class="form-label" style="margin-bottom:4px">Probabilidad</div><div style="font-family:var(--font-m)">${d.prob}%</div></div>
+      <div><div class="form-label" style="margin-bottom:4px">Cierre estimado</div><div style="font-family:var(--font-m)">${d.fecha?fmtDate(d.fecha):'─'}</div></div>
+      <div><div class="form-label" style="margin-bottom:4px">Responsable</div><div>${esc(d.responsable)||'─'}</div></div>
+      ${d.desc?`<div style="grid-column:1/-1"><div class="form-label" style="margin-bottom:4px">Descripción</div><div style="font-size:.8rem;color:var(--muted);line-height:1.6">${esc(d.desc)}</div></div>`:''}
+    </div>`;
+  const stageIdx=STAGES.findIndex(s=>s.id===d.etapa);
+  const nextStage=STAGES[stageIdx+1];
+  const moveBtn=document.getElementById('dd-move-btn');
+  if(nextStage){moveBtn.textContent=`→ ${nextStage.label}`;moveBtn.onclick=()=>{d.etapa=nextStage.id;saveLocal();renderKanban();closeModal('modal-deal-detail');toast(`Movido a ${nextStage.label}`,'success');};}
+  else{moveBtn.textContent='✓ Cerrado';moveBtn.onclick=()=>{if(confirm('¿Marcar como cerrado y mover a Ventas?')){convertDealToSale(d);}};}
+  document.getElementById('dd-delete-btn').onclick=()=>{if(confirm('¿Eliminar este proyecto?')){state.deals=state.deals.filter(x=>x.id!==id);saveLocal();renderKanban();closeModal('modal-deal-detail');toast('Proyecto eliminado','info');}};
+  openModal('modal-deal-detail');
+}
+
+function convertDealToSale(d){
+  const v={id:uid(),fecha:todayStr(),cliente:d.cliente,producto:d.nombre,categoria:'',monto:d.valor,moneda:d.moneda,estado:'cobrada',vendedor:d.responsable,notas:'Cerrado desde pipeline',creado:new Date().toISOString()};
+  state.ventas.unshift(v);
+  state.deals=state.deals.filter(x=>x.id!==d.id);
+  saveLocal();renderKanban();renderVentas();updateKPIs();
+  closeModal('modal-deal-detail');
+  toast('¡Deal cerrado y registrado como venta!','success');
+}
+
+function updatePipelineTotal(){
+  const total=state.deals.reduce((s,d)=>s+d.valor,0);
+  document.getElementById('pipeline-total-val').textContent='$'+fmtNum(total);
+  document.getElementById('pipeline-total-count').textContent=state.deals.length;
+}
+
+function updateBadgePipeline(){
+  document.getElementById('badge-pipeline').textContent=state.deals.length;
+}
+
+// ══════════════════════════════════════════════════
+//  HISTÓRICAS
+// ══════════════════════════════════════════════════
+function saveHist(){
+  const fecha=document.getElementById('h-fecha').value;
+  const cliente=document.getElementById('h-cliente').value.trim();
+  const monto=parseFloat(document.getElementById('h-monto').value)||0;
+  if(!fecha||!cliente||!monto){toast('Completá los campos obligatorios','warning');return;}
+  const h={
+    id:uid(),fecha,cliente,
+    producto:document.getElementById('h-producto').value.trim(),
+    categoria:document.getElementById('h-categoria').value,
+    monto,moneda:document.getElementById('h-moneda').value,
+    canal:document.getElementById('h-canal').value,
+    notas:document.getElementById('h-notas').value.trim(),
+    creado:new Date().toISOString()
+  };
+  state.historicas.unshift(h);
+  saveLocal();renderHistTable();renderHistChart();
+  closeModal('modal-nueva-hist');
+  clearForm(['h-fecha','h-cliente','h-producto','h-monto','h-notas']);
+  toast('Venta histórica guardada','success');
+  autoSyncGDrive();
+}
+
+function renderHistTable(){
+  const year=document.getElementById('hist-year-filter')?.value||'all';
+  let data=state.historicas;
+  if(year!=='all')data=data.filter(h=>h.fecha?.startsWith(year));
+  data=[...data].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const tbody=document.getElementById('hist-tbody');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📈</div><div class="empty-text">Sin ventas históricas</div><div class="empty-sub">Importá tu Excel de 2024 en adelante</div></div></td></tr>';return;}
+  tbody.innerHTML=data.map(h=>`
+    <tr>
+      <td class="tbl-mono">${fmtDate(h.fecha)}</td>
+      <td style="font-weight:500">${esc(h.cliente)}</td>
+      <td style="color:var(--muted)">${esc(h.producto)||'─'}</td>
+      <td>${h.categoria?`<span class="pill pill-blue">${esc(h.categoria)}</span>`:'─'}</td>
+      <td class="tbl-mono" style="color:var(--accent)">${h.moneda} ${fmtNum(h.monto)}</td>
+      <td><span class="pill pill-purple">${h.canal||'─'}</span></td>
+      <td style="color:var(--muted);font-size:.75rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(h.notas)||'─'}</td>
+      <td><button class="btn btn-danger btn-icon btn-sm" onclick="deleteVenta('${h.id}','hist')" title="Eliminar">✕</button></td>
+    </tr>`).join('');
+}
+
+function renderHistChart(){
+  const year=document.getElementById('hist-year-filter')?.value||'all';
+  let data=state.historicas;
+  if(year!=='all')data=data.filter(h=>h.fecha?.startsWith(year));
+  document.getElementById('hist-chart-label').textContent=year==='all'?'todos los períodos':year;
+
+  // Monthly
+  const byMonth={};
+  data.forEach(h=>{
+    const m=h.fecha?.slice(0,7);
+    if(m)byMonth[m]=(byMonth[m]||0)+h.monto;
+  });
+  const labels=Object.keys(byMonth).sort();
+  const vals=labels.map(l=>byMonth[l]);
+
+  if(histChart){histChart.destroy();}
+  const ctx=document.getElementById('histChart').getContext('2d');
+  const grad=ctx.createLinearGradient(0,0,0,240);
+  grad.addColorStop(0,'rgba(232,255,71,.2)');grad.addColorStop(1,'rgba(232,255,71,0)');
+  histChart=new Chart(ctx,{
+    type:'line',
+    data:{labels:labels.map(l=>l.slice(0,7)),datasets:[{label:'Ventas',data:vals,borderColor:'#e8ff47',borderWidth:2,backgroundColor:grad,fill:true,tension:.4,pointBackgroundColor:'#e8ff47',pointRadius:3,pointHoverRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a1a1f',borderColor:'#2e2e35',borderWidth:1,callbacks:{label:c=>` $${fmtNum(c.parsed.y)}`}}},
+      scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{maxTicksLimit:12}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>'$'+fmtNum(v)}}}}
+  });
+
+  // Pie by cat
+  const byCat={};
+  data.forEach(h=>{const c=h.categoria||'Sin categoría';byCat[c]=(byCat[c]||0)+h.monto;});
+  const catLabels=Object.keys(byCat);
+  const catVals=catLabels.map(c=>byCat[c]);
+  const colors=['#e8ff47','#5ca8ff','#ffaa3d','#ff5c5c','#3dffa0','#c084fc','#38bdf8','#fb923c'];
+
+  if(histPie){histPie.destroy();}
+  const ctx2=document.getElementById('histPieChart').getContext('2d');
+  histPie=new Chart(ctx2,{
+    type:'doughnut',
+    data:{labels:catLabels,datasets:[{data:catVals,backgroundColor:colors,borderColor:'#0c0c0e',borderWidth:3,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'right',labels:{boxWidth:10,padding:12,font:{size:11},color:'#6b6b78'}},tooltip:{callbacks:{label:c=>` ${c.label}: $${fmtNum(c.parsed)}`}}}}
+  });
+}
+
+// ══════════════════════════════════════════════════
+//  TAREAS
+// ══════════════════════════════════════════════════
+const TIPOS_ICONS={llamada:'📞',visita:'🚗',reunion:'📅',propuesta:'📄',seguimiento:'🔄',otro:'📌'};
+
+function saveTarea(){
+  const titulo=document.getElementById('t-titulo').value.trim();
+  const fin=document.getElementById('t-fin').value;
+  const inicio=document.getElementById('t-inicio').value;
+  if(!titulo||!fin){toast('Completá título y fecha de vencimiento','warning');return;}
+  const t={
+    id:uid(),titulo,
+    tipo:document.getElementById('t-tipo').value,
+    prioridad:document.getElementById('t-prioridad').value,
+    inicio,fin,
+    cliente:document.getElementById('t-cliente').value.trim(),
+    responsable:document.getElementById('t-responsable').value.trim(),
+    notas:document.getElementById('t-notas').value.trim(),
+    alarm24:document.getElementById('t-alarm24').checked,
+    alarm48:document.getElementById('t-alarm48').checked,
+    alerted24:false,alerted48:false,
+    done:false,
+    creado:new Date().toISOString()
+  };
+  state.tareas.unshift(t);
+  saveLocal();renderTareas();
+  closeModal('modal-nueva-tarea');
+  clearForm(['t-titulo','t-cliente','t-responsable','t-notas']);
+  toast('Tarea creada','success');
+  autoSyncGDrive();
+}
+
+function toggleTarea(id){
+  const t=state.tareas.find(x=>x.id===id);
+  if(t){t.done=!t.done;saveLocal();renderTareas();}
+}
+
+function deleteTarea(id){
+  if(!confirm('¿Eliminar esta tarea?'))return;
+  state.tareas=state.tareas.filter(x=>x.id!==id);
+  saveLocal();renderTareas();
+  toast('Tarea eliminada','info');
+}
+
+function setTaskFilter(f,el){
+  taskFilterCurrent=f;
+  document.querySelectorAll('.task-filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderTareas();
+}
+
+function checkAlarms(){
+  const now=new Date();
+  let urgentes=0;
+  state.tareas.filter(t=>!t.done).forEach(t=>{
+    const fin=new Date(t.fin);
+    const diff=(fin-now)/3600000; // horas
+    if(diff<0){t.overdue=true;}
+    if(diff>=0&&diff<=24&&t.alarm24&&!t.alerted24){
+      t.alerted24=true;
+      toast(`⏰ "${t.titulo}" vence en menos de 24hs`,'warning');
+      urgentes++;
+    }
+    if(diff>24&&diff<=48&&t.alarm48&&!t.alerted48){
+      t.alerted48=true;
+      toast(`🔔 "${t.titulo}" vence en menos de 48hs`,'info');
+      urgentes++;
+    }
+  });
+  if(urgentes)saveLocal();
+  const badge=document.getElementById('badge-tareas');
+  const alarmCount=state.tareas.filter(t=>!t.done&&(t.overdue||(new Date(t.fin)-now)/3600000<=24)).length;
+  if(alarmCount>0){badge.style.display='inline-flex';badge.textContent=alarmCount;}
+  else badge.style.display='none';
+}
+
+function renderTareas(){
+  checkAlarms();
+  const now=new Date();
+  let data=[...state.tareas];
+  // filter
+  if(taskFilterCurrent==='pendiente')data=data.filter(t=>!t.done);
+  else if(taskFilterCurrent==='alarma')data=data.filter(t=>{const d=(new Date(t.fin)-now)/3600000;return !t.done&&d<=48&&d>=0;});
+  else if(taskFilterCurrent==='vencidas')data=data.filter(t=>!t.done&&new Date(t.fin)<now);
+  else if(['llamada','visita','reunion','propuesta','seguimiento'].includes(taskFilterCurrent))data=data.filter(t=>t.tipo===taskFilterCurrent);
+  // sort: overdue first, then by fin
+  data.sort((a,b)=>{if(a.done&&!b.done)return 1;if(!a.done&&b.done)return -1;return new Date(a.fin)-new Date(b.fin);});
+  const pend=state.tareas.filter(t=>!t.done).length;
+  const venc=state.tareas.filter(t=>!t.done&&new Date(t.fin)<now).length;
+  document.getElementById('tareas-resumen').textContent=`${pend} pendientes · ${venc} vencidas · ${state.tareas.filter(t=>t.done).length} completadas`;
+  const list=document.getElementById('tareas-list');
+  if(!data.length){list.innerHTML=`<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No hay tareas aquí</div><div class="empty-sub">Creá una nueva tarea para empezar</div></div>`;return;}
+  list.innerHTML=data.map(t=>{
+    const fin=new Date(t.fin);
+    const diff=(fin-now)/3600000;
+    let cls='';let alarmBadge='';
+    if(!t.done){
+      if(diff<0){cls='overdue';alarmBadge=`<span class="task-alarm-badge task-overdue">VENCIDA</span>`;}
+      else if(diff<=24){cls='alarm-24';alarmBadge=`<span class="task-alarm-badge task-alarm-24">⏰ Vence hoy</span>`;}
+      else if(diff<=48){cls='alarm-48';alarmBadge=`<span class="task-alarm-badge task-alarm-48">🔔 48hs</span>`;}
+    }
+    const prioColors={critica:'p-critica',alta:'p-alta',media:'p-media',baja:'p-baja'};
+    return `
+    <div class="task-item ${cls} ${t.done?'done':''}" id="task-${t.id}">
+      <div class="task-check" onclick="toggleTarea('${t.id}')" title="${t.done?'Marcar pendiente':'Completar'}">${t.done?'✓':''}</div>
+      <div class="task-body">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <div class="priority-dot ${prioColors[t.prioridad]||'p-media'}"></div>
+          <div class="task-title">${TIPOS_ICONS[t.tipo]||'📌'} ${esc(t.titulo)}</div>
+          ${alarmBadge}
+        </div>
+        <div class="task-meta">
+          <span class="task-meta-item">📅 ${fmtDT(t.fin)}</span>
+          ${t.cliente?`<span class="task-meta-item">🏢 ${esc(t.cliente)}</span>`:''}
+          ${t.responsable?`<span class="task-meta-item">👤 ${esc(t.responsable)}</span>`:''}
+          <span class="task-meta-item" style="color:var(--muted2)">Inicio: ${fmtDT(t.inicio)}</span>
+          <span class="pill ${t.prioridad==='critica'?'pill-purple':t.prioridad==='alta'?'pill-red':t.prioridad==='media'?'pill-orange':'pill-green'}">${t.prioridad}</span>
+        </div>
+        ${t.notas?`<div style="font-size:.75rem;color:var(--muted);margin-top:5px;line-height:1.5">${esc(t.notas)}</div>`:''}
+      </div>
+      <div class="task-actions">
+        <button class="btn btn-danger btn-icon btn-sm" onclick="deleteTarea('${t.id}')" title="Eliminar">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════
+//  CONFIG & GDRIVE
+// ══════════════════════════════════════════════════
+function saveProfile(){
+  state.config.nombre=document.getElementById('cfg-nombre').value.trim();
+  state.config.empresa=document.getElementById('cfg-empresa').value.trim()||'Mi Empresa';
+  state.config.rol=document.getElementById('cfg-rol').value.trim()||'Sales Manager';
+  state.config.email=document.getElementById('cfg-email').value.trim();
+  saveLocal();
+  document.getElementById('user-name-display').textContent=state.config.empresa;
+  document.getElementById('user-role-display').textContent=state.config.rol;
+  if(state.config.nombre){document.getElementById('user-avatar').textContent=state.config.nombre.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();}
+  toast('Perfil guardado','success');
+}
+
+function saveConfig(){
+  state.config.categorias=document.getElementById('cfg-cats').value;
+  state.config.alarm24=parseInt(document.getElementById('cfg-alarm24').value);
+  state.config.alarm48=parseInt(document.getElementById('cfg-alarm48').value);
+  state.config.sound=parseInt(document.getElementById('cfg-sound').value);
+  saveLocal();populateCatSelects();toast('Configuración guardada','success');
+}
+
+function saveGDriveConfig(){
+  state.gdrive.clientId=document.getElementById('gdrive-client-id').value.trim();
+  state.gdrive.apiKey=document.getElementById('gdrive-api-key').value.trim();
+  state.gdrive.folder=document.getElementById('gdrive-folder').value.trim()||'APEX_Sales_Data';
+  state.gdrive.autosave=parseInt(document.getElementById('gdrive-autosave').value);
+  saveLocal();toast('Configuración de Drive guardada','success');
+  setupAutoSave();
+}
+
+function toggleGDrive(){
+  if(!state.gdrive.clientId||!state.gdrive.apiKey){
+    toast('Ingresá Client ID y API Key primero','warning');return;
+  }
+  // Simulated OAuth flow for demo
+  const btn=document.getElementById('gdrive-connect-btn');
+  btn.textContent='Conectando...';btn.disabled=true;
+  setTimeout(()=>{
+    state.gdrive.connected=true;saveLocal();updateGDriveUI();
+    btn.textContent='Desconectar';btn.disabled=false;
+    toast('✅ Google Drive conectado correctamente','success');
+    btn.onclick=disconnectGDrive;
+  },2000);
+}
+
+function disconnectGDrive(){
+  state.gdrive.connected=false;saveLocal();updateGDriveUI();
+  document.getElementById('gdrive-connect-btn').onclick=toggleGDrive;
+  document.getElementById('gdrive-connect-btn').textContent='Conectar';
+  toast('Drive desconectado','info');
+}
+
+function testGDriveConnection(){
+  if(!state.gdrive.connected){toast('Conectá Drive primero','warning');return;}
+  toast('✅ Conexión con Drive activa - carpeta: '+state.gdrive.folder,'success');
+}
+
+function updateGDriveUI(){
+  const dot=document.getElementById('gdrive-status-dot');
+  const text=document.getElementById('gdrive-status-text');
+  const sub=document.getElementById('gdrive-status-sub');
+  const topDot=document.getElementById('gdrive-dot-top');
+  const topText=document.getElementById('gdrive-topbtn-text');
+  if(state.gdrive.connected){
+    dot.style.background='var(--green)';dot.style.boxShadow='0 0 6px var(--green)';
+    text.textContent='Conectado';sub.textContent='Carpeta: '+state.gdrive.folder;
+    topDot.style.background='var(--green)';topDot.style.boxShadow='0 0 6px var(--green)';
+    topText.textContent='Drive activo';
+    document.getElementById('gdrive-topbtn').classList.add('connected');
+  } else {
+    dot.style.background='var(--muted2)';dot.style.boxShadow='none';
+    text.textContent='No conectado';sub.textContent='Configurá tu API Key para sincronizar';
+    topDot.style.background='var(--muted2)';topDot.style.boxShadow='none';
+    topText.textContent='Google Drive';
+    document.getElementById('gdrive-topbtn').classList.remove('connected');
+  }
+}
+
+function autoSyncGDrive(){
+  if(!state.gdrive.connected)return;
+  // In production: call Google Drive API to update file
+  // For now: simulated
+  console.log('[APEX] Auto-sync to Google Drive...');
+}
+
+let autoSaveTimer=null;
+function setupAutoSave(){
+  if(autoSaveTimer)clearInterval(autoSaveTimer);
+  const mins=state.gdrive.autosave;
+  if(mins>0&&state.gdrive.connected){
+    autoSaveTimer=setInterval(()=>{autoSyncGDrive();toast('💾 Auto-guardado en Drive','info');},mins*60000);
+  }
+}
+
+function saveAllData(){
+  saveLocal();
+  if(state.gdrive.connected)autoSyncGDrive();
+  toast('Datos guardados','success');
+}
+
+function updateStorageInfo(){
+  try{
+    const data=JSON.stringify(state);
+    const kb=(new Blob([data]).size/1024).toFixed(1);
+    document.getElementById('storage-info').textContent=`Almacenamiento local: ${kb} KB · ${state.ventas.length} ventas · ${state.historicas.length} históricas · ${state.deals.length} deals · ${state.tareas.length} tareas`;
+  }catch(e){}
+}
+
+function exportAllJSON(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='apex_backup_'+todayStr()+'.json';a.click();
+  URL.revokeObjectURL(url);toast('Backup exportado','success');
+}
+
+function exportCSV(type){
+  const data=type==='ventas'?state.ventas:state.historicas;
+  if(!data.length){toast('No hay datos para exportar','warning');return;}
+  const headers=Object.keys(data[0]).filter(k=>k!=='id'&&k!=='creado');
+  const csv=[headers.join(','),...data.map(r=>headers.map(h=>JSON.stringify(r[h]||'')).join(','))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`apex_${type}_${todayStr()}.csv`;a.click();
+  URL.revokeObjectURL(url);toast('CSV exportado','success');
+}
+
+function confirmClearData(){
+  if(!confirm('⚠️ ¿Borrar TODOS los datos? Esta acción no se puede deshacer.'))return;
+  if(!confirm('Última confirmación: ¿borrar ventas, deals, tareas y históricas?'))return;
+  state.ventas=[];state.historicas=[];state.deals=[];state.tareas=[];
+  saveLocal();
+  renderVentas();updateKPIs();renderKanban();renderHistTable();renderHistChart();renderTareas();
+  toast('Todos los datos eliminados','info');
+}
+
+// ══════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function toDateTimeLocal(d){return d.toISOString().slice(0,16);}
+function fmtDate(s){if(!s)return '─';const d=new Date(s+'T12:00:00');return d.toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});}
+function fmtDT(s){if(!s)return '─';const d=new Date(s);return d.toLocaleDateString('es-AR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
+function fmtNum(n){if(!n&&n!==0)return '0';return Number(n).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function clearForm(ids){ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});}
+
+function populateCatSelects(){
+  const cats=(state.config.categorias||'Software,Servicios,Hardware').split(',').map(c=>c.trim()).filter(Boolean);
+  ['v-categoria','h-categoria'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    sel.innerHTML='<option value="">Sin categoría</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  });
+}
+
+function toast(msg,type='success'){
+  const c=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  const icons={success:'✓',warning:'⚠',error:'✕',info:'ℹ'};
+  t.className=`toast toast-${type}`;
+  t.innerHTML=`<div class="toast-icon">${icons[type]||'ℹ'}</div><div>${msg}</div>`;
+  c.appendChild(t);
+  setTimeout(()=>{t.classList.add('hide');setTimeout(()=>t.remove(),300);},3500);
+}
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+function init(){
+  loadLocal();
+  populateCatSelects();
+  // Restore config UI
+  document.getElementById('cfg-nombre').value=state.config.nombre||'';
+  document.getElementById('cfg-empresa').value=state.config.empresa||'';
+  document.getElementById('cfg-rol').value=state.config.rol||'';
+  document.getElementById('cfg-email').value=state.config.email||'';
+  document.getElementById('cfg-cats').value=state.config.categorias||'Software,Servicios,Hardware,Consultoría,Soporte';
+  document.getElementById('cfg-alarm24').value=state.config.alarm24??1;
+  document.getElementById('cfg-alarm48').value=state.config.alarm48??1;
+  document.getElementById('cfg-sound').value=state.config.sound??1;
+  document.getElementById('gdrive-client-id').value=state.gdrive.clientId||'';
+  document.getElementById('gdrive-api-key').value=state.gdrive.apiKey||'';
+  document.getElementById('gdrive-folder').value=state.gdrive.folder||'APEX_Sales_Data';
+  document.getElementById('gdrive-autosave').value=state.gdrive.autosave||15;
+  document.getElementById('user-name-display').textContent=state.config.empresa||'Mi Empresa';
+  document.getElementById('user-role-display').textContent=state.config.rol||'Sales Manager';
+  if(state.config.nombre)document.getElementById('user-avatar').textContent=state.config.nombre.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  updateGDriveUI();
+  updateKPIs();
+  renderVentas();
+  renderKanban();
+  updateBadgePipeline();
+  // Alarm interval
+  checkAlarms();
+  alarmCheckInterval=setInterval(checkAlarms,60000);
+  setupAutoSave();
+}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
