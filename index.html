@@ -323,6 +323,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <div class="ni" onclick="go('proyectos',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="8" width="4" height="7" rx="1"/><rect x="6" y="5" width="4" height="10" rx="1"/><rect x="11" y="2" width="4" height="13" rx="1"/></svg>Proyectos</div>
       <div class="ni" onclick="go('relacionamiento',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3"/><circle cx="11" cy="5" r="3"/><path d="M2 14c0-3 6-3 6-3s6 0 6 3"/></svg>Relacionamiento</div>
       <div class="ni" onclick="go('proveedores',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4l2-2h10l2 2v8l-2 2H3l-2-2V4z"/><path d="M5 4v2a3 3 0 0 0 6 0V4"/></svg>Proveedores</div>
+      <div class="ni" onclick="go('forecast',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l3-4 3 2 3-5 3 3"/><path d="M14 2v12H2"/></svg>Forecast</div>
     </div>
     <div class="nsec">
       <div class="nlbl">Sistema</div>
@@ -668,6 +669,51 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
     </div></div></div>
   </div>
 
+  <!-- FORECAST -->
+  <div class="view" id="view-forecast">
+    <div class="sh">
+      <div>
+        <div class="st">Forecast de Ventas</div>
+        <div style="font-family:var(--fm);font-size:.63rem;color:var(--muted);margin-top:3px" id="fc-resumen">Metas mensuales y anuales</div>
+      </div>
+      <div class="sa">
+        <select class="fsel" id="fc-year-sel" onchange="renderForecast()" style="width:auto;padding:6px 28px 6px 10px">
+          <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+        </select>
+        <button class="btn bts sm" onclick="om('modal-fc-bulk')">📋 Cargar metas anuales</button>
+        <button class="btn btp sm" onclick="om('modal-fc')">+ Meta del mes</button>
+      </div>
+    </div>
+    <!-- KPIs forecast -->
+    <div class="krow" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+      <div class="kpi"><div class="klbl">Meta anual</div><div class="kval" id="fc-k1">$0</div><div class="kdelta">proyectado</div></div>
+      <div class="kpi"><div class="klbl">Ventas reales</div><div class="kval" id="fc-k2" style="color:var(--green)">$0</div><div class="kdelta" id="fc-k2d">año actual</div></div>
+      <div class="kpi"><div class="klbl">Cumplimiento</div><div class="kval" id="fc-k3">─</div><div class="kdelta" id="fc-k3d">vs meta</div></div>
+      <div class="kpi"><div class="klbl">Proyección final</div><div class="kval" id="fc-k4">$0</div><div class="kdelta">al ritmo actual</div></div>
+    </div>
+    <!-- Gráfico principal -->
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:18px">
+      <div class="card">
+        <div class="ch"><div class="ct">Real vs Forecast mensual</div><div class="cs" id="fc-chart-label">año seleccionado</div></div>
+        <div class="cb"><div style="position:relative;height:260px"><canvas id="fcChart"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ct">Cumplimiento por mes</div><div class="cs">% real vs meta</div></div>
+        <div class="cb"><div style="position:relative;height:260px"><canvas id="fcBarChart"></canvas></div></div>
+      </div>
+    </div>
+    <!-- Tabla de metas -->
+    <div class="card">
+      <div class="ch"><div class="ct">Metas mensuales</div><div class="cs">Meta · Real · Diferencia · Cumplimiento</div></div>
+      <div class="cb" style="padding:0"><div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th>Mes</th><th>Meta</th><th>Real</th><th>Diferencia</th><th>Cumplimiento</th><th>Notas</th><th></th></tr></thead>
+          <tbody id="fc-tbody"></tbody>
+        </table>
+      </div></div>
+    </div>
+  </div>
+
   <!-- PIPELINE -->
   <div class="view" id="view-pipeline">
     <div class="sh">
@@ -815,7 +861,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
 // ═══ CONSTANTS ═══
 const CID='184623131866-jvbjpqmife1pvsdbkumitvgf7fomislc.apps.googleusercontent.com';
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive';
-const TABS={v:'Ventas',h:'Historicas',d:'Pipeline',t:'Tareas',m:'Members',l:'Licitaciones',p:'Proyectos',r:'Relacionamiento',pr:'Proveedores'};
+const TABS={v:'Ventas',h:'Historicas',d:'Pipeline',t:'Tareas',m:'Members',l:'Licitaciones',p:'Proyectos',r:'Relacionamiento',pr:'Proveedores',fc:'Forecast'};
 const STAGES=[{id:'lead',lbl:'Lead',col:'var(--muted)'},{id:'propuesta',lbl:'Propuesta',col:'var(--blue)'},{id:'negociacion',lbl:'Negociación',col:'var(--orange)'},{id:'cierre',lbl:'Cierre',col:'var(--green)'}];
 const TICOS={llamada:'📞',visita:'🚗',reunion:'📅',propuesta:'📄',seguimiento:'🔄',otro:'📌'};
 const VH=['id','fecha','cliente','producto','categoria','monto','moneda','estado','vendedor','notas','usuario','creado'];
@@ -826,10 +872,11 @@ const LH=['id','numero','organismo','tipo','apertura','limite','estado','ofertad
 const PH=['id','cliente','tipo','estado','inversion','equipamiento','medico','influenciadores','roi','riesgo','proximos','notas','usuario','creado'];
 const RH=['id','nombre','tipo_contacto','institucion','influencia','relacion','ultimo_contacto','proxima_accion','interacciones','notas','usuario','creado'];
 const PRH=['id','nombre','linea','estado','margen','exclusividad','potencial','contacto','notas','usuario','creado'];
+const FCH=['id','anio','mes','meta','notas','usuario','creado'];
 
 // ═══ STATE ═══
 let tok=null,sid2=null,cu=null;
-let S={v:[],h:[],d:[],t:[],l:[],p:[],r:[],pr:[]};
+let S={v:[],h:[],d:[],t:[],l:[],p:[],r:[],pr:[],fc:[]};
 let cfg={emp:'Mi Empresa',rol:'Sales Manager',cats:'Software,Servicios,Hardware,Consultoría,Soporte',a24:1,a48:1,aut:30};
 let stimer=null,atimer=null,hch=null,hpi=null,tf2='todas',pi={v:[],h:[]},dragId=null;
 
@@ -913,7 +960,7 @@ async function ensureTabs(){
       });
     }
     // Escribir headers en cada tab si está vacía
-    const hmap={[TABS.v]:VH,[TABS.h]:HH,[TABS.d]:DH,[TABS.t]:TH,[TABS.m]:['email','name','lastLogin'],[TABS.l]:LH,[TABS.p]:PH,[TABS.r]:RH,[TABS.pr]:PRH};
+    const hmap={[TABS.v]:VH,[TABS.h]:HH,[TABS.d]:DH,[TABS.t]:TH,[TABS.m]:['email','name','lastLogin'],[TABS.l]:LH,[TABS.p]:PH,[TABS.r]:RH,[TABS.pr]:PRH,[TABS.fc]:FCH};
     for(const [tab,headers] of Object.entries(hmap)){
       try{
         const r=await sReq(`/${sid2}/values/${encodeURIComponent(tab)}!A1:A1`);
@@ -985,32 +1032,29 @@ async function appendRow(tab,headers,row){
 async function loadAll(){
   setSI('go','Cargando...');
   try{
-    const[vr,hr,dr,tr]=await Promise.all([
-      readTab(TABS.v),readTab(TABS.h),readTab(TABS.d),readTab(TABS.t)
+    // Cargar TODOS los tabs en paralelo
+    const[vr,hr,dr,tr,lr,pr2,rr,prr,fcr]=await Promise.all([
+      readTab(TABS.v),readTab(TABS.h),readTab(TABS.d),readTab(TABS.t),
+      readTab(TABS.l),readTab(TABS.p),readTab(TABS.r),readTab(TABS.pr),
+      readTab(TABS.fc)
     ]);
-    console.log('[loadAll] Resultados — V:',vr?.length,'H:',hr?.length,'D:',dr?.length,'T:',tr?.length);
 
-    // REGLA: solo reemplazar estado si la Sheet devuelve datos reales
-    // null = error de API → no tocar
-    // [] vacío = Sheet vacía → no tocar si ya tenemos datos en memoria
+    // safeUpdate: nunca borrar datos en memoria si Sheet devuelve vacío o error
     function safeUpdate(sheetData, current){
-      if(sheetData===null) return current; // error de API
-      if(sheetData.length===0 && current.length>0){
-        console.warn('[loadAll] Sheet devolvió vacío pero hay datos en memoria — ignorando');
-        return current; // protección contra borrado accidental
-      }
+      if(sheetData===null) return current;
+      if(sheetData.length===0 && current.length>0) return current;
       return sheetData;
     }
 
-    const rawV=safeUpdate(vr,S.v);
-    const rawH=safeUpdate(hr,S.h);
-    const rawD=safeUpdate(dr,S.d);
-    const rawT=safeUpdate(tr,S.t);
-
-    S.v=rawV.filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
-    S.h=rawH.filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
-    S.d=rawD.filter(r=>r.id).map(r=>({...r,valor:parseFloat(r.valor)||0,prob:parseInt(r.prob)||50}));
-    S.t=rawT.filter(r=>r.id).map(r=>({...r,done:r.done==='true',alarm24:r.alarm24!=='false',alarm48:r.alarm48!=='false',alerted24:r.alerted24==='true',alerted48:r.alerted48==='true'}));
+    S.v=safeUpdate(vr,S.v).filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
+    S.h=safeUpdate(hr,S.h).filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
+    S.d=safeUpdate(dr,S.d).filter(r=>r.id).map(r=>({...r,valor:parseFloat(r.valor)||0,prob:parseInt(r.prob)||50}));
+    S.t=safeUpdate(tr,S.t).filter(r=>r.id).map(r=>({...r,done:r.done==='true',alarm24:r.alarm24!=='false',alarm48:r.alarm48!=='false',alerted24:r.alerted24==='true',alerted48:r.alerted48==='true'}));
+    S.l=safeUpdate(lr,S.l).filter(r=>r.id).map(r=>({...r,ofertado:parseFloat(r.ofertado)||0,ganador:parseFloat(r.ganador)||0}));
+    S.p=safeUpdate(pr2,S.p).filter(r=>r.id).map(r=>({...r,inversion:parseFloat(r.inversion)||0,roi:parseFloat(r.roi)||0}));
+    S.r=safeUpdate(rr,S.r).filter(r=>r.id);
+    S.pr=safeUpdate(prr,S.pr).filter(r=>r.id).map(r=>({...r,margen:parseFloat(r.margen)||0}));
+    S.fc=safeUpdate(fcr,S.fc).filter(r=>r.id).map(r=>({...r,meta:parseFloat(r.meta)||0}));
 
     setSI('ok','Sincronizado');
     renderAll();
@@ -1453,7 +1497,7 @@ function renderDashboard(){
     });
   }
 
-  // ── Chart 2: Forecast ──
+  // ── Chart 2: Forecast (usa datos de módulo Forecast) ──
   if(document.getElementById('wgt-forecast')&&!document.getElementById('wgt-forecast').classList.contains('hidden')){
     const curM=new Date().getFullYear()===yr?new Date().getMonth():11;
     const labels=MONTHS.slice(0,Math.max(curM+1,6));
@@ -2413,6 +2457,188 @@ document.querySelectorAll('.mo').forEach(x=>x.addEventListener('click',e=>{
   }
 }));
 
+
+// ═══════════════════════════════════════════════════════
+//  MÓDULO: FORECAST
+// ═══════════════════════════════════════════════════════
+let fcChart=null,fcBarChart=null;
+const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+async function saveFc(){
+  const anio=parseInt(v('fc-anio')),mes=parseInt(v('fc-mes'));
+  const meta=parseFloat(v('fc-meta'))||0;
+  if(!meta){toast('Ingresá la meta','warning');return;}
+  // Si ya existe ese mes/año, actualizar; si no, crear
+  const existing=S.fc.find(x=>parseInt(x.anio)===anio&&parseInt(x.mes)===mes);
+  if(existing){
+    existing.meta=meta;existing.notas=v('fc-notas').trim();
+    cm('modal-fc');renderForecast();renderDashboard();
+    toast('Actualizando...','info');
+    await writeTab(TABS.fc,FCH,S.fc);
+    toast('✅ Meta actualizada','success');
+  } else {
+    const row={id:uid(),anio,mes,meta,notas:v('fc-notas').trim(),usuario:cu.name||cu.email,creado:new Date().toISOString()};
+    S.fc.push(row);cm('modal-fc');cv(['fc-meta','fc-notas']);
+    renderForecast();renderDashboard();
+    toast('Guardando...','info');
+    await appendRow(TABS.fc,FCH,row);
+    toast('✅ Meta guardada','success');
+  }
+}
+
+async function saveFcBulk(){
+  const anio=parseInt(document.getElementById('fcb-anio').value);
+  const nuevas=[];
+  for(let mes=1;mes<=12;mes++){
+    const val=parseFloat(document.getElementById('fcb-'+mes)?.value)||0;
+    if(!val)continue;
+    const existing=S.fc.find(x=>parseInt(x.anio)===anio&&parseInt(x.mes)===mes);
+    if(existing){existing.meta=val;}
+    else{nuevas.push({id:uid(),anio,mes,meta:val,notas:'',usuario:cu.name||cu.email,creado:new Date().toISOString()});}
+  }
+  S.fc=[...S.fc,...nuevas];
+  cm('modal-fc-bulk');renderForecast();renderDashboard();
+  toast('Guardando metas...','info');
+  await writeTab(TABS.fc,FCH,S.fc);
+  toast('✅ Metas anuales guardadas','success');
+}
+
+async function delFc(id){
+  if(!confirm('¿Eliminar esta meta?'))return;
+  S.fc=S.fc.filter(x=>x.id!==id);renderForecast();renderDashboard();
+  await writeTab(TABS.fc,FCH,S.fc);toast('Meta eliminada','info');
+}
+
+function editFc(id){
+  const x=S.fc.find(r=>r.id===id);if(!x)return;
+  document.getElementById('fc-anio').value=x.anio;
+  document.getElementById('fc-mes').value=x.mes;
+  document.getElementById('fc-meta').value=x.meta;
+  document.getElementById('fc-notas').value=x.notas||'';
+  const modal=document.getElementById('modal-fc');
+  modal.querySelector('.mt').textContent='Editar Meta';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Actualizar';
+  btn.onclick=async()=>{
+    x.meta=parseFloat(v('fc-meta'))||0;x.notas=v('fc-notas').trim();
+    cm('modal-fc');modal.querySelector('.mt').textContent='Meta del mes';btn.textContent='Guardar';btn.onclick=saveFc;
+    renderForecast();renderDashboard();
+    toast('Guardando...','info');
+    await writeTab(TABS.fc,FCH,S.fc);toast('✅ Meta actualizada','success');
+  };
+  om('modal-fc');
+}
+
+function getMeta(anio,mes){
+  const fc=S.fc.find(x=>parseInt(x.anio)===anio&&parseInt(x.mes)===mes);
+  return fc?fc.meta:0;
+}
+
+function getReal(anio,mes){
+  return S.v.filter(x=>{
+    if(!x.fecha||x.estado==='cancelada')return false;
+    const d=new Date(x.fecha+'T12:00');
+    return d.getFullYear()===anio&&(d.getMonth()+1)===mes;
+  }).reduce((s,x)=>s+x.monto,0);
+}
+
+function renderForecast(){
+  const yr=parseInt(document.getElementById('fc-year-sel')?.value||new Date().getFullYear());
+  const C=chartColors();
+
+  // Calcular datos
+  const metas=MESES.map((_,i)=>getMeta(yr,i+1));
+  const reales=MESES.map((_,i)=>getReal(yr,i+1));
+  const metaAnual=metas.reduce((s,x)=>s+x,0);
+  const realAnual=reales.reduce((s,x)=>s+x,0);
+  const now=new Date();
+  const mesActual=now.getFullYear()===yr?now.getMonth()+1:12;
+  const cumpl=metaAnual>0?(realAnual/metaAnual*100).toFixed(1):0;
+
+  // Proyección al ritmo actual
+  const mesesConDatos=reales.slice(0,mesActual).filter(x=>x>0);
+  const avg=mesesConDatos.length?mesesConDatos.reduce((a,b)=>a+b)/mesesConDatos.length:0;
+  const proyFinal=realAnual+(12-mesActual)*avg;
+
+  // KPIs
+  document.getElementById('fc-k1').textContent='$'+fn(metaAnual);
+  document.getElementById('fc-k2').textContent='$'+fn(realAnual);
+  document.getElementById('fc-k2d').textContent=yr+' · '+mesActual+' meses';
+  document.getElementById('fc-k3').textContent=cumpl+'%';
+  document.getElementById('fc-k3d').textContent=parseFloat(cumpl)>=100?'✅ En meta':'⚠️ Debajo de meta';
+  document.getElementById('fc-k4').textContent='$'+fn(proyFinal);
+  const res=document.getElementById('fc-resumen');
+  if(res)res.textContent=`Meta anual: $${fn(metaAnual)} · Real: $${fn(realAnual)} · Cumplimiento: ${cumpl}%`;
+  document.getElementById('fc-chart-label').textContent=yr;
+
+  // ── Gráfico líneas: Real vs Forecast ──
+  if(fcChart)fcChart.destroy();
+  const ctx=document.getElementById('fcChart')?.getContext('2d');
+  if(ctx){
+    const g=ctx.createLinearGradient(0,0,0,260);
+    g.addColorStop(0,'rgba(61,255,160,.2)');g.addColorStop(1,'rgba(61,255,160,0)');
+    fcChart=new Chart(ctx,{
+      type:'line',
+      data:{
+        labels:MESES.map(m=>m.slice(0,3)),
+        datasets:[
+          {label:'Meta',data:metas,borderColor:'rgba(232,255,71,.6)',borderWidth:2,borderDash:[6,3],pointRadius:3,fill:false,tension:.3,pointBackgroundColor:'rgba(232,255,71,.6)'},
+          {label:'Real',data:reales.map((v,i)=>i<mesActual?v:null),borderColor:C.green,borderWidth:2.5,backgroundColor:g,fill:true,tension:.4,pointRadius:4,pointBackgroundColor:C.green},
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:C.tick,boxWidth:12,font:{size:11}}},
+          tooltip:{backgroundColor:C.tooltip.bg,borderColor:C.tooltip.border,borderWidth:1,titleColor:C.tooltip.color,bodyColor:C.tooltip.color,callbacks:{label:c=>` ${c.dataset.label}: $${fn(c.parsed.y)}`}}},
+        scales:{x:{grid:{color:C.grid},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:10}}},
+                y:{grid:{color:C.grid},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:10},callback:v=>'$'+fn(v)}}}}
+    });
+  }
+
+  // ── Gráfico barras: % cumplimiento ──
+  if(fcBarChart)fcBarChart.destroy();
+  const ctx2=document.getElementById('fcBarChart')?.getContext('2d');
+  if(ctx2){
+    const pcts=MESES.map((_,i)=>metas[i]>0?(reales[i]/metas[i]*100).toFixed(1):null);
+    const barColors=pcts.map(p=>p===null?'rgba(100,100,100,.2)':parseFloat(p)>=100?'rgba(61,255,160,.6)':parseFloat(p)>=75?'rgba(255,170,61,.6)':'rgba(255,92,92,.5)');
+    fcBarChart=new Chart(ctx2,{
+      type:'bar',
+      data:{labels:MESES.map(m=>m.slice(0,3)),datasets:[{label:'Cumplimiento %',data:pcts,backgroundColor:barColors,borderRadius:5,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y?` ${c.parsed.y}%`:' Sin meta'}}},
+        scales:{x:{grid:{display:false},ticks:{color:C.tick,font:{size:10}}},
+                y:{grid:{color:C.grid},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:10},callback:v=>v+'%'},max:150}}}
+    });
+  }
+
+  // ── Tabla ──
+  const tb=document.getElementById('fc-tbody');if(!tb)return;
+  tb.innerHTML=MESES.map((mes,i)=>{
+    const m=metas[i],r=reales[i];
+    const pct=m>0?(r/m*100).toFixed(1):null;
+    const diff=r-m;
+    const fc=S.fc.find(x=>parseInt(x.anio)===yr&&parseInt(x.mes)===i+1);
+    const diffColor=diff>=0?'var(--green)':'var(--red)';
+    const pctColor=pct===null?'var(--muted)':parseFloat(pct)>=100?'var(--green)':parseFloat(pct)>=75?'var(--orange)':'var(--red)';
+    return `<tr>
+      <td style="font-weight:500">${mes}</td>
+      <td class="tm" style="color:var(--accent)">${m?'$'+fn(m):'<span style="color:var(--muted2)">Sin meta</span>'}</td>
+      <td class="tm" style="color:var(--green)">${r?'$'+fn(r):'─'}</td>
+      <td class="tm" style="color:${diffColor}">${m&&r?(diff>=0?'+':'')+fn(diff):'─'}</td>
+      <td><span style="font-family:var(--fm);font-size:.75rem;color:${pctColor};font-weight:600">${pct?pct+'%':'─'}</span></td>
+      <td style="font-size:.75rem;color:var(--muted)">${fc?.notas||'─'}</td>
+      <td style="display:flex;gap:4px">
+        ${fc?`<button class="btn bts ic sm" onclick="editFc('${fc.id}')" title="Editar">✏️</button><button class="btn btd ic sm" onclick="delFc('${fc.id}')">✕</button>`:'<button class="btn bts sm" style="font-size:.6rem;padding:3px 8px" onclick="quickAddMeta(${yr},${i+1})">+ Meta</button>'}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function quickAddMeta(yr,mes){
+  document.getElementById('fc-anio').value=yr;
+  document.getElementById('fc-mes').value=mes;
+  om('modal-fc');
+}
+
 // ═══ CONFIG ═══
 function saveCfg(){
   cfg.cats=v('ccats');cfg.a24=parseInt(v('ca24'));cfg.a48=parseInt(v('ca48'));cfg.aut=parseInt(v('caut'));
@@ -2428,7 +2654,7 @@ function go(vw,el){
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
   document.getElementById('view-'+vw).classList.add('active');el.classList.add('active');
-  const t={gestion:'Dashboard',pipeline:'Pipeline de Ventas',tareas:'Tareas Diarias',config:'Configuración',licitaciones:'Licitaciones',proyectos:'Proyectos Estratégicos',relacionamiento:'Relacionamiento Estratégico',proveedores:'Gestión de Proveedores'};
+  const t={gestion:'Dashboard',pipeline:'Pipeline de Ventas',tareas:'Tareas Diarias',config:'Configuración',licitaciones:'Licitaciones',proyectos:'Proyectos Estratégicos',relacionamiento:'Relacionamiento Estratégico',proveedores:'Gestión de Proveedores',forecast:'Forecast de Ventas'};
   document.getElementById('ptitle').textContent=t[vw]||vw;
   if(vw==='tareas'){checkAlarms();renderT();}
   if(vw==='config'){loadCfg();document.getElementById('cfg-sid').textContent=sid2||'─';document.getElementById('ccats').value=cfg.cats;document.getElementById('cemp').value=cfg.emp;document.getElementById('crol').value=cfg.rol;document.getElementById('caut').value=cfg.aut;regMember();}
@@ -2436,7 +2662,7 @@ function go(vw,el){
 function om(id){document.getElementById(id).classList.add('open');if(id==='mnv')document.getElementById('vf').value=today();if(id==='mnt'){const n=new Date();document.getElementById('tini').value=n.toISOString().slice(0,16);const t=new Date(n);t.setDate(t.getDate()+1);document.getElementById('tfin').value=t.toISOString().slice(0,16);}}
 function cm(id){document.getElementById(id).classList.remove('open');}
 // Modal close handled in edit section
-function renderAll(){renderV();updKPI();renderK();renderT();renderDashboard();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();}
+function renderAll(){renderV();updKPI();renderK();renderT();renderDashboard();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();}
 
 // ═══ UTILS ═══
 function toggleTheme(){
@@ -2666,6 +2892,45 @@ document.addEventListener('DOMContentLoaded',()=>{
     <div style="text-align:center;padding:40px;color:var(--muted)">Cargando análisis...</div>
   </div>
   <div class="mf"><button class="btn bts sm" onclick="cm('modal-ia')">Cerrar</button></div>
+</div></div>
+
+
+<!-- ══ MODAL FORECAST MES ══ -->
+<div class="mo" id="modal-fc"><div class="md" style="max-width:480px">
+  <div class="mh"><div class="mt">Meta del mes</div><div class="mc" onclick="cm('modal-fc')">✕</div></div>
+  <div class="mb"><div class="fg fg2">
+    <div class="fgrp"><label class="flbl">Año</label><select class="fsel" id="fc-anio"><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option></select></div>
+    <div class="fgrp"><label class="flbl">Mes</label><select class="fsel" id="fc-mes"><option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option><option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option><option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select></div>
+    <div class="fgrp" style="grid-column:1/-1"><label class="flbl">Meta de ventas *</label><input class="fi" id="fc-meta" type="number" placeholder="0.00"></div>
+    <div class="fgrp" style="grid-column:1/-1"><label class="flbl">Notas</label><textarea class="fta" id="fc-notas" style="min-height:60px"></textarea></div>
+  </div></div>
+  <div class="mf"><button class="btn bts sm" onclick="cm('modal-fc')">Cancelar</button><button class="btn btp sm" onclick="saveFc()">Guardar</button></div>
+</div></div>
+
+<!-- ══ MODAL FORECAST ANUAL (carga masiva) ══ -->
+<div class="mo" id="modal-fc-bulk"><div class="md" style="max-width:560px">
+  <div class="mh"><div class="mt">Cargar metas anuales</div><div class="mc" onclick="cm('modal-fc-bulk')">✕</div></div>
+  <div class="mb">
+    <div style="font-family:var(--fm);font-size:.65rem;color:var(--muted);margin-bottom:16px">Ingresá la meta para cada mes del año. Los meses sin valor se dejarán sin meta.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fgrp"><label class="flbl">Año</label><select class="fsel" id="fcb-anio" style="margin-bottom:10px"><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option></select></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="fgrp"><label class="flbl">Enero</label><input class="fi" id="fcb-1" type="number" placeholder="0"></div>
+      <div class="fgrp"><label class="flbl">Febrero</label><input class="fi" id="fcb-2" type="number" placeholder="0"></div>
+      <div class="fgrp"><label class="flbl">Marzo</label><input class="fi" id="fcb-3" type="number" placeholder="0"></div>
+      <div class="fgrp"><label class="flbl">Abril</label><input class="fi" id="fcb-4" type="number" placeholder="0"></div>
+      <div class="fgrp"><label class="flbl">Mayo</label><input class="fi" id="fcb-5" type="number" placeholder="0"></div>
+      <div class="fgrp"><label class="flbl">Junio</label><input class="fi" id="fcb-6" type="number" placeholder="0"></div>
+      <div class="fgrp"><label class="flbl">Julio</label><input class="fi" id="fcb-7" type="number" placeholder="0"></div>
+      <div class="fgrp"><label class="flbl">Agosto</label><input class="fi" id="fcb-8" type="number" placeholder="0"></div>
+      <div class="fgrp"><label class="flbl">Septiembre</label><input class="fi" id="fcb-9" type="number" placeholder="0"></div>
+      <div class="fgrp"><label class="flbl">Octubre</label><input class="fi" id="fcb-10" type="number" placeholder="0"></div>
+      <div class="fgrp"><label class="flbl">Noviembre</label><input class="fi" id="fcb-11" type="number" placeholder="0"></div>
+      <div class="fgrp"><label class="flbl">Diciembre</label><input class="fi" id="fcb-12" type="number" placeholder="0"></div>
+    </div>
+  </div>
+  <div class="mf"><button class="btn bts sm" onclick="cm('modal-fc-bulk')">Cancelar</button><button class="btn btp sm" onclick="saveFcBulk()">Guardar año completo</button></div>
 </div></div>
 
 
