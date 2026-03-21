@@ -1644,7 +1644,7 @@ async function saveLic(){
     diferencia,producto:v('lic-producto').trim(),notas:v('lic-notas').trim(),
     usuario:cu.name||cu.email,creado:new Date().toISOString()};
   S.l.unshift(row);cm('modal-lic');cv(['lic-numero','lic-organismo','lic-ofertado','lic-ganador','lic-competidores','lic-producto','lic-notas']);
-  renderLic();updLicKPIs();
+  renderLic();updLicKPIs();renderDashboard();
   toast('Guardando en Sheets...','info');
   await appendRow(TABS.l,LH,row);
   toast('✅ Licitación guardada','success');
@@ -1652,7 +1652,7 @@ async function saveLic(){
 
 async function delLic(id){
   if(!confirm('¿Eliminar licitación?'))return;
-  S.l=S.l.filter(x=>x.id!==id);renderLic();updLicKPIs();
+  S.l=S.l.filter(x=>x.id!==id);renderLic();updLicKPIs();renderDashboard();
   await writeTab(TABS.l,LH,S.l);toast('Eliminada','info');
 }
 
@@ -1731,13 +1731,13 @@ async function saveProy(){
     notas:v('proy-notas').trim(),usuario:cu.name||cu.email,creado:new Date().toISOString()};
   S.p.unshift(row);cm('modal-proy');
   cv(['proy-cliente','proy-tipo','proy-equip','proy-medico','proy-influyentes','proy-proximos','proy-notas','proy-inversion','proy-roi']);
-  renderProy();toast('Guardando...','info');
+  renderProy();renderDashboard();toast('Guardando...','info');
   await appendRow(TABS.p,PH,row);toast('✅ Proyecto guardado','success');
 }
 
 async function delProy(id){
   if(!confirm('¿Eliminar proyecto?'))return;
-  S.p=S.p.filter(x=>x.id!==id);renderProy();await writeTab(TABS.p,PH,S.p);toast('Eliminado','info');
+  S.p=S.p.filter(x=>x.id!==id);renderProy();renderDashboard();await writeTab(TABS.p,PH,S.p);toast('Eliminado','info');
 }
 
 function renderProy(){
@@ -1787,13 +1787,13 @@ async function saveRel(){
     notas:v('rel-notas').trim(),usuario:cu.name||cu.email,creado:new Date().toISOString()};
   S.r.unshift(row);cm('modal-rel');
   cv(['rel-nombre','rel-inst','rel-proxima','rel-inter','rel-notas']);
-  renderRel();toast('Guardando...','info');
+  renderRel();renderDashboard();toast('Guardando...','info');
   await appendRow(TABS.r,RH,row);toast('✅ Contacto guardado','success');
 }
 
 async function delRel(id){
   if(!confirm('¿Eliminar contacto?'))return;
-  S.r=S.r.filter(x=>x.id!==id);renderRel();await writeTab(TABS.r,RH,S.r);toast('Eliminado','info');
+  S.r=S.r.filter(x=>x.id!==id);renderRel();renderDashboard();await writeTab(TABS.r,RH,S.r);toast('Eliminado','info');
 }
 
 function renderRel(){
@@ -1836,13 +1836,13 @@ async function saveProv(){
     notas:v('prov-notas').trim(),usuario:cu.name||cu.email,creado:new Date().toISOString()};
   S.pr.unshift(row);cm('modal-prov');
   cv(['prov-nombre','prov-linea','prov-margen','prov-contacto','prov-notas']);
-  renderProv();toast('Guardando...','info');
+  renderProv();renderDashboard();toast('Guardando...','info');
   await appendRow(TABS.pr,PRH,row);toast('✅ Proveedor guardado','success');
 }
 
 async function delProv(id){
   if(!confirm('¿Eliminar proveedor?'))return;
-  S.pr=S.pr.filter(x=>x.id!==id);renderProv();await writeTab(TABS.pr,PRH,S.pr);toast('Eliminado','info');
+  S.pr=S.pr.filter(x=>x.id!==id);renderProv();renderDashboard();await writeTab(TABS.pr,PRH,S.pr);toast('Eliminado','info');
 }
 
 function renderProv(){
