@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GSI</title>
+<title>RIV</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -912,48 +912,73 @@ const FCH=['id','anio','mes','meta','notas','usuario','creado'];
 let tok=null,sid2=null,cu=null;
 
 // ─── SESSION PERSISTENCE ───
-// Guarda sesión en sessionStorage (sobrevive Cmd+R, no sobrevive cierre de tab)
-// Inactividad de 5 min → pide re-auth
+// Estrategia: guardar token en sessionStorage con timestamp.
+// Al recargar: si el token tiene < 50 min, usarlo directamente (sin llamar a Google).
+// Google tokens duran ~60 min. Renovamos a los 50 min automáticamente.
+// Inactividad de 5 min sin uso → cerrar sesión.
+
 const SESSION_KEY='apex_session';
-const INACTIVITY_MS=5*60*1000; // 5 minutos
+const TOKEN_MAX_AGE=55*60*1000;   // 55 min → token Google dura ~60min
+const INACTIVITY_MS=5*60*1000;    // 5 min sin actividad → cerrar sesión
 let inactivityTimer=null;
+let tokenRenewTimer=null;
 
 function saveSession(){
   if(!tok||!cu||!sid2)return;
-  sessionStorage.setItem(SESSION_KEY,JSON.stringify({
-    tok,cu,sid2,saved:Date.now()
+  const existing=getSession();
+  const tokenSaved=existing?.tokenSaved||Date.now();
+  // Usar localStorage (persiste en recargas) con expiración manual
+  localStorage.setItem(SESSION_KEY,JSON.stringify({
+    tok,cu,sid2,tokenSaved,lastActive:Date.now()
   }));
 }
 
 function clearSession(){
-  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  clearTimeout(tokenRenewTimer);
 }
 
 function getSession(){
   try{
-    const raw=sessionStorage.getItem(SESSION_KEY);
-    if(!raw)return null;
-    return JSON.parse(raw);
+    const raw=localStorage.getItem(SESSION_KEY);
+    return raw?JSON.parse(raw):null;
   }catch{return null;}
 }
 
 function resetInactivityTimer(){
   clearTimeout(inactivityTimer);
   inactivityTimer=setTimeout(()=>{
-    // 5 min sin actividad → cerrar sesión silenciosamente
-    clearSession();
-    signOut();
+    clearSession();signOut();
     toast('Sesión cerrada por inactividad','info');
   },INACTIVITY_MS);
-  // Actualizar timestamp en session
   saveSession();
 }
 
-// Registrar actividad del usuario
+function scheduleTokenRenew(msUntilExpiry){
+  clearTimeout(tokenRenewTimer);
+  const delay=Math.max(msUntilExpiry-2*60*1000,30000); // renovar 2 min antes
+  tokenRenewTimer=setTimeout(async()=>{
+    if(!tok||!sid2)return;
+    try{
+      google.accounts.oauth2.initTokenClient({
+        client_id:CID,scope:SCOPES,prompt:'none',
+        callback:(r)=>{
+          if(r.access_token){
+            tok=r.access_token;
+            // Resetear tokenSaved
+            const s=getSession();
+            if(s){s.tok=tok;s.tokenSaved=Date.now();sessionStorage.setItem(SESSION_KEY,JSON.stringify(s));}
+            scheduleTokenRenew(TOKEN_MAX_AGE);
+          }
+        }
+      }).requestAccessToken();
+    }catch(e){}
+  },delay);
+}
+
+// Registrar actividad
 ['mousemove','keydown','click','touchstart','scroll'].forEach(ev=>{
-  document.addEventListener(ev,()=>{
-    if(tok)resetInactivityTimer();
-  },{passive:true});
+  document.addEventListener(ev,()=>{if(tok)resetInactivityTimer();},{passive:true});
 });
 let S={v:[],h:[],d:[],t:[],l:[],p:[],r:[],pr:[],fc:[]};
 let cfg={emp:'Mi Empresa',rol:'Sales Manager',cats:'Software,Servicios,Hardware,Consultoría,Soporte',a24:1,a48:1,aut:30};
@@ -983,6 +1008,7 @@ async function startLogin(){
         await regMember();
         saveSession();
         resetInactivityTimer();
+        scheduleTokenRenew(TOKEN_MAX_AGE);
         showApp();
       }
     }).requestAccessToken();
@@ -2866,82 +2892,54 @@ function hideSplash(){
 async function tryAutoLogin(){
   const savedSid=localStorage.getItem('apex_sid');
   if(!savedSid){
-    // Primera vez — mostrar login directamente
     showLoginScreen();
     return;
   }
 
-  // Hay sesión previa: mostrar splash mientras intentamos restaurar
+  // Mostrar splash mientras restauramos
+  const splash=document.getElementById('splash');
+  if(splash)splash.style.display='flex';
   setSplashMsg('Restaurando sesión...');
 
-  // 1. Intentar restaurar desde sessionStorage (Cmd+R — token aún válido)
+  // ── Leer sesión guardada ──
   const session=getSession();
   if(session&&session.tok&&session.cu&&session.sid2){
-    const age=Date.now()-session.saved;
-    if(age<INACTIVITY_MS){
-      tok=session.tok;cu=session.cu;sid2=session.sid2;
-      try{
-        setSplashMsg('Verificando acceso...');
-        const test=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+tok}});
-        if(test.ok){
-          cu=await test.json();
-          setSplashMsg('Cargando datos...');
-          await ensureTabs();
-          await loadAll();
-          saveSession();
-          resetInactivityTimer();
-          hideSplash();
-          showApp();
-          return;
-        }
-      }catch(e){}
-      // Token expiró → renovar silenciosamente
+    const tokenAge=Date.now()-(session.tokenSaved||0);
+    const inactive=Date.now()-(session.lastActive||0);
+
+    // Si estuvo inactivo más de 5 min → logout
+    if(inactive>INACTIVITY_MS){
+      clearSession();
+      showLoginScreen();
+      return;
     }
-  }
 
-  // 2. Token expirado o no hay session → renovar via OAuth prompt:none (invisible)
-  setSplashMsg('Renovando sesión...');
-  if(!window.google||!window.google.accounts){setTimeout(tryAutoLogin,400);return;}
-
-  let resolved=false;
-  const timeout=setTimeout(()=>{
-    if(resolved)return;resolved=true;
-    // Timeout — mostrar login
-    showLoginScreen();
-  },10000);
-
-  try{
-    google.accounts.oauth2.initTokenClient({
-      client_id:CID,scope:SCOPES,prompt:'none',
-      callback:async(r)=>{
-        if(resolved)return;
-        resolved=true;clearTimeout(timeout);
-        if(r.error||!r.access_token){
-          // OAuth silent falló (ej: cookies bloqueadas, sesión Google expirada)
-          // Mostrar login — única situación donde el usuario tiene que hacer click
-          showLoginScreen();
-          return;
-        }
-        tok=r.access_token;
-        try{
-          const ui=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+tok}});
-          cu=await ui.json();
-        }catch(e){cu={name:'Usuario',email:''};}
-        sid2=savedSid;
-        setSplashMsg('Cargando datos...');
+    // Si el token tiene menos de 50 min → usarlo directo sin llamar a Google
+    if(tokenAge<TOKEN_MAX_AGE){
+      tok=session.tok;
+      cu=session.cu;
+      sid2=session.sid2;
+      setSplashMsg('Cargando datos...');
+      try{
         await ensureTabs();
         await loadAll();
         saveSession();
         resetInactivityTimer();
+        scheduleTokenRenew(TOKEN_MAX_AGE-tokenAge);
         hideSplash();
         showApp();
+        return;
+      }catch(e){
+        // Si falla la carga, intentar con token nuevo
       }
-    }).requestAccessToken();
-  }catch(e){
-    resolved=true;clearTimeout(timeout);
-    showLoginScreen();
+    }
   }
+
+  // ── Token expirado o sin sesión: pedir login ──
+  // No intentar prompt:none porque falla en GitHub Pages con cookies bloqueadas
+  showLoginScreen();
 }
+
 
 function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('open');
