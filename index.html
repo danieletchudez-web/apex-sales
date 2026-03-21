@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASI</title>
+<title>Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -3307,24 +3307,19 @@ async function tryAutoLogin(){
     return;
   }
 
-  // Mostrar splash mientras restauramos
+  // Mostrar splash (nunca login) mientras restauramos
   const splash=document.getElementById('splash');
   if(splash)splash.style.display='flex';
+  document.getElementById('ls').style.display='none';
   setSplashMsg('Restaurando sesión...');
 
-  // ── Leer sesión guardada ──
   const session=getSession();
+
+  // ── CASO 1: token vigente en localStorage → entrar directo ──
   if(session&&session.tok&&session.cu&&session.sid2){
     const tokenAge=Date.now()-(session.tokenSaved||0);
-    const inactive=Date.now()-(session.lastActive||0);
-
-    // No cerrar por inactividad — el usuario puede recargar cuando quiera
-
-    // Si el token tiene menos de 50 min → usarlo directo sin llamar a Google
     if(tokenAge<TOKEN_MAX_AGE){
-      tok=session.tok;
-      cu=session.cu;
-      sid2=session.sid2;
+      tok=session.tok; cu=session.cu; sid2=session.sid2;
       setSplashMsg('Cargando datos...');
       try{
         await ensureTabs();
@@ -3335,15 +3330,70 @@ async function tryAutoLogin(){
         hideSplash();
         showApp();
         return;
-      }catch(e){
-        // Si falla la carga, intentar con token nuevo
-      }
+      }catch(e){ console.warn('loadAll failed, trying token renew', e); }
     }
   }
 
-  // ── Token expirado o sin sesión: pedir login ──
-  // No intentar prompt:none porque falla en GitHub Pages con cookies bloqueadas
-  showLoginScreen();
+  // ── CASO 2: token expirado → renovar silenciosamente (OAuth prompt:none) ──
+  // Mantener splash visible, NUNCA mostrar login
+  setSplashMsg('Renovando sesión...');
+  if(!window.google||!window.google.accounts){
+    // SDK no cargó todavía — esperar
+    let att=0;
+    await new Promise(res=>{
+      const w=setInterval(()=>{
+        att++;
+        if(window.google&&window.google.accounts){clearInterval(w);res();}
+        else if(att>30){clearInterval(w);res();}
+      },500);
+    });
+  }
+
+  if(!window.google||!window.google.accounts){
+    // SDK nunca cargó → mostrar login como último recurso
+    showLoginScreen();
+    return;
+  }
+
+  const sid=session?.sid2||savedSid;
+  let renewed=false;
+  await new Promise(res=>{
+    const timeout=setTimeout(()=>{ if(!renewed){renewed=true;res();} },8000);
+    try{
+      google.accounts.oauth2.initTokenClient({
+        client_id:CID, scope:SCOPES, prompt:'none',
+        callback:async(r)=>{
+          if(renewed)return;
+          renewed=true; clearTimeout(timeout);
+          if(r.access_token){
+            tok=r.access_token;
+            try{
+              const ui=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+tok}});
+              cu=await ui.json();
+            }catch(e){ cu=session?.cu||{name:'Usuario',email:''}; }
+            sid2=sid;
+            setSplashMsg('Cargando datos...');
+            try{
+              await ensureTabs();
+              await loadAll();
+              // Reset tokenSaved
+              const s=getSession();
+              if(s){s.tok=tok;s.tokenSaved=Date.now();localStorage.setItem(SESSION_KEY,JSON.stringify(s));}
+              else saveSession();
+              resetInactivityTimer();
+              scheduleTokenRenew(TOKEN_MAX_AGE);
+              hideSplash();
+              showApp();
+            }catch(e2){ showLoginScreen(); }
+          } else {
+            // prompt:none falló → mostrar login
+            showLoginScreen();
+          }
+          res();
+        }
+      }).requestAccessToken();
+    }catch(e){ showLoginScreen(); res(); }
+  });
 }
 
 
