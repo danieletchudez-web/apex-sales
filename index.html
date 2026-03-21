@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sales</title>
+<title>Sales Report</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -95,10 +95,15 @@ body.nav-edit-mode #nav-sortable .ni:hover{background:var(--ad)}
 .wgt{transition:opacity .2s}
 .wgt.hidden{display:none!important}
 /* DRAG GRID */
-#dash-grid{display:flex;flex-direction:column;gap:16px}
-.dash-row{display:flex;gap:16px}
-.dash-row-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.dash-item{flex:1;min-width:0}
+#dash-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;align-items:start;width:100%;box-sizing:border-box}
+.dash-row{display:contents}
+.dash-row-2{display:contents}
+.dash-item{min-width:0;grid-column:span 12;box-sizing:border-box;overflow:hidden}
+/* Default spans */
+.dash-item[data-col="6"]{grid-column:span 6}
+.dash-item[data-col="9"]{grid-column:span 9}
+.dash-item[data-col="3"]{grid-column:span 3}
+.dash-item[data-col="12"]{grid-column:span 12}
 /* drag handle */
 .drag-handle{color:var(--muted2);cursor:default;font-size:1rem;padding:0 6px 0 0;user-select:none;display:none;align-items:center;line-height:1;flex-shrink:0}
 /* drag mode active */
@@ -106,12 +111,13 @@ body.drag-mode .drag-handle{display:flex;cursor:grab}
 body.drag-mode .drag-handle:active{cursor:grabbing}
 body.drag-mode .dash-item{cursor:default}
 /* Width size picker */
-.size-picker{display:none;position:absolute;top:8px;right:8px;z-index:20;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:4px 6px;box-shadow:0 4px 20px rgba(0,0,0,.5);flex-direction:row;gap:2px;align-items:center}
+.size-picker{display:none;position:absolute;top:8px;right:8px;z-index:30;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:6px 8px;box-shadow:0 6px 24px rgba(0,0,0,.6);flex-direction:row;gap:3px;align-items:center;flex-wrap:nowrap}
 body.drag-mode .size-picker{display:flex}
-.size-btn{display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:5px;border:none;background:none;color:var(--muted);font-family:var(--fm);font-size:.62rem;font-weight:500;cursor:pointer;white-space:nowrap;transition:background .12s,color .12s}
-.size-btn:hover{background:var(--surface2);color:var(--text)}
-.size-btn.active{background:var(--ad);color:var(--accent)}
-.size-btn span{letter-spacing:.04em}
+.size-btn{display:flex;align-items:center;justify-content:center;padding:4px 9px;border-radius:5px;border:1px solid transparent;background:var(--surface2);color:var(--muted);font-family:var(--fm);font-size:.62rem;font-weight:600;cursor:pointer;transition:all .12s;min-width:30px}
+.size-btn:hover{background:var(--border2);color:var(--text)}
+.size-btn.active{background:var(--ad);border-color:rgba(232,255,71,.3);color:var(--accent)}
+.size-group-label{font-family:var(--fm);font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);padding:0 2px}
+.size-divider{width:1px;height:18px;background:var(--border);margin:0 3px}
 
 body.drag-mode .dash-item .card{outline:2px dashed var(--accent);outline-offset:2px;transition:outline .15s,box-shadow .15s}
 body.drag-mode .dash-item:hover .card{box-shadow:0 0 0 3px var(--ad2)}
@@ -131,9 +137,8 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
   .krow{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
   .kval{font-size:1.3rem}
   /* Dashboard grid */
-  .dash-row,.dash-row-2{flex-direction:column!important;grid-template-columns:1fr!important;display:flex!important}
-  .dash-item{width:100%!important;min-width:0}
-  #dash-grid{gap:12px}
+  .dash-item{grid-column:span 12!important}
+  #dash-grid{gap:10px}
   /* Charts smaller on mobile */
   .dash-item canvas{max-height:180px}
   /* Toggle bar wrap */
@@ -448,18 +453,16 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <div class="wgt dash-item" id="wgt-ventas-mes" data-size="full">
           <div class="card" style="position:relative">
             <div class="size-picker">
-              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>½</span>
-              </button>
-              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>¾</span>
-              </button>
-              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
-                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
-                <span>Full</span>
-              </button>
+              <div class="size-group-label">ANCHO</div>
+              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+              <div class="size-divider"></div>
+              <div class="size-group-label">ALTO</div>
+              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
@@ -482,18 +485,16 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <div class="wgt dash-item" id="wgt-forecast" data-size="full">
           <div class="card" style="position:relative">
             <div class="size-picker">
-              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>½</span>
-              </button>
-              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>¾</span>
-              </button>
-              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
-                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
-                <span>Full</span>
-              </button>
+              <div class="size-group-label">ANCHO</div>
+              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+              <div class="size-divider"></div>
+              <div class="size-group-label">ALTO</div>
+              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
@@ -512,18 +513,16 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <div class="wgt dash-item" id="wgt-categorias" data-size="half">
           <div class="card" style="position:relative">
             <div class="size-picker">
-              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>½</span>
-              </button>
-              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>¾</span>
-              </button>
-              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
-                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
-                <span>Full</span>
-              </button>
+              <div class="size-group-label">ANCHO</div>
+              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+              <div class="size-divider"></div>
+              <div class="size-group-label">ALTO</div>
+              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
@@ -537,18 +536,16 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <div class="wgt dash-item" id="wgt-estado-ventas" data-size="half">
           <div class="card" style="position:relative">
             <div class="size-picker">
-              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>½</span>
-              </button>
-              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>¾</span>
-              </button>
-              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
-                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
-                <span>Full</span>
-              </button>
+              <div class="size-group-label">ANCHO</div>
+              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+              <div class="size-divider"></div>
+              <div class="size-group-label">ALTO</div>
+              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
@@ -566,18 +563,16 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <div class="wgt dash-item" id="wgt-tareas-chart" data-size="half">
           <div class="card" style="position:relative">
             <div class="size-picker">
-              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>½</span>
-              </button>
-              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>¾</span>
-              </button>
-              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
-                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
-                <span>Full</span>
-              </button>
+              <div class="size-group-label">ANCHO</div>
+              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+              <div class="size-divider"></div>
+              <div class="size-group-label">ALTO</div>
+              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
@@ -591,18 +586,16 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <div class="wgt dash-item" id="wgt-top-clientes" data-size="half">
           <div class="card" style="position:relative">
             <div class="size-picker">
-              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>½</span>
-              </button>
-              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>¾</span>
-              </button>
-              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
-                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
-                <span>Full</span>
-              </button>
+              <div class="size-group-label">ANCHO</div>
+              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+              <div class="size-divider"></div>
+              <div class="size-group-label">ALTO</div>
+              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
@@ -622,18 +615,16 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <div class="wgt dash-item" id="wgt-licitaciones-dash" data-size="full">
           <div class="card" style="position:relative">
             <div class="size-picker">
-              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>½</span>
-              </button>
-              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>¾</span>
-              </button>
-              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
-                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
-                <span>Full</span>
-              </button>
+              <div class="size-group-label">ANCHO</div>
+              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+              <div class="size-divider"></div>
+              <div class="size-group-label">ALTO</div>
+              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
@@ -652,18 +643,16 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <div class="wgt dash-item" id="wgt-proyectos-dash" data-size="half">
           <div class="card" style="position:relative">
             <div class="size-picker">
-              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>½</span>
-              </button>
-              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>¾</span>
-              </button>
-              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
-                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
-                <span>Full</span>
-              </button>
+              <div class="size-group-label">ANCHO</div>
+              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+              <div class="size-divider"></div>
+              <div class="size-group-label">ALTO</div>
+              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
@@ -678,18 +667,16 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <div class="wgt dash-item" id="wgt-relacionamiento-dash" data-size="half">
           <div class="card" style="position:relative">
             <div class="size-picker">
-              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>½</span>
-              </button>
-              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>¾</span>
-              </button>
-              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
-                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
-                <span>Full</span>
-              </button>
+              <div class="size-group-label">ANCHO</div>
+              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+              <div class="size-divider"></div>
+              <div class="size-group-label">ALTO</div>
+              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
@@ -708,18 +695,16 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <div class="wgt dash-item" id="wgt-proveedores-dash" data-size="full">
           <div class="card" style="position:relative">
             <div class="size-picker">
-              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>½</span>
-              </button>
-              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
-                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
-                <span>¾</span>
-              </button>
-              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
-                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
-                <span>Full</span>
-              </button>
+              <div class="size-group-label">ANCHO</div>
+              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+              <div class="size-divider"></div>
+              <div class="size-group-label">ALTO</div>
+              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
@@ -2115,81 +2100,97 @@ function toggleDragMode(){
 
 function initSortable(){
   destroySortable();
-  // Make each row sortable (items within row)
-  document.querySelectorAll('.dash-row').forEach(row=>{
-    const s=Sortable.create(row,{
-      group:'dash-items',
-      animation:200,
-      handle:'.drag-handle',
-      ghostClass:'sortable-ghost',
-      chosenClass:'sortable-chosen',
-      dragClass:'sortable-drag',
-      onEnd:()=>{
-        setTimeout(()=>{destroyDashCharts();renderDashboard();},100);
-      }
-    });
-    sortableInstances.push(s);
-  });
-  // Make rows themselves sortable within dash-grid
-  const gridSort=Sortable.create(document.getElementById('dash-grid'),{
+  // Grid is flat — sort all dash-items directly
+  const grid=document.getElementById('dash-grid');
+  if(!grid) return;
+  const s=Sortable.create(grid,{
+    group:'dash-items',
     animation:200,
     handle:'.drag-handle',
     ghostClass:'sortable-ghost',
     chosenClass:'sortable-chosen',
-    filter:'.dash-item', // only drag rows, not items
+    dragClass:'sortable-drag',
+    filter:'.size-picker',
+    preventOnFilter:false,
     onEnd:()=>{
+      saveDashLayout();
       setTimeout(()=>{destroyDashCharts();renderDashboard();},100);
     }
   });
-  sortableInstances.push(gridSort);
+  sortableInstances.push(s);
 }
+
 
 
 
 // ═══ WIDGET SIZE CONTROLS ═══
-function setWidgetWidth(btn, pct){
+const W_HEIGHTS = {s:140, m:220, l:320, xl:440};
+
+function setWidgetCol(btn, col){
   const card = btn.closest('.card');
   const widget = card?.closest('.dash-item');
   if(!widget) return;
-  if(pct === 100){
-    widget.style.flex = '1 1 0';
-    widget.style.width = '';
-    widget.style.minWidth = '';
-    widget.style.maxWidth = '';
-  } else {
-    widget.style.flex = '0 0 '+pct+'%';
-    widget.style.width = pct+'%';
-    widget.style.minWidth = '240px';
-    widget.style.maxWidth = pct+'%';
-  }
-  card.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+  // Remove previous col spans
+  widget.classList.remove('dash-item');
+  [6,9,12,3].forEach(c=>widget.classList.remove('span-'+c));
+  widget.style.gridColumn = 'span '+col;
+  widget.dataset.col = col;
+  // Mark active
+  card.querySelectorAll('[data-col]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   saveWidgetSizes();
-  setTimeout(()=>{ destroyDashCharts(); renderDashboard(); }, 80);
+  setTimeout(()=>{destroyDashCharts();renderDashboard();},80);
+}
+
+function setWidgetH(btn, h){
+  const card = btn.closest('.card');
+  const widget = card?.closest('.dash-item');
+  if(!widget) return;
+  const px = W_HEIGHTS[h] || 220;
+  // Set min-height on the card
+  card.style.minHeight = px + 'px';
+  // Set canvas / cb height
+  const cb = card.querySelector('.cb');
+  if(cb){
+    const cbH = Math.max(80, px - 65);
+    cb.style.minHeight = cbH + 'px';
+    const canvas = cb.querySelector('canvas');
+    if(canvas) canvas.style.height = cbH + 'px';
+  }
+  widget.dataset.h = h;
+  // Mark active
+  card.querySelectorAll('[data-h]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  saveWidgetSizes();
+  setTimeout(()=>{destroyDashCharts();renderDashboard();},120);
 }
 
 function showWidgetSizeControls(show){
-  // Sync active button state when entering edit mode
-  if(show){
-    document.querySelectorAll('.dash-item[id]').forEach(w => {
-      const card = w.querySelector('.card');
-      if(!card) return;
-      const currentW = w.style.width;
-      const pct = currentW ? parseInt(currentW) : 100;
-      card.querySelectorAll('.size-btn').forEach(b => {
-        b.classList.toggle('active', parseInt(b.dataset.pct) === pct);
-      });
+  if(!show) return;
+  document.querySelectorAll('.dash-item[id]').forEach(w=>{
+    const card = w.querySelector('.card');
+    if(!card) return;
+    // Sync col buttons
+    const col = parseInt(w.dataset.col) || 12;
+    card.querySelectorAll('[data-col]').forEach(b=>{
+      b.classList.toggle('active', parseInt(b.dataset.col)===col);
     });
-  }
+    // Sync h buttons
+    const h = w.dataset.h || 'm';
+    card.querySelectorAll('[data-h]').forEach(b=>{
+      b.classList.toggle('active', b.dataset.h===h);
+    });
+  });
 }
 
 function saveWidgetSizes(){
-  const sizes = {};
-  document.querySelectorAll('.dash-item[id]').forEach(w => {
-    sizes[w.id] = {
-      flex: w.style.flex || '',
-      width: w.style.width || '',
-      minWidth: w.style.minWidth || ''
+  const sizes={};
+  document.querySelectorAll('.dash-item[id]').forEach(w=>{
+    const card=w.querySelector('.card');
+    sizes[w.id]={
+      col: w.dataset.col || '12',
+      h: w.dataset.h || 'm',
+      cardMinH: card?card.style.minHeight||'':''
     };
   });
   localStorage.setItem('apxwsizes', JSON.stringify(sizes));
@@ -2197,28 +2198,36 @@ function saveWidgetSizes(){
 
 function restoreWidgetSizes(){
   try{
-    const raw = localStorage.getItem('apxwsizes');
+    const raw=localStorage.getItem('apxwsizes');
     if(!raw) return;
-    const sizes = JSON.parse(raw);
-    Object.entries(sizes).forEach(([id, s]) => {
-      const w = document.getElementById(id);
+    const sizes=JSON.parse(raw);
+    Object.entries(sizes).forEach(([id,s])=>{
+      const w=document.getElementById(id);
       if(!w) return;
-      if(s.width){
-        const pct=parseInt(s.width);
-        w.style.flex='0 0 '+pct+'%';
-        w.style.width=pct+'%';
-        w.style.minWidth='240px';
-        w.style.maxWidth=pct+'%';
+      if(s.col && s.col!=='12'){
+        w.style.gridColumn='span '+s.col;
+        w.dataset.col=s.col;
+      }
+      if(s.h && s.h!=='m'){
+        w.dataset.h=s.h;
         const card=w.querySelector('.card');
+        const px=W_HEIGHTS[s.h]||220;
         if(card){
-          card.querySelectorAll('.size-btn').forEach(b=>{
-            b.classList.toggle('active', parseInt(b.dataset.pct)===pct);
-          });
+          card.style.minHeight=px+'px';
+          const cb=card.querySelector('.cb');
+          if(cb){cb.style.minHeight=Math.max(80,px-65)+'px';}
         }
       }
+      // Sync buttons
+      const card=w.querySelector('.card');
+      if(card){
+        card.querySelectorAll('[data-col]').forEach(b=>b.classList.toggle('active',b.dataset.col===(s.col||'12')));
+        card.querySelectorAll('[data-h]').forEach(b=>b.classList.toggle('active',b.dataset.h===(s.h||'m')));
+      }
     });
-  } catch(e){}
+  }catch(e){console.warn(e);}
 }
+
 
 function destroySortable(){
   sortableInstances.forEach(s=>{try{s.destroy();}catch(e){}});
@@ -2226,32 +2235,22 @@ function destroySortable(){
 }
 
 function saveDashLayout(){
-  const rows=[];
-  document.querySelectorAll('#dash-grid .dash-row').forEach(row=>{
-    const items=[];
-    row.querySelectorAll('.dash-item[id]').forEach(item=>items.push(item.id));
-    rows.push({rowId:row.id,items});
-  });
-  localStorage.setItem('apxlayout',JSON.stringify(rows));
+  const order=[];
+  document.querySelectorAll('#dash-grid .dash-item[id]').forEach(item=>order.push(item.id));
+  localStorage.setItem('apxlayout',JSON.stringify(order));
 }
 
 function restoreDashLayout(){
   try{
     const saved=localStorage.getItem('apxlayout');
     if(!saved)return;
-    const rows=JSON.parse(saved);
+    const order=JSON.parse(saved);
     const grid=document.getElementById('dash-grid');
-    rows.forEach(({rowId,items})=>{
-      const row=document.getElementById(rowId);
-      if(!row)return;
-      items.forEach(id=>{
-        const el=document.getElementById(id);
-        if(el&&el.parentElement!==row)row.appendChild(el);
-      });
+    if(!grid)return;
+    order.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)grid.appendChild(el);
     });
-    // Restore row order
-    const orderedRows=rows.map(r=>document.getElementById(r.rowId)).filter(Boolean);
-    orderedRows.forEach(row=>grid.appendChild(row));
   }catch(e){console.warn('restoreDashLayout',e);}
 }
 
