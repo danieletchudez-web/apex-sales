@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SIV</title>
+<title>APEX</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -381,7 +381,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <div class="kpi"><div class="klbl">Ventas del mes</div><div class="kval" id="kmes">$0</div><div class="kdelta" id="kmesd">─</div></div>
       <div class="kpi"><div class="klbl">Tareas pendientes</div><div class="kval" id="ktot" style="color:var(--orange)">0</div><div class="kdelta" id="ktotd">de 0 totales</div></div>
       <div class="kpi" id="kpi-gauge" style="padding:14px 18px 10px"><div class="klbl">Forecast del mes</div><canvas id="gaugeChart" style="display:block;margin:0 auto" width="160" height="90"></canvas><div class="kdelta" style="text-align:center;margin-top:-4px" id="ktickd">─</div></div>
-      <div class="kpi"><div class="klbl">Mejor cliente</div><div class="kval" style="font-size:1rem;padding-top:4px" id="kcli">─</div><div class="kdelta" id="kcliv">sin ventas</div></div>
+      <div class="kpi"><div class="klbl">Top 3 clientes</div><div id="kcli" style="margin-bottom:4px">─</div><div class="kdelta" id="kcliv">sin ventas</div></div>
     </div>
 
     <!-- MINI LINE CHART: Real vs Forecast -->
@@ -442,6 +442,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Ventas por mes</div><div class="cs">Ingresos reales · período</div></div>
+              <button class="btn bts sm" onclick="iaChartVentas()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartVentasMes" onclick="toggleLabels('chartVentasMes',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
               <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
                 <select class="fsel" id="db-year" onchange="renderDashboard()" style="width:auto;padding:5px 28px 5px 10px;font-size:.72rem">
@@ -461,6 +462,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Ventas reales vs Forecast</div><div class="cs">Comparativo mensual</div></div>
+              <button class="btn bts sm" onclick="iaChartForecast()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartForecast" onclick="toggleLabels('chartForecast',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
               <button class="btn bts sm" onclick="go('forecast',document.querySelector('.ni[data-view=forecast]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver Forecast →</button>
             </div>
@@ -476,6 +478,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Ventas por categoría</div><div class="cs">% del total</div></div>
+              <button class="btn bts sm" onclick="iaChartCats()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartCats" onclick="toggleLabels('chartCats',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
             </div>
             <div class="cb"><div style="position:relative;height:200px"><canvas id="chartCats"></canvas></div></div>
@@ -486,6 +489,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Estados de ventas</div><div class="cs">Cobradas · pendientes · canceladas</div></div>
+              <button class="btn bts sm" onclick="iaChartEstados()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartEstados" onclick="toggleLabels('chartEstados',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
             </div>
             <div class="cb"><div style="position:relative;height:200px"><canvas id="chartEstados"></canvas></div></div>
@@ -500,6 +504,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Estado de tareas</div><div class="cs">Por tipo</div></div>
+              <button class="btn bts sm" onclick="iaChartTareas()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartTareas" onclick="toggleLabels('chartTareas',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
             </div>
             <div class="cb"><div style="position:relative;height:200px"><canvas id="chartTareas"></canvas></div></div>
@@ -510,6 +515,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Top 5 clientes</div><div class="cs">Por monto facturado</div></div>
+              <button class="btn bts sm" onclick="iaChartClientes()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartClientes" onclick="toggleLabels('chartClientes',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
             </div>
             <div class="cb"><div style="position:relative;height:200px"><canvas id="chartClientes"></canvas></div></div>
@@ -1309,12 +1315,18 @@ function updKPI(){
   const metaMes=getMeta(y,m+1);
   renderGauge(ventasMes,metaMes);
 
-  // Mejor cliente
+  // Top 3 clientes
   const act=S.v.filter(x=>x.estado!=='cancelada');
   const cm2={};act.forEach(x=>{cm2[x.cliente]=(cm2[x.cliente]||0)+x.monto;});
-  const top=Object.entries(cm2).sort((a,b)=>b[1]-a[1])[0];
-  document.getElementById('kcli').textContent=top?top[0]:'─';
-  document.getElementById('kcliv').textContent=top?'$'+fn(top[1]):'sin ventas';
+  const tops=Object.entries(cm2).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const kpiTop=document.getElementById('kcli');
+  const kpiTopD=document.getElementById('kcliv');
+  if(!tops.length){kpiTop.textContent='─';kpiTopD.textContent='sin ventas';}
+  else{
+    kpiTop.style.fontSize='.8rem';kpiTop.style.lineHeight='1.6';
+    kpiTop.innerHTML=tops.map((t,i)=>`<div style="display:flex;justify-content:space-between;gap:8px"><span style="color:var(--muted2);font-family:var(--fm)">${i+1}.</span><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t[0])}</span><span style="color:var(--accent);font-family:var(--fm);font-size:.72rem">$${fn(t[1])}</span></div>`).join('');
+    kpiTopD.textContent='top 3 por monto';
+  }
 }
 
 let gaugeChartInst=null;
@@ -1370,7 +1382,7 @@ function renderKpiFcChart(){
     data:{
       labels:MONTHS_S,
       datasets:[
-        {label:'Meta',data:metas,borderColor:'rgba(232,255,71,.5)',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false,tension:.4},
+        {label:'Meta',data:metas,borderColor:document.body.classList.contains('light')?'rgba(91,94,244,.8)':'rgba(232,255,71,.7)',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false,tension:.4},
         {label:'Real',data:reales,borderColor:C.green,borderWidth:2,backgroundColor:g,fill:true,tension:.4,pointRadius:3,pointBackgroundColor:C.green,pointHoverRadius:5},
       ]
     },
@@ -1722,7 +1734,7 @@ function renderDashboard(){
       {label:'Real',data:reales,backgroundColor:C.accentAlpha,borderColor:C.accent,borderWidth:2,borderRadius:5,type:'bar'},
       {label:'Proyección',data:forecast,backgroundColor:'rgba(92,168,255,.15)',borderColor:C.blue,borderWidth:2,borderRadius:5,type:'bar'},
     ];
-    if(metaLine)datasets.push({label:'Meta',data:metaLine,borderColor:C.red,borderWidth:2,borderDash:[6,3],type:'line',pointRadius:0,fill:false});
+    if(metaLine)datasets.push({label:'Meta',data:metaLine,borderColor:document.body.classList.contains('light')?C.blue:C.accent,borderWidth:2,borderDash:[6,3],type:'line',pointRadius:0,fill:false});
     mkChart('chartForecast',{
       type:'bar',data:{labels,datasets},
       options:{responsive:true,maintainAspectRatio:false,
@@ -2794,7 +2806,7 @@ function renderForecast(){
       data:{
         labels:MESES.map(m=>m.slice(0,3)),
         datasets:[
-          {label:'Meta',data:metas,borderColor:'rgba(232,255,71,.6)',borderWidth:2,borderDash:[6,3],pointRadius:3,fill:false,tension:.3,pointBackgroundColor:'rgba(232,255,71,.6)'},
+          {label:'Meta',data:metas,borderColor:document.body.classList.contains('light')?'rgba(91,94,244,.8)':'rgba(232,255,71,.7)',borderWidth:2,borderDash:[6,3],pointRadius:3,fill:false,tension:.3,pointBackgroundColor:document.body.classList.contains('light')?'rgba(91,94,244,.8)':'rgba(232,255,71,.7)'},
           {label:'Real',data:reales.map((v,i)=>i<mesActual?v:null),borderColor:C.green,borderWidth:2.5,backgroundColor:g,fill:true,tension:.4,pointRadius:4,pointBackgroundColor:C.green},
         ]
       },
@@ -2916,6 +2928,100 @@ function renderVentasKPIs(){
   if(res)res.textContent=`${S.v.length} registros · mes actual: $${fn(totalMes)} en ${mesData.length} operaciones`;
 }
 
+
+
+// ═══ IA ANÁLISIS DE GRÁFICOS ═══
+function iaChartVentas(){
+  const now=new Date();const yr=parseInt(document.getElementById('db-year')?.value||now.getFullYear());
+  const MONTHS_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const byMonth=MONTHS_N.map((_,i)=>S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getFullYear()===yr&&d.getMonth()===i;}).reduce((s,x)=>s+x.monto,0));
+  const total=byMonth.reduce((a,b)=>a+b,0);
+  const maxM=byMonth.indexOf(Math.max(...byMonth));
+  const minM=byMonth.filter(v=>v>0).length?byMonth.indexOf(byMonth.filter(v=>v>0).reduce((a,b)=>a<b?a:b)):0;
+  const mesesConDatos=byMonth.filter(v=>v>0).length;
+  const avg=mesesConDatos?total/mesesConDatos:0;
+  const trend=byMonth.slice(-3).filter(v=>v>0);
+  const growing=trend.length>1&&trend[trend.length-1]>trend[0];
+  renderIAPanel(`
+    <div style="font-family:var(--fd);font-size:.95rem;font-weight:700;margin-bottom:4px">Análisis: Ventas ${yr}</div>
+    ${iaSection('Performance anual','📊',`Total facturado: <strong>$${fn(total)}</strong> en ${mesesConDatos} meses activos. Promedio mensual: <strong>$${fn(avg)}</strong>.`,'var(--blue)')}
+    ${iaSection('Mes pico','🏆',`<strong>${MONTHS_N[maxM]}</strong> fue el mejor mes con $${fn(byMonth[maxM])}. ${growing?'La tendencia reciente es <strong style="color:var(--green)">alcista ↑</strong>.':'La tendencia reciente muestra <strong style="color:var(--orange)">desaceleración</strong>.'}`,'var(--green)')}
+    ${iaSection('Riesgo & oportunidad','⚡',`${mesesConDatos<6?'Solo '+mesesConDatos+' meses con ventas — concentración de ingresos en pocos períodos. Riesgo de estacionalidad.':'Cartera de ventas distribuida en '+mesesConDatos+' meses.'} ${avg>0?'Para superar el promedio, cada mes siguiente debe superar $'+fn(avg)+'.':''}`,'var(--orange)')}
+    ${iaSection('Acción recomendada','✅',`${growing?'Tendencia positiva. Capitalizar el momentum con acciones de cierre de pipeline.':'Revisar causas de la desaceleración. Activar ofertas o follow-ups de pipeline detenido.'}`,'var(--accent)')}
+  `);
+}
+
+function iaChartForecast(){
+  const yr=new Date().getFullYear();const m=new Date().getMonth();
+  const real=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getFullYear()===yr;}).reduce((s,x)=>s+x.monto,0);
+  const metaAnual=Array.from({length:12},(_,i)=>getMeta(yr,i+1)).reduce((a,b)=>a+b,0);
+  const metaMes=getMeta(yr,m+1);
+  const realMes=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getFullYear()===yr&&d.getMonth()===m;}).reduce((s,x)=>s+x.monto,0);
+  const cumpl=metaAnual>0?(real/metaAnual*100).toFixed(1):null;
+  const cumplMes=metaMes>0?(realMes/metaMes*100).toFixed(1):null;
+  renderIAPanel(`
+    <div style="font-family:var(--fd);font-size:.95rem;font-weight:700;margin-bottom:4px">Análisis: Real vs Forecast ${yr}</div>
+    ${metaAnual?iaSection('Estado anual','📊',`Cumplimiento acumulado: <strong style="color:${parseFloat(cumpl)>=100?'var(--green)':'var(--orange)'}">${cumpl}%</strong> — $${fn(real)} de $${fn(metaAnual)} de meta anual.`,'var(--blue)'):iaSection('Sin metas cargadas','⚠️','No hay metas definidas para este año. Cargalas en la sección Forecast para activar el análisis.','var(--orange)')}
+    ${metaMes?iaSection('Mes actual','🗓️',`Meta del mes: $${fn(metaMes)} — Real: $${fn(realMes)} — <strong style="color:${parseFloat(cumplMes)>=100?'var(--green)':'var(--red)'}">Cumplimiento ${cumplMes}%</strong>. ${parseFloat(cumplMes)<100?'Faltan $'+fn(metaMes-realMes)+' para llegar a la meta del mes.':'Meta del mes superada ✅'}`,'var(--accent)'):''}
+    ${iaSection('Proyección','🔮',`Al ritmo actual, ${metaAnual>0?'el año cierra con un '+cumpl+'% de la meta anual.':'cargá metas para obtener proyección precisa.'}`,'var(--purple)')}
+    ${iaSection('Acción recomendada','✅',metaAnual&&parseFloat(cumpl)<80?'Alerta: debajo del 80% del objetivo anual. Revisar pipeline y acelerar cierres.':metaAnual?'En línea con el objetivo. Mantener ritmo y asegurar cobranza de pendientes.':'Definir metas mensuales en Forecast para habilitar el análisis de desvíos.','var(--accent)')}
+  `);
+}
+
+function iaChartCats(){
+  const catMap={};S.v.filter(x=>x.estado!=='cancelada').forEach(x=>{const c=x.categoria||'Sin categoría';catMap[c]=(catMap[c]||0)+x.monto;});
+  const tops=Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+  const total=tops.reduce((s,x)=>s+x[1],0);
+  const top1=tops[0];const conc=top1?((top1[1]/total)*100).toFixed(0):0;
+  renderIAPanel(`
+    <div style="font-family:var(--fd);font-size:.95rem;font-weight:700;margin-bottom:4px">Análisis: Mix de categorías</div>
+    ${tops.length?iaSection('Distribución','📊',tops.slice(0,4).map(t=>`<strong>${esc(t[0])}</strong>: $${fn(t[1])} (${(t[1]/total*100).toFixed(0)}%)`).join('<br>'),'var(--blue)'):''}
+    ${top1&&conc>50?iaSection('Concentración de riesgo','⚠️',`La categoría <strong>${esc(top1[0])}</strong> representa el <strong style="color:var(--orange)">${conc}%</strong> de las ventas. Alta dependencia — explorar diversificación.`,'var(--orange)'):iaSection('Diversificación','✅',`Mix equilibrado entre ${tops.length} categorías. Buena diversificación de ingresos.`,'var(--green)')}
+    ${iaSection('Oportunidad','🚀',tops.length>1?`La categoría "${esc(tops[tops.length>2?1:0][0])}" tiene potencial de crecimiento. Evaluar si hay capacidad para incrementar volumen.`:'Ampliar el catálogo de categorías para reducir riesgo de concentración.','var(--accent)')}
+  `);
+}
+
+function iaChartEstados(){
+  const estados={cobrada:0,pendiente:0,cancelada:0};
+  S.v.forEach(v=>{if(estados[v.estado]!==undefined)estados[v.estado]++;});
+  const total=S.v.length;
+  const pctPend=total?(estados.pendiente/total*100).toFixed(0):0;
+  const montoPend=S.v.filter(x=>x.estado==='pendiente').reduce((s,x)=>s+x.monto,0);
+  renderIAPanel(`
+    <div style="font-family:var(--fd);font-size:.95rem;font-weight:700;margin-bottom:4px">Análisis: Estados de ventas</div>
+    ${iaSection('Resumen','📊',`Cobradas: <strong style="color:var(--green)">${estados.cobrada}</strong> · Pendientes: <strong style="color:var(--orange)">${estados.pendiente}</strong> · Canceladas: <strong style="color:var(--red)">${estados.cancelada}</strong>`,'var(--blue)')}
+    ${estados.pendiente>0?iaSection('Cobranza pendiente','💰',`<strong>$${fn(montoPend)}</strong> en ${estados.pendiente} ventas sin cobrar. Representa el ${pctPend}% de las operaciones. ${parseFloat(pctPend)>30?'⚠️ Alto porcentaje pendiente — priorizar cobranza.':'Porcentaje dentro de lo normal.'}`,'var(--orange)'):''}
+    ${estados.cancelada>0?iaSection('Cancelaciones','⚡',`${estados.cancelada} ventas canceladas. Analizar causas para reducir la tasa de cancelación.`,'var(--red)'):''}
+    ${iaSection('Acción recomendada','✅',estados.pendiente>0?`Gestionar cobro de las ${estados.pendiente} facturas pendientes ($${fn(montoPend)}). El dinero ya está generado — solo falta la cobranza.`:'Excelente: sin cobranza pendiente.','var(--accent)')}
+  `);
+}
+
+function iaChartTareas(){
+  const pend=S.t.filter(x=>!x.done).length;
+  const done=S.t.filter(x=>x.done).length;
+  const vencidas=S.t.filter(x=>!x.done&&x.fin&&new Date(x.fin+'T23:59')<new Date()).length;
+  const tipos={};S.t.forEach(t=>{tipos[t.tipo]=(tipos[t.tipo]||0)+1;});
+  renderIAPanel(`
+    <div style="font-family:var(--fd);font-size:.95rem;font-weight:700;margin-bottom:4px">Análisis: Estado de tareas</div>
+    ${iaSection('Resumen','📊',`Pendientes: <strong style="color:var(--orange)">${pend}</strong> · Completadas: <strong style="color:var(--green)">${done}</strong> · Total: ${S.t.length}`,'var(--blue)')}
+    ${vencidas>0?iaSection('Tareas vencidas','🚨',`<strong style="color:var(--red)">${vencidas} tarea${vencidas>1?'s':''} vencida${vencidas>1?'s':''}</strong>. Requieren atención inmediata — cada tarea vencida es una oportunidad comercial en riesgo.`,'var(--red)'):''}
+    ${iaSection('Distribución por tipo','🔍',Object.entries(tipos).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}: ${v}`).join(' · ')||'Sin datos','var(--purple)')}
+    ${iaSection('Recomendación','✅',pend>10?`Carga alta: ${pend} tareas pendientes. Priorizar por fecha y cliente estratégico.`:pend>0?`${pend} tareas pendientes. Mantener el ritmo de ejecución.`:'Sin tareas pendientes — actualizar el pipeline con las próximas acciones.','var(--accent)')}
+  `);
+}
+
+function iaChartClientes(){
+  const cm={};S.v.filter(x=>x.estado!=='cancelada').forEach(x=>{cm[x.cliente]=(cm[x.cliente]||0)+x.monto;});
+  const tops=Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const total=Object.values(cm).reduce((a,b)=>a+b,0);
+  const top1pct=tops[0]?(tops[0][1]/total*100).toFixed(0):0;
+  renderIAPanel(`
+    <div style="font-family:var(--fd);font-size:.95rem;font-weight:700;margin-bottom:4px">Análisis: Top clientes</div>
+    ${iaSection('Ranking','🏆',tops.map((t,i)=>`<strong>${i+1}. ${esc(t[0])}</strong> — $${fn(t[1])} (${(t[1]/total*100).toFixed(0)}%)`).join('<br>')||'Sin datos','var(--blue)')}
+    ${top1pct>40?iaSection('Concentración','⚠️',`El cliente #1 representa el <strong style="color:var(--orange)">${top1pct}%</strong> de las ventas. Dependencia crítica — diversificar cartera de clientes.`,'var(--orange)'):iaSection('Diversificación','✅',`Cartera diversificada: el cliente principal representa solo el ${top1pct}% del total.`,'var(--green)')}
+    ${iaSection('Estrategia','🚀',tops.length?`Proteger la relación con <strong>${esc(tops[0][0])}</strong>. Identificar oportunidades de upsell en el top 3.`:'Registrar ventas con cliente para activar análisis.','var(--accent)')}
+  `);
+}
 
 // ═══ CHART LABEL TOGGLE ═══
 const labelStates={};  // chartId → boolean
