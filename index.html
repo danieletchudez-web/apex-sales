@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RIV</title>
+<title>TREA</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -105,14 +105,14 @@ body.nav-edit-mode #nav-sortable .ni:hover{background:var(--ad)}
 body.drag-mode .drag-handle{display:flex;cursor:grab}
 body.drag-mode .drag-handle:active{cursor:grabbing}
 body.drag-mode .dash-item{cursor:default}
-body.drag-mode .dash-item .card{position:relative}
-/* Resize handles — visible only in edit mode */
-.resize-handle{display:none;position:absolute;background:var(--accent);border-radius:3px;opacity:.7;transition:opacity .15s;z-index:10}
-.resize-handle:hover{opacity:1}
-body.drag-mode .resize-handle{display:block;cursor:s-resize}
-.resize-s{bottom:-4px;left:50%;transform:translateX(-50%);width:40px;height:6px;cursor:s-resize}
-.resize-e{right:-4px;top:50%;transform:translateY(-50%);width:6px;height:40px;cursor:e-resize}
-.resize-se{bottom:-4px;right:-4px;width:12px;height:12px;border-radius:0 0 4px 0;cursor:se-resize}
+/* Width size picker */
+.size-picker{display:none;position:absolute;top:6px;right:6px;z-index:20;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:4px;box-shadow:0 4px 16px rgba(0,0,0,.4);flex-direction:column;gap:3px}
+body.drag-mode .size-picker{display:flex}
+.size-btn{display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:5px;border:none;background:none;color:var(--muted);font-family:var(--fm);font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:background .12s,color .12s}
+.size-btn:hover{background:var(--surface2);color:var(--text)}
+.size-btn.active{background:var(--ad);color:var(--accent)}
+.size-btn .size-bar{height:8px;border-radius:2px;background:currentColor;opacity:.7}
+
 body.drag-mode .dash-item .card{outline:2px dashed var(--accent);outline-offset:2px;transition:outline .15s,box-shadow .15s}
 body.drag-mode .dash-item:hover .card{box-shadow:0 0 0 3px var(--ad2)}
 body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:var(--accent)}
@@ -408,7 +408,6 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <div style="display:flex;align-items:center;gap:10px">
         <div class="st">Gestión de Ventas</div>
         <div id="drag-mode-badge" style="display:none;background:var(--accent);color:var(--bg);font-family:var(--fm);font-size:.58rem;padding:2px 10px;border-radius:20px;letter-spacing:.08em;text-transform:uppercase">Modo edición</div>
-        <button id="reset-sizes-btn" onclick="resetAllSizes()" style="display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--muted);font-family:var(--fm);font-size:.58rem;padding:2px 10px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase">↺ Restablecer tamaños</button>
       </div>
       <!-- WIDGET DROPDOWN -->
       <div style="position:relative" id="wgt-dropdown-wrap">
@@ -447,12 +446,17 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- full-width row -->
       <div class="dash-row" id="row-full">
         <div class="wgt dash-item" id="wgt-ventas-mes" data-size="full">
-          <div class="card">
+          <div class="card" style="position:relative">
+            <div class="size-picker">
+              <button class="size-btn" onclick="setWidgetWidth(this,25)"><div class="size-bar" style="width:16px"></div>25%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,33)"><div class="size-bar" style="width:22px"></div>33%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,50)"><div class="size-bar" style="width:28px"></div>50%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,66)"><div class="size-bar" style="width:34px"></div>66%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,75)"><div class="size-bar" style="width:40px"></div>75%</button>
+              <button class="size-btn active" onclick="setWidgetWidth(this,100)"><div class="size-bar" style="width:46px"></div>100%</button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
-              <div class="resize-handle resize-s" title="Cambiar alto"></div>
-              <div class="resize-handle resize-e" title="Cambiar ancho"></div>
-              <div class="resize-handle resize-se" title="Redimensionar"></div>
               <div><div class="ct">Ventas por mes</div><div class="cs">Ingresos reales · período</div></div>
               <button class="btn bts sm" onclick="iaChartVentas()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartVentasMes" onclick="toggleLabels('chartVentasMes',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
@@ -470,12 +474,17 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- full-width row -->
       <div class="dash-row" id="row-forecast">
         <div class="wgt dash-item" id="wgt-forecast" data-size="full">
-          <div class="card">
+          <div class="card" style="position:relative">
+            <div class="size-picker">
+              <button class="size-btn" onclick="setWidgetWidth(this,25)"><div class="size-bar" style="width:16px"></div>25%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,33)"><div class="size-bar" style="width:22px"></div>33%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,50)"><div class="size-bar" style="width:28px"></div>50%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,66)"><div class="size-bar" style="width:34px"></div>66%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,75)"><div class="size-bar" style="width:40px"></div>75%</button>
+              <button class="size-btn active" onclick="setWidgetWidth(this,100)"><div class="size-bar" style="width:46px"></div>100%</button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
-              <div class="resize-handle resize-s" title="Cambiar alto"></div>
-              <div class="resize-handle resize-e" title="Cambiar ancho"></div>
-              <div class="resize-handle resize-se" title="Redimensionar"></div>
               <div><div class="ct">Ventas reales vs Forecast</div><div class="cs">Comparativo mensual</div></div>
               <button class="btn bts sm" onclick="iaChartForecast()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartForecast" onclick="toggleLabels('chartForecast',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
@@ -489,12 +498,17 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- 2-col row -->
       <div class="dash-row dash-row-2" id="row-cats">
         <div class="wgt dash-item" id="wgt-categorias" data-size="half">
-          <div class="card">
+          <div class="card" style="position:relative">
+            <div class="size-picker">
+              <button class="size-btn" onclick="setWidgetWidth(this,25)"><div class="size-bar" style="width:16px"></div>25%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,33)"><div class="size-bar" style="width:22px"></div>33%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,50)"><div class="size-bar" style="width:28px"></div>50%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,66)"><div class="size-bar" style="width:34px"></div>66%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,75)"><div class="size-bar" style="width:40px"></div>75%</button>
+              <button class="size-btn active" onclick="setWidgetWidth(this,100)"><div class="size-bar" style="width:46px"></div>100%</button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
-              <div class="resize-handle resize-s" title="Cambiar alto"></div>
-              <div class="resize-handle resize-e" title="Cambiar ancho"></div>
-              <div class="resize-handle resize-se" title="Redimensionar"></div>
               <div><div class="ct">Ventas por categoría</div><div class="cs">% del total</div></div>
               <button class="btn bts sm" onclick="iaChartCats()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartCats" onclick="toggleLabels('chartCats',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
@@ -503,12 +517,17 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
           </div>
         </div>
         <div class="wgt dash-item" id="wgt-estado-ventas" data-size="half">
-          <div class="card">
+          <div class="card" style="position:relative">
+            <div class="size-picker">
+              <button class="size-btn" onclick="setWidgetWidth(this,25)"><div class="size-bar" style="width:16px"></div>25%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,33)"><div class="size-bar" style="width:22px"></div>33%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,50)"><div class="size-bar" style="width:28px"></div>50%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,66)"><div class="size-bar" style="width:34px"></div>66%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,75)"><div class="size-bar" style="width:40px"></div>75%</button>
+              <button class="size-btn active" onclick="setWidgetWidth(this,100)"><div class="size-bar" style="width:46px"></div>100%</button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
-              <div class="resize-handle resize-s" title="Cambiar alto"></div>
-              <div class="resize-handle resize-e" title="Cambiar ancho"></div>
-              <div class="resize-handle resize-se" title="Redimensionar"></div>
               <div><div class="ct">Estados de ventas</div><div class="cs">Cobradas · pendientes · canceladas</div></div>
               <button class="btn bts sm" onclick="iaChartEstados()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartEstados" onclick="toggleLabels('chartEstados',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
@@ -521,12 +540,17 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- 2-col row -->
       <div class="dash-row dash-row-2" id="row-tasks">
         <div class="wgt dash-item" id="wgt-tareas-chart" data-size="half">
-          <div class="card">
+          <div class="card" style="position:relative">
+            <div class="size-picker">
+              <button class="size-btn" onclick="setWidgetWidth(this,25)"><div class="size-bar" style="width:16px"></div>25%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,33)"><div class="size-bar" style="width:22px"></div>33%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,50)"><div class="size-bar" style="width:28px"></div>50%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,66)"><div class="size-bar" style="width:34px"></div>66%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,75)"><div class="size-bar" style="width:40px"></div>75%</button>
+              <button class="size-btn active" onclick="setWidgetWidth(this,100)"><div class="size-bar" style="width:46px"></div>100%</button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
-              <div class="resize-handle resize-s" title="Cambiar alto"></div>
-              <div class="resize-handle resize-e" title="Cambiar ancho"></div>
-              <div class="resize-handle resize-se" title="Redimensionar"></div>
               <div><div class="ct">Estado de tareas</div><div class="cs">Por tipo</div></div>
               <button class="btn bts sm" onclick="iaChartTareas()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartTareas" onclick="toggleLabels('chartTareas',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
@@ -535,12 +559,17 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
           </div>
         </div>
         <div class="wgt dash-item" id="wgt-top-clientes" data-size="half">
-          <div class="card">
+          <div class="card" style="position:relative">
+            <div class="size-picker">
+              <button class="size-btn" onclick="setWidgetWidth(this,25)"><div class="size-bar" style="width:16px"></div>25%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,33)"><div class="size-bar" style="width:22px"></div>33%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,50)"><div class="size-bar" style="width:28px"></div>50%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,66)"><div class="size-bar" style="width:34px"></div>66%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,75)"><div class="size-bar" style="width:40px"></div>75%</button>
+              <button class="size-btn active" onclick="setWidgetWidth(this,100)"><div class="size-bar" style="width:46px"></div>100%</button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
-              <div class="resize-handle resize-s" title="Cambiar alto"></div>
-              <div class="resize-handle resize-e" title="Cambiar ancho"></div>
-              <div class="resize-handle resize-se" title="Redimensionar"></div>
               <div><div class="ct">Top 5 clientes</div><div class="cs">Por monto facturado</div></div>
               <button class="btn bts sm" onclick="iaChartClientes()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartClientes" onclick="toggleLabels('chartClientes',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
@@ -555,12 +584,17 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- WIDGET: Licitaciones resumen -->
       <div class="dash-row" id="row-licitaciones">
         <div class="wgt dash-item" id="wgt-licitaciones-dash" data-size="full">
-          <div class="card">
+          <div class="card" style="position:relative">
+            <div class="size-picker">
+              <button class="size-btn" onclick="setWidgetWidth(this,25)"><div class="size-bar" style="width:16px"></div>25%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,33)"><div class="size-bar" style="width:22px"></div>33%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,50)"><div class="size-bar" style="width:28px"></div>50%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,66)"><div class="size-bar" style="width:34px"></div>66%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,75)"><div class="size-bar" style="width:40px"></div>75%</button>
+              <button class="size-btn active" onclick="setWidgetWidth(this,100)"><div class="size-bar" style="width:46px"></div>100%</button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
-              <div class="resize-handle resize-s" title="Cambiar alto"></div>
-              <div class="resize-handle resize-e" title="Cambiar ancho"></div>
-              <div class="resize-handle resize-se" title="Redimensionar"></div>
               <div><div class="ct">Licitaciones activas</div><div class="cs">Próximas a vencer · estado general</div></div>
               <button class="btn bts sm" onclick="go('licitaciones',document.querySelector('.ni[onclick*=licitaciones]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver todas →</button>
             </div>
@@ -574,12 +608,17 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- WIDGET: Proyectos + Relacionamiento 2-col -->
       <div class="dash-row dash-row-2" id="row-proy-rel">
         <div class="wgt dash-item" id="wgt-proyectos-dash" data-size="half">
-          <div class="card">
+          <div class="card" style="position:relative">
+            <div class="size-picker">
+              <button class="size-btn" onclick="setWidgetWidth(this,25)"><div class="size-bar" style="width:16px"></div>25%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,33)"><div class="size-bar" style="width:22px"></div>33%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,50)"><div class="size-bar" style="width:28px"></div>50%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,66)"><div class="size-bar" style="width:34px"></div>66%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,75)"><div class="size-bar" style="width:40px"></div>75%</button>
+              <button class="size-btn active" onclick="setWidgetWidth(this,100)"><div class="size-bar" style="width:46px"></div>100%</button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
-              <div class="resize-handle resize-s" title="Cambiar alto"></div>
-              <div class="resize-handle resize-e" title="Cambiar ancho"></div>
-              <div class="resize-handle resize-se" title="Redimensionar"></div>
               <div><div class="ct">Proyectos estratégicos</div><div class="cs">Estado y riesgo</div></div>
               <button class="btn bts sm" onclick="go('proyectos',document.querySelector('.ni[onclick*=proyectos]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver →</button>
             </div>
@@ -589,12 +628,17 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
           </div>
         </div>
         <div class="wgt dash-item" id="wgt-relacionamiento-dash" data-size="half">
-          <div class="card">
+          <div class="card" style="position:relative">
+            <div class="size-picker">
+              <button class="size-btn" onclick="setWidgetWidth(this,25)"><div class="size-bar" style="width:16px"></div>25%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,33)"><div class="size-bar" style="width:22px"></div>33%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,50)"><div class="size-bar" style="width:28px"></div>50%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,66)"><div class="size-bar" style="width:34px"></div>66%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,75)"><div class="size-bar" style="width:40px"></div>75%</button>
+              <button class="size-btn active" onclick="setWidgetWidth(this,100)"><div class="size-bar" style="width:46px"></div>100%</button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
-              <div class="resize-handle resize-s" title="Cambiar alto"></div>
-              <div class="resize-handle resize-e" title="Cambiar ancho"></div>
-              <div class="resize-handle resize-se" title="Redimensionar"></div>
               <div><div class="ct">Relacionamiento</div><div class="cs">Contactos · alertas de seguimiento</div></div>
               <button class="btn bts sm" onclick="go('relacionamiento',document.querySelector('.ni[onclick*=relacionamiento]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver →</button>
             </div>
@@ -608,12 +652,17 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- WIDGET: Proveedores -->
       <div class="dash-row" id="row-proveedores">
         <div class="wgt dash-item" id="wgt-proveedores-dash" data-size="full">
-          <div class="card">
+          <div class="card" style="position:relative">
+            <div class="size-picker">
+              <button class="size-btn" onclick="setWidgetWidth(this,25)"><div class="size-bar" style="width:16px"></div>25%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,33)"><div class="size-bar" style="width:22px"></div>33%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,50)"><div class="size-bar" style="width:28px"></div>50%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,66)"><div class="size-bar" style="width:34px"></div>66%</button>
+              <button class="size-btn" onclick="setWidgetWidth(this,75)"><div class="size-bar" style="width:40px"></div>75%</button>
+              <button class="size-btn active" onclick="setWidgetWidth(this,100)"><div class="size-bar" style="width:46px"></div>100%</button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
-              <div class="resize-handle resize-s" title="Cambiar alto"></div>
-              <div class="resize-handle resize-e" title="Cambiar ancho"></div>
-              <div class="resize-handle resize-se" title="Redimensionar"></div>
               <div><div class="ct">Proveedores</div><div class="cs">Estado · margen · potencial estratégico</div></div>
               <button class="btn bts sm" onclick="go('proveedores',document.querySelector('.ni[onclick*=proveedores]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver todos →</button>
             </div>
@@ -1987,132 +2036,19 @@ let sortableInstances=[];
 let dragModeOn=false;
 
 
-// ═══ WIDGET RESIZE ═══
-let resizeState=null;
-const widgetSizes={};  // id → {w, h}
-
-function initResizeHandles(){
-  document.querySelectorAll('.resize-handle').forEach(handle=>{
-    handle.addEventListener('mousedown',startResize);
-    handle.addEventListener('touchstart',startResize,{passive:false});
-  });
-}
-
-function startResize(e){
-  if(!dragModeOn)return;
-  e.preventDefault();e.stopPropagation();
-  const handle=e.currentTarget;
-  const widget=handle.closest('.dash-item');
-  if(!widget)return;
-  const isS=handle.classList.contains('resize-s');
-  const isE=handle.classList.contains('resize-e');
-  const isSE=handle.classList.contains('resize-se');
-  const startX=e.touches?e.touches[0].clientX:e.clientX;
-  const startY=e.touches?e.touches[0].clientY:e.clientY;
-  const startW=widget.offsetWidth;
-  const startH=widget.offsetHeight;
-  const row=widget.closest('.dash-row');
-  const rowW=row?row.offsetWidth:startW;
-  widget.style.transition='none';
-
-  resizeState={widget,isS,isE,isSE,startX,startY,startW,startH,rowW};
-
-  const onMove=ev=>{
-    if(!resizeState)return;
-    const cx=ev.touches?ev.touches[0].clientX:ev.clientX;
-    const cy=ev.touches?ev.touches[0].clientY:ev.clientY;
-    const dx=cx-resizeState.startX;
-    const dy=cy-resizeState.startY;
-    const {widget,isS,isE,isSE,startW,startH,rowW}=resizeState;
-    if(isE||isSE){
-      const newW=Math.max(200,startW+dx);
-      const pct=Math.min(100,Math.round(newW/rowW*100));
-      widget.style.flex='none';
-      widget.style.width=pct+'%';
-    }
-    if(isS||isSE){
-      const card=widget.querySelector('.card');
-      if(card){
-        const newH=Math.max(120,startH+dy);
-        card.style.height=newH+'px';
-        // Also resize canvas inside
-        const cb=card.querySelector('.cb');
-        if(cb){
-          const cbH=Math.max(80,newH-60);
-          cb.style.height=cbH+'px';
-          const canvas=cb.querySelector('canvas');
-          if(canvas){canvas.style.height=cbH+'px';}
-        }
-      }
-    }
-  };
-
-  const onUp=()=>{
-    if(!resizeState)return;
-    resizeState.widget.style.transition='';
-    resizeState=null;
-    saveWidgetSizes();
-    setTimeout(()=>{destroyDashCharts();renderDashboard();},80);
-    document.removeEventListener('mousemove',onMove);
-    document.removeEventListener('mouseup',onUp);
-    document.removeEventListener('touchmove',onMove);
-    document.removeEventListener('touchend',onUp);
-  };
-
-  document.addEventListener('mousemove',onMove);
-  document.addEventListener('mouseup',onUp);
-  document.addEventListener('touchmove',onMove,{passive:false});
-  document.addEventListener('touchend',onUp);
-}
-
-function saveWidgetSizes(){
-  const sizes={};
-  document.querySelectorAll('.dash-item[id]').forEach(w=>{
-    const card=w.querySelector('.card');
-    sizes[w.id]={
-      width:w.style.width||'',
-      flex:w.style.flex||'',
-      cardH:card?card.style.height||'':''
-    };
-  });
-  localStorage.setItem('apxwsizes',JSON.stringify(sizes));
-}
-
-function restoreWidgetSizes(){
-  try{
-    const raw=localStorage.getItem('apxwsizes');
-    if(!raw)return;
-    const sizes=JSON.parse(raw);
-    Object.entries(sizes).forEach(([id,s])=>{
-      const w=document.getElementById(id);if(!w)return;
-      if(s.width){w.style.flex='none';w.style.width=s.width;}
-      if(s.cardH){
-        const card=w.querySelector('.card');
-        if(card){
-          card.style.height=s.cardH;
-          const cb=card.querySelector('.cb');
-          if(cb){
-            const cbH=Math.max(80,parseInt(s.cardH)-60);
-            cb.style.height=cbH+'px';
-          }
-        }
-      }
-    });
-  }catch(e){}
-}
-
 function toggleDragMode(){
   dragModeOn=!dragModeOn;
   document.body.classList.toggle('drag-mode',dragModeOn);
   document.getElementById('drag-mode-badge').style.display=dragModeOn?'inline-flex':'none';
-  const rsBtn=document.getElementById('reset-sizes-btn');if(rsBtn)rsBtn.style.display=dragModeOn?'inline-flex':'none';
   if(dragModeOn){
     initSortable();
-    initResizeHandles();
-    toast('Modo edición activo — arrastrá y redimensioná los widgets','info');
+    showWidgetSizeControls(true);
+    toast('Modo edición — arrastrá y ajustá el ancho de cada widget','info');
   } else {
     destroySortable();
+    showWidgetSizeControls(false);
     saveDashLayout();
+    saveWidgetSizes();
     toast('Layout guardado ✓','success');
   }
 }
@@ -2149,15 +2085,76 @@ function initSortable(){
 }
 
 
-function resetAllSizes(){
-  document.querySelectorAll('.dash-item[id]').forEach(w=>{
-    w.style.flex='';w.style.width='';
-    const card=w.querySelector('.card');
-    if(card){card.style.height='';const cb=card.querySelector('.cb');if(cb){cb.style.height='';}}
+
+// ═══ WIDGET SIZE CONTROLS ═══
+function setWidgetWidth(btn, pct){
+  const card = btn.closest('.card');
+  const widget = card?.closest('.dash-item');
+  if(!widget) return;
+  // Apply width
+  if(pct === 100){
+    widget.style.flex = '1';
+    widget.style.width = '';
+    widget.style.minWidth = '';
+  } else {
+    widget.style.flex = 'none';
+    widget.style.width = pct + '%';
+    widget.style.minWidth = '200px';
+  }
+  // Mark active button
+  card.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  saveWidgetSizes();
+  setTimeout(()=>{ destroyDashCharts(); renderDashboard(); }, 80);
+}
+
+function showWidgetSizeControls(show){
+  // Sync active button state when entering edit mode
+  if(show){
+    document.querySelectorAll('.dash-item[id]').forEach(w => {
+      const card = w.querySelector('.card');
+      if(!card) return;
+      const currentW = w.style.width;
+      const pct = currentW ? parseInt(currentW) : 100;
+      card.querySelectorAll('.size-btn').forEach(b => {
+        const bPct = parseInt(b.textContent);
+        b.classList.toggle('active', bPct === pct);
+      });
+    });
+  }
+}
+
+function saveWidgetSizes(){
+  const sizes = {};
+  document.querySelectorAll('.dash-item[id]').forEach(w => {
+    sizes[w.id] = {
+      flex: w.style.flex || '',
+      width: w.style.width || '',
+      minWidth: w.style.minWidth || ''
+    };
   });
-  localStorage.removeItem('apxwsizes');
-  setTimeout(()=>{destroyDashCharts();renderDashboard();},80);
-  toast('Tamaños restablecidos','info');
+  localStorage.setItem('apxwsizes', JSON.stringify(sizes));
+}
+
+function restoreWidgetSizes(){
+  try{
+    const raw = localStorage.getItem('apxwsizes');
+    if(!raw) return;
+    const sizes = JSON.parse(raw);
+    Object.entries(sizes).forEach(([id, s]) => {
+      const w = document.getElementById(id);
+      if(!w) return;
+      if(s.width){ w.style.flex = s.flex || 'none'; w.style.width = s.width; w.style.minWidth = s.minWidth || '200px'; }
+      // Sync active button
+      const card = w.querySelector('.card');
+      if(card && s.width){
+        const pct = parseInt(s.width);
+        card.querySelectorAll('.size-btn').forEach(b => {
+          b.classList.toggle('active', parseInt(b.textContent) === pct);
+        });
+      }
+    });
+  } catch(e){}
 }
 
 function destroySortable(){
