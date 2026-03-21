@@ -286,6 +286,13 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
 </style>
 </head>
 <body>
+<div id="splash" style="position:fixed;inset:0;background:#0c0c0e;z-index:600;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;letter-spacing:-.03em;color:#e8e8ec;display:flex;align-items:center;gap:10px">
+    <div style="width:10px;height:10px;background:#e8ff47;border-radius:50%;box-shadow:0 0 12px #e8ff47"></div>
+    Storing
+  </div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:#6b6b78;letter-spacing:.1em;text-transform:uppercase" id="splash-msg">Iniciando...</div>
+</div>
 <!-- LOGIN -->
 <div class="ls" id="ls" style="display:none">
   <div class="lb">
@@ -984,7 +991,7 @@ async function startLogin(){
 
 function gbHTML(){return `<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continuar con Google`;}
 function showErr(m){const e=document.getElementById('lerr');e.textContent=m;e.classList.add('show');}
-function signOut(){if(window.google&&tok)google.accounts.oauth2.revoke(tok,()=>{});clearSession();clearTimeout(inactivityTimer);tok=null;sid2=null;cu=null;clearInterval(stimer);clearInterval(atimer);document.getElementById('ls').classList.remove('hidden');document.getElementById('sidebar').style.display='none';document.getElementById('app').style.display='none';document.getElementById('gbtn').disabled=false;document.getElementById('gbtn').innerHTML=gbHTML();document.getElementById('lerr').classList.remove('show');}
+function signOut(){if(window.google&&tok)google.accounts.oauth2.revoke(tok,()=>{});clearSession();clearTimeout(inactivityTimer);tok=null;sid2=null;cu=null;clearInterval(stimer);clearInterval(atimer);showLoginScreen();document.getElementById('gbtn').disabled=false;document.getElementById('gbtn').innerHTML=gbHTML();document.getElementById('lerr').classList.remove('show');}
 
 function showApp(){
   hideSplash();
@@ -2974,15 +2981,24 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(icon)icon.innerHTML='<path d="M8 3a5 5 0 1 0 0 10A5 5 0 0 0 8 3z" fill="currentColor" stroke="none"/><path d="M8 1v1M8 14v1M1 8H2M14 8h1M3.22 3.22l.7.7M12.08 12.08l.7.7M3.22 12.78l.7-.7M12.08 3.92l.7-.7" stroke="currentColor"/>';
     },100);
   }
+
   const savedSid=localStorage.getItem('apex_sid');
+
+  // Siempre ocultar splash al inicio
+  document.getElementById('splash').style.display='none';
+  document.getElementById('ls').style.display='none';
+  document.getElementById('sidebar').style.display='none';
+  document.getElementById('app').style.display='none';
+
   if(savedSid){
-    // Hay sesión previa: mostrar splash (nunca el login) y arrancar auto-login
+    document.getElementById('sid').value=savedSid;
+    // Mostrar splash mientras se restaura sesión
     document.getElementById('splash').style.display='flex';
-    document.getElementById('ls').style.display='none';
-    if(savedSid)document.getElementById('sid').value=savedSid;
+    // Arrancar auto-login cuando el SDK de Google esté listo
     const startAuto=()=>{
-      if(window.google&&window.google.accounts){tryAutoLogin();}
-      else{
+      if(window.google&&window.google.accounts){
+        tryAutoLogin();
+      } else {
         let attempts=0;
         const wait=setInterval(()=>{
           attempts++;
@@ -2993,10 +3009,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     };
     startAuto();
   } else {
-    // Primera vez: mostrar login directamente
-    document.getElementById('splash').style.display='none';
+    // Sin sesión previa: mostrar login directamente
     document.getElementById('ls').style.display='flex';
-    if(savedSid)document.getElementById('sid').value=savedSid;
   }
 });
 </script>
