@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RIV</title>
+<title>SIV</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -152,8 +153,8 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
 .view.active{display:block}
 @keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 /* CARD */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s}
-.card:hover{border-color:var(--border2)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s,box-shadow .25s,transform .25s;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.card:hover{border-color:var(--border2);box-shadow:0 8px 28px rgba(0,0,0,.32);transform:translateY(-2px)}
 .ch{padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
 .ct{font-family:var(--fd);font-weight:600;font-size:.85rem;letter-spacing:-.01em}
 .cs{font-family:var(--fm);font-size:.59rem;color:var(--muted);letter-spacing:.06em;margin-top:2px}
@@ -214,8 +215,8 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
 .ti .toi{background:rgba(92,168,255,.15);color:var(--blue)}
 /* KPI */
 .krow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;position:relative;overflow:hidden;transition:border-color .2s}
-.kpi:hover{border-color:var(--border2)}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden;transition:border-color .25s,box-shadow .25s,transform .25s;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.kpi:hover{border-color:var(--border2);box-shadow:0 8px 28px rgba(0,0,0,.32);transform:translateY(-3px)}
 .kpi::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle at top right,var(--ad),transparent 70%);pointer-events:none}
 .klbl{font-family:var(--fm);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
 .kval{font-family:var(--fd);font-weight:700;font-size:1.75rem;letter-spacing:-.03em;line-height:1;margin-bottom:7px}
@@ -378,9 +379,20 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
   <div class="view active" id="view-gestion">
     <div class="krow">
       <div class="kpi"><div class="klbl">Ventas del mes</div><div class="kval" id="kmes">$0</div><div class="kdelta" id="kmesd">─</div></div>
-      <div class="kpi"><div class="klbl">Total registros</div><div class="kval" id="ktot">0</div><div class="kdelta du">base compartida</div></div>
-      <div class="kpi"><div class="klbl">Ticket promedio</div><div class="kval" id="ktick">$0</div><div class="kdelta" id="ktickd">─</div></div>
+      <div class="kpi"><div class="klbl">Tareas pendientes</div><div class="kval" id="ktot" style="color:var(--orange)">0</div><div class="kdelta" id="ktotd">de 0 totales</div></div>
+      <div class="kpi" id="kpi-gauge" style="padding:14px 18px 10px"><div class="klbl">Forecast del mes</div><canvas id="gaugeChart" style="display:block;margin:0 auto" width="160" height="90"></canvas><div class="kdelta" style="text-align:center;margin-top:-4px" id="ktickd">─</div></div>
       <div class="kpi"><div class="klbl">Mejor cliente</div><div class="kval" style="font-size:1rem;padding-top:4px" id="kcli">─</div><div class="kdelta" id="kcliv">sin ventas</div></div>
+    </div>
+
+    <!-- MINI LINE CHART: Real vs Forecast -->
+    <div class="card" style="margin-bottom:22px">
+      <div class="ch" style="padding:14px 18px 10px">
+        <div><div class="ct" style="font-size:.82rem">Real vs Forecast mensual</div></div>
+        <select id="kpi-fc-year" onchange="renderKpiFcChart()" style="margin-left:auto;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--fm);font-size:.62rem;padding:3px 8px;outline:none">
+          <option value="2023">2023</option><option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option><option value="2028">2028</option><option value="2029">2029</option><option value="2030">2030</option>
+        </select>
+      </div>
+      <div class="cb" style="padding:0 4px 4px"><div style="position:relative;height:130px"><canvas id="kpiFcChart"></canvas></div></div>
     </div>
 
     <!-- TOOLBAR -->
@@ -430,6 +442,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Ventas por mes</div><div class="cs">Ingresos reales · período</div></div>
+              <button class="lbl-toggle" id="lbl-chartVentasMes" onclick="toggleLabels('chartVentasMes',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
               <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
                 <select class="fsel" id="db-year" onchange="renderDashboard()" style="width:auto;padding:5px 28px 5px 10px;font-size:.72rem">
                   <option value="2023">2023</option><option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option><option value="2028">2028</option><option value="2029">2029</option><option value="2030">2030</option>
@@ -448,6 +461,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Ventas reales vs Forecast</div><div class="cs">Comparativo mensual</div></div>
+              <button class="lbl-toggle" id="lbl-chartForecast" onclick="toggleLabels('chartForecast',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
               <button class="btn bts sm" onclick="go('forecast',document.querySelector('.ni[data-view=forecast]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver Forecast →</button>
             </div>
             <div class="cb"><div style="position:relative;height:220px"><canvas id="chartForecast"></canvas></div></div>
@@ -462,6 +476,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Ventas por categoría</div><div class="cs">% del total</div></div>
+              <button class="lbl-toggle" id="lbl-chartCats" onclick="toggleLabels('chartCats',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
             </div>
             <div class="cb"><div style="position:relative;height:200px"><canvas id="chartCats"></canvas></div></div>
           </div>
@@ -471,6 +486,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Estados de ventas</div><div class="cs">Cobradas · pendientes · canceladas</div></div>
+              <button class="lbl-toggle" id="lbl-chartEstados" onclick="toggleLabels('chartEstados',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
             </div>
             <div class="cb"><div style="position:relative;height:200px"><canvas id="chartEstados"></canvas></div></div>
           </div>
@@ -484,6 +500,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Estado de tareas</div><div class="cs">Por tipo</div></div>
+              <button class="lbl-toggle" id="lbl-chartTareas" onclick="toggleLabels('chartTareas',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
             </div>
             <div class="cb"><div style="position:relative;height:200px"><canvas id="chartTareas"></canvas></div></div>
           </div>
@@ -493,6 +510,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Top 5 clientes</div><div class="cs">Por monto facturado</div></div>
+              <button class="lbl-toggle" id="lbl-chartClientes" onclick="toggleLabels('chartClientes',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
             </div>
             <div class="cb"><div style="position:relative;height:200px"><canvas id="chartClientes"></canvas></div></div>
           </div>
@@ -1276,14 +1294,99 @@ function verMas(){
 function updKPI(){
   const now=new Date();const m=now.getMonth();const y=now.getFullYear();
   const mv=S.v.filter(x=>{const d=new Date(x.fecha+'T12:00:00');return d.getMonth()===m&&d.getFullYear()===y&&x.estado!=='cancelada';});
-  document.getElementById('kmes').textContent='$'+fn(mv.reduce((s,x)=>s+x.monto,0));
-  document.getElementById('ktot').textContent=S.v.length;
+  const ventasMes=mv.reduce((s,x)=>s+x.monto,0);
+  document.getElementById('kmes').textContent='$'+fn(ventasMes);
+  document.getElementById('kmesd').textContent=mv.length+' operaciones';
+
+  // Tareas pendientes
+  const pendientes=S.t.filter(x=>!x.done).length;
+  const totalT=S.t.length;
+  document.getElementById('ktot').textContent=pendientes;
+  document.getElementById('ktot').style.color=pendientes>5?'var(--red)':pendientes>0?'var(--orange)':'var(--green)';
+  document.getElementById('ktotd').textContent='de '+totalT+' tareas totales';
+
+  // Velocímetro: ventas mes vs meta del forecast
+  const metaMes=getMeta(y,m+1);
+  renderGauge(ventasMes,metaMes);
+
+  // Mejor cliente
   const act=S.v.filter(x=>x.estado!=='cancelada');
-  document.getElementById('ktick').textContent='$'+fn(act.length?act.reduce((s,x)=>s+x.monto,0)/act.length:0);
   const cm2={};act.forEach(x=>{cm2[x.cliente]=(cm2[x.cliente]||0)+x.monto;});
   const top=Object.entries(cm2).sort((a,b)=>b[1]-a[1])[0];
-  document.getElementById('kcli').textContent=top?top[0].split(' ')[0]:'─';
+  document.getElementById('kcli').textContent=top?top[0]:'─';
   document.getElementById('kcliv').textContent=top?'$'+fn(top[1]):'sin ventas';
+}
+
+let gaugeChartInst=null;
+function renderGauge(real,meta){
+  const pct=meta>0?Math.min(real/meta,1.2):0;
+  const C=chartColors();
+  const ctx=document.getElementById('gaugeChart');
+  if(!ctx)return;
+  if(gaugeChartInst){gaugeChartInst.destroy();gaugeChartInst=null;}
+  const color=pct>=1?C.green:pct>=0.7?C.orange:C.red;
+  const remaining=Math.max(0,1.2-pct);
+  gaugeChartInst=new Chart(ctx,{
+    type:'doughnut',
+    data:{datasets:[{
+      data:[pct,remaining],
+      backgroundColor:[color,document.body.classList.contains('light')?'#e0e0e8':'#1a1a1f'],
+      borderWidth:0,
+      circumference:180,rotation:270,
+    }]},
+    options:{
+      responsive:false,cutout:'72%',
+      plugins:{
+        legend:{display:false},
+        tooltip:{enabled:false},
+      }
+    }
+  });
+  // Label central en el canvas
+  const kd=document.getElementById('ktickd');
+  if(kd){
+    const pctShow=meta>0?Math.round(pct*100)+'%':'Sin meta';
+    kd.innerHTML=meta>0
+      ?`<span style="font-family:var(--fd);font-size:1rem;font-weight:700;color:${color}">${pctShow}</span><br><span style="font-size:.6rem;color:var(--muted)">$${fn(real)} / $${fn(meta)}</span>`
+      :`<span style="font-size:.65rem;color:var(--muted)">Cargá meta en Forecast</span>`;
+  }
+}
+
+let kpiFcChartInst=null;
+function renderKpiFcChart(){
+  const yr=parseInt(document.getElementById('kpi-fc-year')?.value||new Date().getFullYear());
+  const C=chartColors();
+  const MONTHS_S=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const reales=MONTHS_S.map((_,i)=>{
+    return S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getFullYear()===yr&&d.getMonth()===i;}).reduce((s,x)=>s+x.monto,0);
+  });
+  const metas=MONTHS_S.map((_,i)=>getMeta(yr,i+1));
+  const ctx=document.getElementById('kpiFcChart');if(!ctx)return;
+  if(kpiFcChartInst){kpiFcChartInst.destroy();kpiFcChartInst=null;}
+  const g=ctx.getContext('2d').createLinearGradient(0,0,0,130);
+  g.addColorStop(0,'rgba(61,255,160,.18)');g.addColorStop(1,'rgba(61,255,160,0)');
+  kpiFcChartInst=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:MONTHS_S,
+      datasets:[
+        {label:'Meta',data:metas,borderColor:'rgba(232,255,71,.5)',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false,tension:.4},
+        {label:'Real',data:reales,borderColor:C.green,borderWidth:2,backgroundColor:g,fill:true,tension:.4,pointRadius:3,pointBackgroundColor:C.green,pointHoverRadius:5},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{labels:{color:C.tick,boxWidth:10,font:{size:10}}},
+        tooltip:{backgroundColor:C.tooltip.bg,borderColor:C.tooltip.border,borderWidth:1,titleColor:C.tooltip.color,bodyColor:C.tooltip.color,callbacks:{label:c=>` ${c.dataset.label}: $${fn(c.parsed.y)}`}},
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:9}}},
+        y:{grid:{color:C.grid},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:9},callback:v=>'$'+fn(v)}}
+      }
+    }
+  });
 }
 
 // ═══ IMPORT EXCEL ═══
@@ -1700,6 +1803,7 @@ function renderDashboard(){
     });
   }
 
+  renderKpiFcChart();
   // ── Mini widget: Licitaciones ──
   const licEl=document.getElementById('dash-lic-content');
   if(licEl&&!document.getElementById('wgt-licitaciones-dash')?.classList.contains('hidden')){
@@ -2812,6 +2916,39 @@ function renderVentasKPIs(){
   if(res)res.textContent=`${S.v.length} registros · mes actual: $${fn(totalMes)} en ${mesData.length} operaciones`;
 }
 
+
+// ═══ CHART LABEL TOGGLE ═══
+const labelStates={};  // chartId → boolean
+
+function toggleLabels(chartId,btn){
+  labelStates[chartId]=!labelStates[chartId];
+  btn.classList.toggle('on',labelStates[chartId]);
+  // Find chart instance
+  const canvas=document.getElementById(chartId);
+  if(!canvas)return;
+  const inst=Chart.getChart(canvas);
+  if(!inst)return;
+  const show=labelStates[chartId];
+  // Toggle datalabels plugin if available
+  if(inst.options.plugins.datalabels){
+    inst.options.plugins.datalabels.display=show;
+  } else {
+    // Fallback: toggle data values on the chart
+    inst.options.plugins.datalabels={
+      display:show,
+      color:document.body.classList.contains('light')?'#1a1a2e':'#e8e8ec',
+      font:{family:'IBM Plex Mono',size:9,weight:'500'},
+      anchor:'end',align:'end',offset:2,
+      formatter:(v)=>{
+        if(v===null||v===undefined||v===0)return '';
+        if(typeof v==='number'&&v>999)return '$'+Math.round(v/1000)+'k';
+        return v;
+      }
+    };
+  }
+  inst.update('none');
+}
+
 // ═══ CONFIG ═══
 function saveCfg(){
   cfg.cats=v('ccats');cfg.a24=parseInt(v('ca24'));cfg.a48=parseInt(v('ca48'));cfg.aut=parseInt(v('caut'));
@@ -2835,7 +2972,7 @@ function go(vw,el){
 function om(id){document.getElementById(id).classList.add('open');if(id==='mnv')document.getElementById('vf').value=today();if(id==='mnt'){const n=new Date();document.getElementById('tini').value=n.toISOString().slice(0,16);const t=new Date(n);t.setDate(t.getDate()+1);document.getElementById('tfin').value=t.toISOString().slice(0,16);}}
 function cm(id){document.getElementById(id).classList.remove('open');}
 // Modal close handled in edit section
-function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();renderDashboard();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();}
+function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();renderDashboard();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();renderKpiFcChart();}
 
 // ═══ UTILS ═══
 function toggleTheme(){
