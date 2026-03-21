@@ -80,9 +80,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);display:flex;m
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .ibtn{width:32px;height:32px;background:var(--surface);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;color:var(--muted)}
 .ibtn:hover{border-color:var(--border2);color:var(--text)}
-.wgtbtn{background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--muted);font-family:var(--fm);font-size:.58rem;letter-spacing:.07em;padding:4px 12px;cursor:pointer;transition:all .15s;text-transform:uppercase}
-.wgtbtn:hover{border-color:var(--border2);color:var(--text)}
-.wgtbtn.active{background:var(--ad2);border-color:var(--accent);color:var(--accent)}
+.wgtbtn{display:none} /* legacy - hidden, replaced by dropdown */
+.wgt-chk-row{display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer;font-size:.82rem;transition:background .12s}
+.wgt-chk-row:hover{background:var(--surface2)}
+.wgt-chk-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.wgt-chk-row span{flex:1}
 .wgt{transition:opacity .2s}
 .wgt.hidden{display:none!important}
 /* DRAG GRID */
@@ -369,19 +371,35 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <div class="st">Dashboard</div>
         <div id="drag-mode-badge" style="display:none;background:var(--accent);color:var(--bg);font-family:var(--fm);font-size:.58rem;padding:2px 10px;border-radius:20px;letter-spacing:.08em;text-transform:uppercase">Modo edición</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <span style="font-family:var(--fm);font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Mostrar:</span>
-        <button class="wgtbtn active" data-w="ventas-mes" onclick="toggleWidget(this)">Ventas del mes</button>
-        <button class="wgtbtn active" data-w="forecast" onclick="toggleWidget(this)">Forecast</button>
-        <button class="wgtbtn active" data-w="categorias" onclick="toggleWidget(this)">Categorías</button>
-        <button class="wgtbtn active" data-w="tareas-chart" onclick="toggleWidget(this)">Tareas</button>
-        <button class="wgtbtn active" data-w="top-clientes" onclick="toggleWidget(this)">Top clientes</button>
-        <button class="wgtbtn active" data-w="estado-ventas" onclick="toggleWidget(this)">Estados</button>
-        <button class="wgtbtn active" data-w="tabla-ventas" onclick="toggleWidget(this)">Tabla</button>
-        <button class="wgtbtn active" data-w="licitaciones-dash" onclick="toggleWidget(this)">Licitaciones</button>
-        <button class="wgtbtn active" data-w="proyectos-dash" onclick="toggleWidget(this)">Proyectos</button>
-        <button class="wgtbtn active" data-w="relacionamiento-dash" onclick="toggleWidget(this)">Relacionamiento</button>
-        <button class="wgtbtn active" data-w="proveedores-dash" onclick="toggleWidget(this)">Proveedores</button>
+      <!-- WIDGET DROPDOWN -->
+      <div style="position:relative" id="wgt-dropdown-wrap">
+        <button onclick="toggleWgtDropdown()" style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--fm);font-size:.65rem;padding:7px 14px;cursor:pointer;transition:all .15s" id="wgt-dropdown-btn">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M4 8h8M6 12h4"/></svg>
+          <span id="wgt-dropdown-label">Personalizar widgets</span>
+          <svg width="10" height="10" viewBox="0 0 10 6" fill="currentColor" style="opacity:.5"><path d="M0 0l5 6 5-6z"/></svg>
+        </button>
+        <div id="wgt-dropdown" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--border2);border-radius:10px;min-width:220px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:99;overflow:hidden">
+          <div style="padding:10px 14px 6px;font-family:var(--fm);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Secciones visibles</div>
+          <div style="padding:6px 0">
+            <!-- hidden wgtbtn elements still exist for JS compatibility, hidden from view -->
+            <label class="wgt-chk-row" data-w="ventas-mes"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>📊 Ventas del mes</span></label>
+            <label class="wgt-chk-row" data-w="forecast"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>🎯 Forecast</span></label>
+            <label class="wgt-chk-row" data-w="categorias"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>🥧 Categorías</span></label>
+            <label class="wgt-chk-row" data-w="tareas-chart"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>✅ Tareas</span></label>
+            <label class="wgt-chk-row" data-w="top-clientes"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>🏆 Top clientes</span></label>
+            <label class="wgt-chk-row" data-w="estado-ventas"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>📈 Estados de ventas</span></label>
+            <label class="wgt-chk-row" data-w="tabla-ventas"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>📋 Tabla de ventas</span></label>
+            <div style="margin:4px 0;border-top:1px solid var(--border);padding-top:4px"></div>
+            <label class="wgt-chk-row" data-w="licitaciones-dash"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>📄 Licitaciones</span></label>
+            <label class="wgt-chk-row" data-w="proyectos-dash"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>📐 Proyectos</span></label>
+            <label class="wgt-chk-row" data-w="relacionamiento-dash"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>👥 Relacionamiento</span></label>
+            <label class="wgt-chk-row" data-w="proveedores-dash"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>🏭 Proveedores</span></label>
+          </div>
+          <div style="padding:8px 14px;border-top:1px solid var(--border);display:flex;gap:8px">
+            <button onclick="setAllWidgets(true)" style="flex:1;background:var(--ad);border:1px solid rgba(232,255,71,.2);color:var(--accent);font-family:var(--fm);font-size:.6rem;padding:5px;border-radius:6px;cursor:pointer">Mostrar todo</button>
+            <button onclick="setAllWidgets(false)" style="flex:1;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-family:var(--fm);font-size:.6rem;padding:5px;border-radius:6px;cursor:pointer">Ocultar todo</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1309,26 +1327,72 @@ function destroyDashCharts(){
   dCharts={};
 }
 
+function toggleWidgetChk(chk){
+  const row=chk.closest('.wgt-chk-row');
+  const wid=row.dataset.w;
+  const el=document.getElementById('wgt-'+wid);
+  const visible=chk.checked;
+  if(el)el.classList.toggle('hidden',!visible);
+  localStorage.setItem('apxwgt_'+wid,visible?'1':'0');
+  updateDropdownLabel();
+  if(visible)renderDashboard();
+}
+
 function toggleWidget(btn){
+  // Legacy support - not used visually anymore
   const id='wgt-'+btn.dataset.w;
   const el=document.getElementById(id);
   if(!el)return;
   const hiding=!el.classList.contains('hidden');
   el.classList.toggle('hidden',hiding);
-  btn.classList.toggle('active',!hiding);
-  localStorage.setItem('apxwgt_'+btn.dataset.w, hiding?'0':'1');
-  if(!hiding) renderDashboard();
+  localStorage.setItem('apxwgt_'+btn.dataset.w,hiding?'0':'1');
+  if(!hiding)renderDashboard();
+}
+
+function setAllWidgets(show){
+  document.querySelectorAll('.wgt-chk-row').forEach(row=>{
+    const wid=row.dataset.w;
+    const chk=row.querySelector('input[type=checkbox]');
+    const el=document.getElementById('wgt-'+wid);
+    if(chk)chk.checked=show;
+    if(el)el.classList.toggle('hidden',!show);
+    localStorage.setItem('apxwgt_'+wid,show?'1':'0');
+  });
+  updateDropdownLabel();
+  if(show)renderDashboard();
+}
+
+function updateDropdownLabel(){
+  const total=document.querySelectorAll('.wgt-chk-row').length;
+  const active=document.querySelectorAll('.wgt-chk-row input:checked').length;
+  const lbl=document.getElementById('wgt-dropdown-label');
+  if(lbl){
+    if(active===total)lbl.textContent='Todos los widgets';
+    else if(active===0)lbl.textContent='Ningún widget';
+    else lbl.textContent=`${active} de ${total} widgets`;
+  }
+}
+
+function toggleWgtDropdown(){
+  const dd=document.getElementById('wgt-dropdown');
+  dd.style.display=dd.style.display==='none'?'block':'none';
 }
 
 function restoreWidgets(){
-  document.querySelectorAll('.wgtbtn').forEach(btn=>{
-    const saved=localStorage.getItem('apxwgt_'+btn.dataset.w);
+  document.querySelectorAll('.wgt-chk-row').forEach(row=>{
+    const wid=row.dataset.w;
+    const saved=localStorage.getItem('apxwgt_'+wid);
+    const chk=row.querySelector('input[type=checkbox]');
+    const el=document.getElementById('wgt-'+wid);
     if(saved==='0'){
-      const el=document.getElementById('wgt-'+btn.dataset.w);
+      if(chk)chk.checked=false;
       if(el)el.classList.add('hidden');
-      btn.classList.remove('active');
+    } else {
+      if(chk)chk.checked=true;
+      if(el)el.classList.remove('hidden');
     }
   });
+  updateDropdownLabel();
 }
 
 function chartColors(){
@@ -2061,6 +2125,13 @@ function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('open');
 }
 // Show hamburger on mobile
+// Close widget dropdown on outside click
+document.addEventListener('click',e=>{
+  const wrap=document.getElementById('wgt-dropdown-wrap');
+  const dd=document.getElementById('wgt-dropdown');
+  if(wrap&&dd&&!wrap.contains(e.target)){dd.style.display='none';}
+});
+
 function checkMobile(){
   const isMobile=window.innerWidth<=768;
   const mb=document.getElementById('menu-btn');
