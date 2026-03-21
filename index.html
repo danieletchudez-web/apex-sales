@@ -808,7 +808,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
 <div class="mo" id="mdd"><div class="md" style="max-width:500px">
   <div class="mh"><div class="mt" id="ddt">Proyecto</div><div class="mc" onclick="cm('mdd')">✕</div></div>
   <div class="mb" id="ddb"></div>
-  <div class="mf"><button class="btn btd sm" id="dddel">Eliminar</button><button class="btn bts sm" onclick="cm('mdd')">Cerrar</button><button class="btn btp sm" id="ddmov">Mover →</button></div>
+  <div class="mf"><button class="btn btd sm" id="dddel">Eliminar</button><button class="btn bts sm" onclick="cm('mdd')">Cerrar</button><button class="btn bts sm" id="ddedit">✏️ Editar</button><button class="btn btp sm" id="ddmov">Mover →</button></div>
 </div></div>
 
 <script>
@@ -1239,6 +1239,7 @@ function openDD(id){
   if(ns){mb.textContent='→ '+ns.lbl;mb.onclick=async()=>{d.etapa=ns.id;renderK();cm('mdd');await writeTab(TABS.d,DH,S.d);toast('Movido a '+ns.lbl,'success');};}
   else{mb.textContent='✓ Convertir en venta';mb.onclick=()=>dealToSale(d);}
   document.getElementById('dddel').onclick=async()=>{if(!confirm('¿Eliminar?'))return;S.d=S.d.filter(x=>x.id!==id);renderK();cm('mdd');await writeTab(TABS.d,DH,S.d);toast('Eliminado','info');};
+  document.getElementById('ddedit').onclick=()=>{cm('mdd');editDeal(id);};
   om('mdd');
 }
 
@@ -1312,7 +1313,10 @@ function renderT(){
         </div>
         ${t.notas?`<div style="font-size:.75rem;color:var(--muted);margin-top:5px;line-height:1.5">${esc(t.notas)}</div>`:''}
       </div>
-      <div style="flex-shrink:0"><button class="btn btd ic sm" onclick="delT('${t.id}')">✕</button></div>
+      <div style="flex-shrink:0;display:flex;gap:4px">
+        <button class="btn bts ic sm" onclick="editT('${t.id}')" title="Editar">✏️</button>
+        <button class="btn btd ic sm" onclick="delT('${t.id}')">✕</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1542,6 +1546,126 @@ function renderDashboard(){
         scales:{x:{grid:{color:C.grid},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:10},callback:v=>'$'+fn(v)}},
                 y:{grid:{display:false},ticks:{color:C.tick,font:{size:11}}}}}
     });
+  }
+
+  // ── Mini widget: Licitaciones ──
+  const licEl=document.getElementById('dash-lic-content');
+  if(licEl&&!document.getElementById('wgt-licitaciones-dash')?.classList.contains('hidden')){
+    const now2=new Date();
+    const activas=S.l.filter(x=>x.estado==='en analisis'||x.estado==='presentada');
+    const vencen=activas.filter(x=>x.limite&&(new Date(x.limite+'T12:00')-now2)/86400000<=7);
+    const adj=S.l.filter(x=>x.estado==='adjudicada').length;
+    const tasa=S.l.length?Math.round(adj/S.l.length*100):0;
+    if(!S.l.length){
+      licEl.innerHTML=`<div class="es" style="padding:20px 0"><div class="ei" style="font-size:1.5rem">📋</div><div class="et" style="font-size:.78rem">Sin licitaciones cargadas</div></div>`;
+    } else {
+      licEl.innerHTML=`
+        <div style="display:flex;gap:24px;margin-bottom:14px;flex-wrap:wrap">
+          <div><div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);text-transform:uppercase;margin-bottom:3px">Total</div><div style="font-family:var(--fd);font-size:1.5rem;font-weight:700">${S.l.length}</div></div>
+          <div><div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);text-transform:uppercase;margin-bottom:3px">Tasa de éxito</div><div style="font-family:var(--fd);font-size:1.5rem;font-weight:700;color:var(--green)">${tasa}%</div></div>
+          <div><div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);text-transform:uppercase;margin-bottom:3px">Vencen en 7 días</div><div style="font-family:var(--fd);font-size:1.5rem;font-weight:700;color:${vencen.length?'var(--orange)':'var(--muted)'}">${vencen.length}</div></div>
+          <div><div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);text-transform:uppercase;margin-bottom:3px">Valor ofertado</div><div style="font-family:var(--fd);font-size:1.2rem;font-weight:700;color:var(--accent)">$${fn(S.l.reduce((s,x)=>s+x.ofertado,0))}</div></div>
+        </div>
+        ${vencen.length?
+          `<div style="background:rgba(255,170,61,.08);border:1px solid rgba(255,170,61,.25);border-radius:8px;padding:10px 12px">
+            <div style="font-family:var(--fm);font-size:.59rem;color:var(--orange);margin-bottom:6px;text-transform:uppercase">⚠️ Próximas a vencer</div>
+            ${vencen.slice(0,3).map(x=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.8rem;border-bottom:1px solid rgba(255,255,255,.04)">
+              <span><strong>${esc(x.numero)}</strong> — ${esc(x.organismo)}</span>
+              <span style="font-family:var(--fm);font-size:.65rem;color:var(--orange)">${fmtD(x.limite)}</span>
+            </div>`).join('')}
+          </div>` :
+          `<div style="display:flex;flex-wrap:wrap;gap:6px">${S.l.slice(0,5).map(x=>`
+            <div style="background:var(--surface2);border-radius:6px;padding:6px 10px;font-size:.75rem">
+              <span style="font-weight:500">${esc(x.numero)}</span>
+              <span class="pill ${x.estado==='adjudicada'?'pg':x.estado==='perdida'?'pr':x.estado==='presentada'?'pb':'po'}" style="margin-left:6px">${esc(x.estado)}</span>
+            </div>`).join('')}</div>`
+        }`;
+    }
+  }
+
+  // ── Mini widget: Proyectos ──
+  const proyEl=document.getElementById('dash-proy-content');
+  if(proyEl&&!document.getElementById('wgt-proyectos-dash')?.classList.contains('hidden')){
+    if(!S.p.length){
+      proyEl.innerHTML=`<div class="es" style="padding:20px 0"><div class="ei" style="font-size:1.5rem">📐</div><div class="et" style="font-size:.78rem">Sin proyectos cargados</div></div>`;
+    } else {
+      const porEst={exploracion:0,desarrollo:0,implementacion:0,activo:0};
+      S.p.forEach(x=>{if(porEst[x.estado]!==undefined)porEst[x.estado]++;});
+      const riskHigh=S.p.filter(x=>x.riesgo==='alto'||x.riesgo==='critico');
+      const estCol2={exploracion:'var(--muted)',desarrollo:'var(--blue)',implementacion:'var(--orange)',activo:'var(--green)'};
+      proyEl.innerHTML=`
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px">
+          ${Object.entries(porEst).map(([e,n])=>`
+            <div style="background:var(--surface2);border-radius:6px;padding:8px 10px;border-left:2px solid ${estCol2[e]}">
+              <div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);text-transform:uppercase;margin-bottom:2px">${e}</div>
+              <div style="font-family:var(--fd);font-size:1.1rem;font-weight:700;color:${estCol2[e]}">${n}</div>
+            </div>`).join('')}
+        </div>
+        ${riskHigh.length?`
+          <div style="background:rgba(255,92,92,.07);border:1px solid rgba(255,92,92,.2);border-radius:6px;padding:8px 10px">
+            <div style="font-family:var(--fm);font-size:.58rem;color:var(--red);margin-bottom:5px;text-transform:uppercase">⚡ Riesgo alto/crítico</div>
+            ${riskHigh.slice(0,3).map(x=>`<div style="font-size:.78rem;padding:3px 0;display:flex;justify-content:space-between">
+              <span>${esc(x.cliente)}</span>
+              <span style="font-family:var(--fm);font-size:.62rem;color:var(--red)">${x.riesgo}</span>
+            </div>`).join('')}
+          </div>` : `<div style="font-family:var(--fm);font-size:.68rem;color:var(--green)">✓ Sin proyectos en riesgo crítico</div>`}`;
+    }
+  }
+
+  // ── Mini widget: Relacionamiento ──
+  const relEl=document.getElementById('dash-rel-content');
+  if(relEl&&!document.getElementById('wgt-relacionamiento-dash')?.classList.contains('hidden')){
+    if(!S.r.length){
+      relEl.innerHTML=`<div class="es" style="padding:20px 0"><div class="ei" style="font-size:1.5rem">👥</div><div class="et" style="font-size:.78rem">Sin contactos cargados</div></div>`;
+    } else {
+      const now3=new Date();
+      const frios=S.r.filter(x=>x.ultimo_contacto&&(now3-new Date(x.ultimo_contacto+'T12:00'))/86400000>60);
+      const aliados=S.r.filter(x=>x.relacion?.startsWith('4'));
+      const decisores=S.r.filter(x=>x.influencia?.startsWith('4'));
+      relEl.innerHTML=`
+        <div style="display:flex;gap:20px;margin-bottom:12px;flex-wrap:wrap">
+          <div><div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);text-transform:uppercase;margin-bottom:3px">Contactos</div><div style="font-family:var(--fd);font-size:1.4rem;font-weight:700">${S.r.length}</div></div>
+          <div><div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);text-transform:uppercase;margin-bottom:3px">Aliados</div><div style="font-family:var(--fd);font-size:1.4rem;font-weight:700;color:var(--green)">${aliados.length}</div></div>
+          <div><div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);text-transform:uppercase;margin-bottom:3px">Decisores</div><div style="font-family:var(--fd);font-size:1.4rem;font-weight:700;color:var(--accent)">${decisores.length}</div></div>
+          <div><div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);text-transform:uppercase;margin-bottom:3px">Sin contacto +60d</div><div style="font-family:var(--fd);font-size:1.4rem;font-weight:700;color:${frios.length?'var(--orange)':'var(--muted)'}">${frios.length}</div></div>
+        </div>
+        ${frios.length?`
+          <div style="background:rgba(255,170,61,.08);border:1px solid rgba(255,170,61,.2);border-radius:8px;padding:8px 10px">
+            <div style="font-family:var(--fm);font-size:.58rem;color:var(--orange);margin-bottom:5px;text-transform:uppercase">🧊 Relaciones frías</div>
+            ${frios.slice(0,3).map(x=>`<div style="font-size:.78rem;padding:3px 0;display:flex;justify-content:space-between">
+              <span>${esc(x.nombre)}</span>
+              <span style="font-family:var(--fm);font-size:.62rem;color:var(--muted)">${esc(x.institucion||'─')}</span>
+            </div>`).join('')}
+          </div>` :
+          `<div style="font-family:var(--fm);font-size:.68rem;color:var(--green)">✓ Todas las relaciones activas</div>`}`;
+    }
+  }
+
+  // ── Mini widget: Proveedores ──
+  const provEl=document.getElementById('dash-prov-content');
+  if(provEl&&!document.getElementById('wgt-proveedores-dash')?.classList.contains('hidden')){
+    if(!S.pr.length){
+      provEl.innerHTML=`<div class="es" style="padding:20px 0"><div class="ei" style="font-size:1.5rem">🏭</div><div class="et" style="font-size:.78rem">Sin proveedores cargados</div></div>`;
+    } else {
+      const activos2=S.pr.filter(x=>x.estado==='activo');
+      const avgMargen=activos2.length?Math.round(activos2.reduce((s,x)=>s+x.margen,0)/activos2.length):0;
+      const core=S.pr.filter(x=>x.potencial==='critico'||x.potencial==='alto');
+      const potCol2={bajo:'var(--muted)',medio:'var(--blue)',alto:'var(--orange)',critico:'var(--purple)'};
+      provEl.innerHTML=`
+        <div style="display:flex;gap:20px;margin-bottom:14px;flex-wrap:wrap">
+          <div><div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);text-transform:uppercase;margin-bottom:3px">Total</div><div style="font-family:var(--fd);font-size:1.4rem;font-weight:700">${S.pr.length}</div></div>
+          <div><div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);text-transform:uppercase;margin-bottom:3px">Activos</div><div style="font-family:var(--fd);font-size:1.4rem;font-weight:700;color:var(--green)">${activos2.length}</div></div>
+          <div><div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);text-transform:uppercase;margin-bottom:3px">Margen prom.</div><div style="font-family:var(--fd);font-size:1.4rem;font-weight:700;color:var(--accent)">${avgMargen}%</div></div>
+          <div><div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);text-transform:uppercase;margin-bottom:3px">Estratégicos</div><div style="font-family:var(--fd);font-size:1.4rem;font-weight:700;color:var(--purple)">${core.length}</div></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${S.pr.slice(0,6).map(x=>`
+            <div style="background:var(--surface2);border-radius:6px;padding:6px 10px;border-left:2px solid ${potCol2[x.potencial]||'var(--muted)'}">
+              <div style="font-size:.78rem;font-weight:500">${esc(x.nombre)}</div>
+              <div style="font-family:var(--fm);font-size:.58rem;color:var(--muted)">${x.margen}% · ${esc(x.linea||'─')}</div>
+            </div>`).join('')}
+        </div>`;
+    }
   }
 }
 
@@ -1861,7 +1985,10 @@ function renderProv(){
     <td><span class="pill" style="background:${potCol[x.potencial]||'var(--muted)'}22;color:${potCol[x.potencial]||'var(--muted)'}">${esc(x.potencial)||'─'}</span></td>
     <td style="font-size:.75rem;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.contacto)||'─'}</td>
     <td><button class="btn bts sm" onclick="showIAProv('${x.id}')" style="padding:3px 8px;font-size:.58rem">IA 🧠</button></td>
-    <td><button class="btn btd ic sm" onclick="delProv('${x.id}')">✕</button></td>
+    <td style="display:flex;gap:4px">
+      <button class="btn bts ic sm" onclick="editProv('${x.id}')" title="Editar">✏️</button>
+      <button class="btn btd ic sm" onclick="delProv('${x.id}')">✕</button>
+    </td>
   </tr>`).join('');
 }
 
@@ -2002,6 +2129,290 @@ function showIADashboard(){
   renderIAPanel(html);
 }
 
+
+// ═══════════════════════════════════════════════════════
+//  EDICIÓN DE REGISTROS — todas las secciones
+// ═══════════════════════════════════════════════════════
+
+// ── VENTA ──
+function editV(id){
+  const x=S.v.find(r=>r.id===id);if(!x)return;
+  // Pre-cargar modal
+  document.getElementById('vf').value=x.fecha||'';
+  document.getElementById('vcl').value=x.cliente||'';
+  document.getElementById('vpr').value=x.producto||'';
+  document.getElementById('vcat').value=x.categoria||'';
+  document.getElementById('vmo').value=x.monto||'';
+  document.getElementById('vmon').value=x.moneda||'ARS';
+  document.getElementById('vest').value=x.estado||'cobrada';
+  document.getElementById('vven').value=x.vendedor||'';
+  document.getElementById('vnot').value=x.notas||'';
+  // Cambiar botón guardar a actualizar
+  const modal=document.getElementById('mnv');
+  modal.querySelector('.mt').textContent='Editar Venta';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Actualizar';
+  btn.onclick=async()=>{
+    x.fecha=v('vf');x.cliente=v('vcl').trim();x.producto=v('vpr').trim();
+    x.categoria=v('vcat');x.monto=parseFloat(v('vmo'))||0;x.moneda=v('vmon');
+    x.estado=v('vest');x.vendedor=v('vven').trim();x.notas=v('vnot').trim();
+    cm('mnv');resetModalV();renderV();updKPI();renderDashboard();
+    toast('Guardando cambios...','info');
+    await writeTab(TABS.v,VH,S.v);
+    toast('✅ Venta actualizada','success');
+  };
+  om('mnv');
+}
+function resetModalV(){
+  const modal=document.getElementById('mnv');
+  modal.querySelector('.mt').textContent='Nueva Venta';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Guardar Venta';
+  btn.onclick=saveV;
+}
+
+// ── DEAL / PIPELINE ──
+function editDeal(id){
+  const x=S.d.find(r=>r.id===id);if(!x)return;
+  document.getElementById('dn').value=x.nombre||'';
+  document.getElementById('dcl').value=x.cliente||'';
+  document.getElementById('dv').value=x.valor||'';
+  document.getElementById('dmon').value=x.moneda||'ARS';
+  document.getElementById('dp').value=x.prob||50;
+  document.getElementById('det').value=x.etapa||'lead';
+  document.getElementById('df').value=x.fecha||'';
+  document.getElementById('dr').value=x.responsable||'';
+  document.getElementById('dd2').value=x.desc||'';
+  const modal=document.getElementById('mnd');
+  modal.querySelector('.mt').textContent='Editar Proyecto';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Actualizar';
+  btn.onclick=async()=>{
+    x.nombre=v('dn').trim();x.cliente=v('dcl').trim();x.valor=parseFloat(v('dv'))||0;
+    x.moneda=v('dmon');x.prob=parseInt(v('dp'))||50;x.etapa=v('det');
+    x.fecha=v('df');x.responsable=v('dr').trim();x.desc=v('dd2').trim();
+    cm('mnd');resetModalD();renderK();renderDashboard();
+    toast('Guardando...','info');
+    await writeTab(TABS.d,DH,S.d);
+    toast('✅ Proyecto actualizado','success');
+  };
+  om('mnd');
+}
+function resetModalD(){
+  const modal=document.getElementById('mnd');
+  modal.querySelector('.mt').textContent='Nuevo Proyecto / Deal';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Crear Proyecto';
+  btn.onclick=saveD;
+}
+
+// ── TAREA ──
+function editT(id){
+  const x=S.t.find(r=>r.id===id);if(!x)return;
+  document.getElementById('ttit').value=x.titulo||'';
+  document.getElementById('ttip').value=x.tipo||'llamada';
+  document.getElementById('tpri').value=x.prioridad||'media';
+  document.getElementById('tini').value=x.inicio||'';
+  document.getElementById('tfin').value=x.fin||'';
+  document.getElementById('tcl').value=x.cliente||'';
+  document.getElementById('tres').value=x.responsable||'';
+  document.getElementById('tnot').value=x.notas||'';
+  document.getElementById('ta24').checked=x.alarm24!==false&&x.alarm24!=='false';
+  document.getElementById('ta48').checked=x.alarm48!==false&&x.alarm48!=='false';
+  const modal=document.getElementById('mnt');
+  modal.querySelector('.mt').textContent='Editar Tarea';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Actualizar';
+  btn.onclick=async()=>{
+    x.titulo=v('ttit').trim();x.tipo=v('ttip');x.prioridad=v('tpri');
+    x.inicio=v('tini');x.fin=v('tfin');x.cliente=v('tcl').trim();
+    x.responsable=v('tres').trim();x.notas=v('tnot').trim();
+    x.alarm24=document.getElementById('ta24').checked;
+    x.alarm48=document.getElementById('ta48').checked;
+    cm('mnt');resetModalT();renderT();
+    toast('Guardando...','info');
+    await writeTab(TABS.t,TH,S.t);
+    toast('✅ Tarea actualizada','success');
+  };
+  om('mnt');
+}
+function resetModalT(){
+  const modal=document.getElementById('mnt');
+  modal.querySelector('.mt').textContent='Nueva Tarea';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Crear Tarea';
+  btn.onclick=saveT;
+}
+
+// ── LICITACION ──
+function editLic(id){
+  const x=S.l.find(r=>r.id===id);if(!x)return;
+  document.getElementById('lic-numero').value=x.numero||'';
+  document.getElementById('lic-organismo').value=x.organismo||'';
+  document.getElementById('lic-tipo').value=x.tipo||'publica';
+  document.getElementById('lic-estado').value=x.estado||'en analisis';
+  document.getElementById('lic-apertura').value=x.apertura||'';
+  document.getElementById('lic-limite').value=x.limite||'';
+  document.getElementById('lic-ofertado').value=x.ofertado||'';
+  document.getElementById('lic-ganador').value=x.ganador||'';
+  document.getElementById('lic-competidores').value=x.competidores||'';
+  document.getElementById('lic-producto').value=x.producto||'';
+  document.getElementById('lic-notas').value=x.notas||'';
+  const modal=document.getElementById('modal-lic');
+  modal.querySelector('.mt').textContent='Editar Licitación';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Actualizar';
+  btn.onclick=async()=>{
+    x.numero=v('lic-numero').trim();x.organismo=v('lic-organismo').trim();
+    x.tipo=v('lic-tipo');x.estado=v('lic-estado');
+    x.apertura=v('lic-apertura');x.limite=v('lic-limite');
+    x.ofertado=parseFloat(v('lic-ofertado'))||0;x.ganador=parseFloat(v('lic-ganador'))||0;
+    x.diferencia=x.ofertado&&x.ganador?((x.ofertado-x.ganador)/x.ganador*100).toFixed(1):'';
+    x.competidores=v('lic-competidores').trim();x.producto=v('lic-producto').trim();
+    x.notas=v('lic-notas').trim();
+    cm('modal-lic');resetModalLic();renderLic();updLicKPIs();renderDashboard();
+    toast('Guardando...','info');
+    await writeTab(TABS.l,LH,S.l);
+    toast('✅ Licitación actualizada','success');
+  };
+  om('modal-lic');
+}
+function resetModalLic(){
+  const modal=document.getElementById('modal-lic');
+  modal.querySelector('.mt').textContent='Nueva Licitación';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Guardar';
+  btn.onclick=saveLic;
+}
+
+// ── PROYECTO ──
+function editProy(id){
+  const x=S.p.find(r=>r.id===id);if(!x)return;
+  document.getElementById('proy-cliente').value=x.cliente||'';
+  document.getElementById('proy-tipo').value=x.tipo||'';
+  document.getElementById('proy-estado').value=x.estado||'exploracion';
+  document.getElementById('proy-riesgo').value=x.riesgo||'bajo';
+  document.getElementById('proy-inversion').value=x.inversion||'';
+  document.getElementById('proy-roi').value=x.roi||'';
+  document.getElementById('proy-equip').value=x.equipamiento||'';
+  document.getElementById('proy-medico').value=x.medico||'';
+  document.getElementById('proy-influyentes').value=x.influenciadores||'';
+  document.getElementById('proy-proximos').value=x.proximos||'';
+  document.getElementById('proy-notas').value=x.notas||'';
+  const modal=document.getElementById('modal-proy');
+  modal.querySelector('.mt').textContent='Editar Proyecto';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Actualizar';
+  btn.onclick=async()=>{
+    x.cliente=v('proy-cliente').trim();x.tipo=v('proy-tipo').trim();
+    x.estado=v('proy-estado');x.riesgo=v('proy-riesgo');
+    x.inversion=parseFloat(v('proy-inversion'))||0;x.roi=parseFloat(v('proy-roi'))||0;
+    x.equipamiento=v('proy-equip').trim();x.medico=v('proy-medico').trim();
+    x.influenciadores=v('proy-influyentes').trim();x.proximos=v('proy-proximos').trim();
+    x.notas=v('proy-notas').trim();
+    cm('modal-proy');resetModalProy();renderProy();renderDashboard();
+    toast('Guardando...','info');
+    await writeTab(TABS.p,PH,S.p);
+    toast('✅ Proyecto actualizado','success');
+  };
+  om('modal-proy');
+}
+function resetModalProy(){
+  const modal=document.getElementById('modal-proy');
+  modal.querySelector('.mt').textContent='Nuevo Proyecto Estratégico';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Guardar';
+  btn.onclick=saveProy;
+}
+
+// ── RELACIONAMIENTO ──
+function editRel(id){
+  const x=S.r.find(r=>r.id===id);if(!x)return;
+  document.getElementById('rel-nombre').value=x.nombre||'';
+  document.getElementById('rel-tipo').value=x.tipo_contacto||'medico';
+  document.getElementById('rel-inst').value=x.institucion||'';
+  document.getElementById('rel-inf').value=x.influencia||'1-bajo';
+  document.getElementById('rel-rel').value=x.relacion||'1-desconocido';
+  document.getElementById('rel-ultimo').value=x.ultimo_contacto||'';
+  document.getElementById('rel-proxima').value=x.proxima_accion||'';
+  document.getElementById('rel-inter').value=x.interacciones||'';
+  document.getElementById('rel-notas').value=x.notas||'';
+  const modal=document.getElementById('modal-rel');
+  modal.querySelector('.mt').textContent='Editar Contacto';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Actualizar';
+  btn.onclick=async()=>{
+    x.nombre=v('rel-nombre').trim();x.tipo_contacto=v('rel-tipo');
+    x.institucion=v('rel-inst').trim();x.influencia=v('rel-inf');
+    x.relacion=v('rel-rel');x.ultimo_contacto=v('rel-ultimo');
+    x.proxima_accion=v('rel-proxima').trim();x.interacciones=v('rel-inter').trim();
+    x.notas=v('rel-notas').trim();
+    cm('modal-rel');resetModalRel();renderRel();renderDashboard();
+    toast('Guardando...','info');
+    await writeTab(TABS.r,RH,S.r);
+    toast('✅ Contacto actualizado','success');
+  };
+  om('modal-rel');
+}
+function resetModalRel(){
+  const modal=document.getElementById('modal-rel');
+  modal.querySelector('.mt').textContent='Nuevo Contacto Estratégico';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Guardar';
+  btn.onclick=saveRel;
+}
+
+// ── PROVEEDOR ──
+function editProv(id){
+  const x=S.pr.find(r=>r.id===id);if(!x)return;
+  document.getElementById('prov-nombre').value=x.nombre||'';
+  document.getElementById('prov-linea').value=x.linea||'';
+  document.getElementById('prov-estado').value=x.estado||'activo';
+  document.getElementById('prov-margen').value=x.margen||'';
+  document.getElementById('prov-excl').value=x.exclusividad||'sin exclusividad';
+  document.getElementById('prov-pot').value=x.potencial||'medio';
+  document.getElementById('prov-contacto').value=x.contacto||'';
+  document.getElementById('prov-notas').value=x.notas||'';
+  const modal=document.getElementById('modal-prov');
+  modal.querySelector('.mt').textContent='Editar Proveedor';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Actualizar';
+  btn.onclick=async()=>{
+    x.nombre=v('prov-nombre').trim();x.linea=v('prov-linea').trim();
+    x.estado=v('prov-estado');x.margen=parseFloat(v('prov-margen'))||0;
+    x.exclusividad=v('prov-excl');x.potencial=v('prov-pot');
+    x.contacto=v('prov-contacto').trim();x.notas=v('prov-notas').trim();
+    cm('modal-prov');resetModalProv();renderProv();renderDashboard();
+    toast('Guardando...','info');
+    await writeTab(TABS.pr,PRH,S.pr);
+    toast('✅ Proveedor actualizado','success');
+  };
+  om('modal-prov');
+}
+function resetModalProv(){
+  const modal=document.getElementById('modal-prov');
+  modal.querySelector('.mt').textContent='Nuevo Proveedor';
+  const btn=modal.querySelector('.btn.btp');
+  btn.textContent='Guardar';
+  btn.onclick=saveProv;
+}
+
+// Reset modals when closed (so they go back to "nuevo" mode)
+document.querySelectorAll('.mo').forEach(x=>x.addEventListener('click',e=>{
+  if(e.target===x){
+    x.classList.remove('open');
+    // Reset any modal that was in edit mode
+    const id=x.id;
+    if(id==='mnv')resetModalV();
+    else if(id==='mnd')resetModalD();
+    else if(id==='mnt')resetModalT();
+    else if(id==='modal-lic')resetModalLic();
+    else if(id==='modal-proy')resetModalProy();
+    else if(id==='modal-rel')resetModalRel();
+    else if(id==='modal-prov')resetModalProv();
+  }
+}));
+
 // ═══ CONFIG ═══
 function saveCfg(){
   cfg.cats=v('ccats');cfg.a24=parseInt(v('ca24'));cfg.a48=parseInt(v('ca48'));cfg.aut=parseInt(v('caut'));
@@ -2024,7 +2435,7 @@ function go(vw,el){
 }
 function om(id){document.getElementById(id).classList.add('open');if(id==='mnv')document.getElementById('vf').value=today();if(id==='mnt'){const n=new Date();document.getElementById('tini').value=n.toISOString().slice(0,16);const t=new Date(n);t.setDate(t.getDate()+1);document.getElementById('tfin').value=t.toISOString().slice(0,16);}}
 function cm(id){document.getElementById(id).classList.remove('open');}
-document.querySelectorAll('.mo').forEach(x=>x.addEventListener('click',e=>{if(e.target===x)x.classList.remove('open');}));
+// Modal close handled in edit section
 function renderAll(){renderV();updKPI();renderK();renderT();renderDashboard();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();}
 
 // ═══ UTILS ═══
