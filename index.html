@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>APEX — Sales Intelligence</title>
+<title>ASI</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -461,7 +461,6 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="rh rh-s" data-dir="s"></div>
             <div class="rh rh-e" data-dir="e"></div>
             <div class="rh rh-se" data-dir="se"></div>
-            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Ventas por mes</div><div class="cs">Ingresos reales · período</div></div>
@@ -485,7 +484,6 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="rh rh-s" data-dir="s"></div>
             <div class="rh rh-e" data-dir="e"></div>
             <div class="rh rh-se" data-dir="se"></div>
-            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Ventas reales vs Forecast</div><div class="cs">Comparativo mensual</div></div>
@@ -500,12 +498,11 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
 
       <!-- 2-col row -->
       <div class="dash-row dash-row-2" id="row-cats">
-        <div class="wgt dash-item" id="wgt-categorias" data-size="half">
+        <div class="wgt dash-item" id="wgt-categorias" data-size="half" style="grid-column:span 6">
           <div class="card" style="position:relative">
             <div class="rh rh-s" data-dir="s"></div>
             <div class="rh rh-e" data-dir="e"></div>
             <div class="rh rh-se" data-dir="se"></div>
-            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Ventas por categoría</div><div class="cs">% del total</div></div>
@@ -515,12 +512,11 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="cb"><div style="position:relative;height:200px"><canvas id="chartCats"></canvas></div></div>
           </div>
         </div>
-        <div class="wgt dash-item" id="wgt-estado-ventas" data-size="half">
+        <div class="wgt dash-item" id="wgt-estado-ventas" data-size="half" style="grid-column:span 6">
           <div class="card" style="position:relative">
             <div class="rh rh-s" data-dir="s"></div>
             <div class="rh rh-e" data-dir="e"></div>
             <div class="rh rh-se" data-dir="se"></div>
-            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Estados de ventas</div><div class="cs">Cobradas · pendientes · canceladas</div></div>
@@ -534,12 +530,11 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
 
       <!-- 2-col row -->
       <div class="dash-row dash-row-2" id="row-tasks">
-        <div class="wgt dash-item" id="wgt-tareas-chart" data-size="half">
+        <div class="wgt dash-item" id="wgt-tareas-chart" data-size="half" style="grid-column:span 6">
           <div class="card" style="position:relative">
             <div class="rh rh-s" data-dir="s"></div>
             <div class="rh rh-e" data-dir="e"></div>
             <div class="rh rh-se" data-dir="se"></div>
-            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Estado de tareas</div><div class="cs">Por tipo</div></div>
@@ -549,12 +544,11 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="cb"><div style="position:relative;height:200px"><canvas id="chartTareas"></canvas></div></div>
           </div>
         </div>
-        <div class="wgt dash-item" id="wgt-top-clientes" data-size="half">
+        <div class="wgt dash-item" id="wgt-top-clientes" data-size="half" style="grid-column:span 6">
           <div class="card" style="position:relative">
             <div class="rh rh-s" data-dir="s"></div>
             <div class="rh rh-e" data-dir="e"></div>
             <div class="rh rh-se" data-dir="se"></div>
-            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Top 5 clientes</div><div class="cs">Por monto facturado</div></div>
@@ -575,7 +569,6 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="rh rh-s" data-dir="s"></div>
             <div class="rh rh-e" data-dir="e"></div>
             <div class="rh rh-se" data-dir="se"></div>
-            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Licitaciones activas</div><div class="cs">Próximas a vencer · estado general</div></div>
@@ -590,12 +583,11 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
 
       <!-- WIDGET: Proyectos + Relacionamiento 2-col -->
       <div class="dash-row dash-row-2" id="row-proy-rel">
-        <div class="wgt dash-item" id="wgt-proyectos-dash" data-size="half">
+        <div class="wgt dash-item" id="wgt-proyectos-dash" data-size="half" style="grid-column:span 6">
           <div class="card" style="position:relative">
             <div class="rh rh-s" data-dir="s"></div>
             <div class="rh rh-e" data-dir="e"></div>
             <div class="rh rh-se" data-dir="se"></div>
-            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Proyectos estratégicos</div><div class="cs">Estado y riesgo</div></div>
@@ -606,12 +598,11 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             </div>
           </div>
         </div>
-        <div class="wgt dash-item" id="wgt-relacionamiento-dash" data-size="half">
+        <div class="wgt dash-item" id="wgt-relacionamiento-dash" data-size="half" style="grid-column:span 6">
           <div class="card" style="position:relative">
             <div class="rh rh-s" data-dir="s"></div>
             <div class="rh rh-e" data-dir="e"></div>
             <div class="rh rh-se" data-dir="se"></div>
-            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Relacionamiento</div><div class="cs">Contactos · alertas de seguimiento</div></div>
@@ -631,7 +622,6 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="rh rh-s" data-dir="s"></div>
             <div class="rh rh-e" data-dir="e"></div>
             <div class="rh rh-se" data-dir="se"></div>
-            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Proveedores</div><div class="cs">Estado · margen · potencial estratégico</div></div>
@@ -898,7 +888,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <div class="cb" id="members">Sincronizando...</div>
       </div>
     </div>
-  </div>
+  
 </main>
 
 <div class="tc" id="tc"></div>
