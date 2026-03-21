@@ -1102,7 +1102,7 @@ function renderV(){
     <td><span class="pill ${x.estado==='cobrada'?'pg':x.estado==='pendiente'?'po':'pr'}">${x.estado}</span></td>
     <td style="color:var(--muted);font-size:.75rem">${esc(x.vendedor)||'─'}</td>
     <td style="color:var(--muted2);font-size:.7rem">${esc(x.usuario)||'─'}</td>
-    <td><button class="btn btd ic sm" onclick="delV('${x.id}','v')">✕</button></td>
+    <td style="display:flex;gap:4px"><button class="btn bts ic sm" onclick="editV('${x.id}')" title="Editar">✏️</button><button class="btn btd ic sm" onclick="delV('${x.id}','v')">✕</button></td>
   </tr>`;
   tb.innerHTML=visible.map(rowHTML).join('');
   // Mostrar/ocultar botón ver más
@@ -1837,7 +1837,7 @@ function renderLic(){
       <td class="tm">${x.ganador?'$'+fn(x.ganador):'─'}</td>
       <td class="tm" style="color:${difColor}">${dif}</td>
       <td><button class="btn bts sm" onclick="showIALic('${x.id}')" style="padding:3px 8px;font-size:.58rem">IA 🧠</button></td>
-      <td><button class="btn btd ic sm" onclick="delLic('${x.id}')">✕</button></td>
+      <td style="display:flex;gap:4px"><button class="btn bts ic sm" onclick="editLic('${x.id}')" title="Editar">✏️</button><button class="btn btd ic sm" onclick="delLic('${x.id}')">✕</button></td>
     </tr>`;
   }).join('');
 }
@@ -1893,7 +1893,7 @@ function renderProy(){
         ${x.proximos?`<div style="background:var(--ad);border-radius:6px;padding:8px 10px;margin-bottom:10px"><div style="font-family:var(--fm);font-size:.58rem;color:var(--accent);margin-bottom:3px">PRÓXIMOS PASOS</div><div style="font-size:.78rem">${esc(x.proximos)}</div></div>`:''}
         <div style="display:flex;gap:8px">
           <button class="btn bts sm" onclick="showIAProy('${x.id}')" style="flex:1;justify-content:center">IA 🧠</button>
-          <button class="btn btd sm" onclick="delProy('${x.id}')" style="padding:5px 10px">✕</button>
+          <button class="btn bts sm" onclick="editProy('${x.id}')" style="padding:5px 10px" title="Editar">✏️</button><button class="btn btd sm" onclick="delProy('${x.id}')" style="padding:5px 10px">✕</button>
         </div>
       </div>
     </div>`).join('');
@@ -1943,7 +1943,7 @@ function renderRel(){
       </td>
       <td style="font-size:.78rem;color:var(--muted);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.proxima_accion)||'─'}</td>
       <td><button class="btn bts sm" onclick="showIARel('${x.id}')" style="padding:3px 8px;font-size:.58rem">IA 🧠</button></td>
-      <td><button class="btn btd ic sm" onclick="delRel('${x.id}')">✕</button></td>
+      <td style="display:flex;gap:4px"><button class="btn bts ic sm" onclick="editRel('${x.id}')" title="Editar">✏️</button><button class="btn btd ic sm" onclick="delRel('${x.id}')">✕</button></td>
     </tr>`;
   }).join('');
 }
