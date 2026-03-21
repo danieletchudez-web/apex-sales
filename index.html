@@ -378,6 +378,10 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <button class="wgtbtn active" data-w="top-clientes" onclick="toggleWidget(this)">Top clientes</button>
         <button class="wgtbtn active" data-w="estado-ventas" onclick="toggleWidget(this)">Estados</button>
         <button class="wgtbtn active" data-w="tabla-ventas" onclick="toggleWidget(this)">Tabla</button>
+        <button class="wgtbtn active" data-w="licitaciones-dash" onclick="toggleWidget(this)">Licitaciones</button>
+        <button class="wgtbtn active" data-w="proyectos-dash" onclick="toggleWidget(this)">Proyectos</button>
+        <button class="wgtbtn active" data-w="relacionamiento-dash" onclick="toggleWidget(this)">Relacionamiento</button>
+        <button class="wgtbtn active" data-w="proveedores-dash" onclick="toggleWidget(this)">Proveedores</button>
       </div>
     </div>
 
@@ -480,6 +484,66 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
               <div id="ver-mas-wrap" style="display:none;padding:12px 16px;border-top:1px solid var(--border);justify-content:center">
                 <button id="ver-mas-btn" class="btn bts sm" onclick="verMas()" style="width:100%;justify-content:center">Ver más</button>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WIDGET: Licitaciones resumen -->
+      <div class="dash-row" id="row-licitaciones">
+        <div class="wgt dash-item" id="wgt-licitaciones-dash" data-size="full">
+          <div class="card">
+            <div class="ch">
+              <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div><div class="ct">Licitaciones activas</div><div class="cs">Próximas a vencer · estado general</div></div>
+              <button class="btn bts sm" onclick="go('licitaciones',document.querySelector('.ni[onclick*=licitaciones]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver todas →</button>
+            </div>
+            <div class="cb" id="dash-lic-content" style="padding:14px">
+              <div style="color:var(--muted);font-size:.82rem">Cargando...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WIDGET: Proyectos + Relacionamiento 2-col -->
+      <div class="dash-row dash-row-2" id="row-proy-rel">
+        <div class="wgt dash-item" id="wgt-proyectos-dash" data-size="half">
+          <div class="card">
+            <div class="ch">
+              <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div><div class="ct">Proyectos estratégicos</div><div class="cs">Estado y riesgo</div></div>
+              <button class="btn bts sm" onclick="go('proyectos',document.querySelector('.ni[onclick*=proyectos]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver →</button>
+            </div>
+            <div class="cb" id="dash-proy-content" style="padding:14px;min-height:160px">
+              <div style="color:var(--muted);font-size:.82rem">Cargando...</div>
+            </div>
+          </div>
+        </div>
+        <div class="wgt dash-item" id="wgt-relacionamiento-dash" data-size="half">
+          <div class="card">
+            <div class="ch">
+              <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div><div class="ct">Relacionamiento</div><div class="cs">Contactos · alertas de seguimiento</div></div>
+              <button class="btn bts sm" onclick="go('relacionamiento',document.querySelector('.ni[onclick*=relacionamiento]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver →</button>
+            </div>
+            <div class="cb" id="dash-rel-content" style="padding:14px;min-height:160px">
+              <div style="color:var(--muted);font-size:.82rem">Cargando...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WIDGET: Proveedores -->
+      <div class="dash-row" id="row-proveedores">
+        <div class="wgt dash-item" id="wgt-proveedores-dash" data-size="full">
+          <div class="card">
+            <div class="ch">
+              <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div><div class="ct">Proveedores</div><div class="cs">Estado · margen · potencial estratégico</div></div>
+              <button class="btn bts sm" onclick="go('proveedores',document.querySelector('.ni[onclick*=proveedores]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver todos →</button>
+            </div>
+            <div class="cb" id="dash-prov-content" style="padding:14px">
+              <div style="color:var(--muted);font-size:.82rem">Cargando...</div>
             </div>
           </div>
         </div>
