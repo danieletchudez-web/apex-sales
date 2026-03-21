@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sales Report</title>
+<title>Sales RIV</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -95,10 +95,10 @@ body.nav-edit-mode #nav-sortable .ni:hover{background:var(--ad)}
 .wgt{transition:opacity .2s}
 .wgt.hidden{display:none!important}
 /* DRAG GRID */
-#dash-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;align-items:start;width:100%;box-sizing:border-box}
+#dash-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:start;width:100%}
 .dash-row{display:contents}
 .dash-row-2{display:contents}
-.dash-item{min-width:0;grid-column:span 12;box-sizing:border-box;overflow:hidden}
+.dash-item{min-width:0;grid-column:span 12;position:relative}
 /* Default spans */
 .dash-item[data-col="6"]{grid-column:span 6}
 .dash-item[data-col="9"]{grid-column:span 9}
@@ -110,14 +110,19 @@ body.nav-edit-mode #nav-sortable .ni:hover{background:var(--ad)}
 body.drag-mode .drag-handle{display:flex;cursor:grab}
 body.drag-mode .drag-handle:active{cursor:grabbing}
 body.drag-mode .dash-item{cursor:default}
+body.drag-mode .dash-item .card{outline:2px dashed rgba(232,255,71,.4);outline-offset:2px}
+/* resize grip bottom-right corner */
+.rz-grip{display:none;position:absolute;bottom:0;right:0;width:20px;height:20px;cursor:se-resize;z-index:50;align-items:flex-end;justify-content:flex-end;padding:3px}
+.rz-grip svg{opacity:.5;transition:opacity .15s}
+.rz-grip:hover svg{opacity:1}
+body.drag-mode .rz-grip{display:flex}
+/* resize right edge */
+.rz-right{display:none;position:absolute;top:10%;right:-4px;width:8px;height:80%;cursor:ew-resize;z-index:50;align-items:center;justify-content:center}
+.rz-right::after{content:'';width:3px;height:30px;border-radius:2px;background:var(--accent);opacity:.5;transition:opacity .15s}
+.rz-right:hover::after{opacity:1}
+body.drag-mode .rz-right{display:flex}
 /* Width size picker */
-.size-picker{display:none;position:absolute;top:8px;right:8px;z-index:30;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:6px 8px;box-shadow:0 6px 24px rgba(0,0,0,.6);flex-direction:row;gap:3px;align-items:center;flex-wrap:nowrap}
-body.drag-mode .size-picker{display:flex}
-.size-btn{display:flex;align-items:center;justify-content:center;padding:4px 9px;border-radius:5px;border:1px solid transparent;background:var(--surface2);color:var(--muted);font-family:var(--fm);font-size:.62rem;font-weight:600;cursor:pointer;transition:all .12s;min-width:30px}
-.size-btn:hover{background:var(--border2);color:var(--text)}
-.size-btn.active{background:var(--ad);border-color:rgba(232,255,71,.3);color:var(--accent)}
-.size-group-label{font-family:var(--fm);font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);padding:0 2px}
-.size-divider{width:1px;height:18px;background:var(--border);margin:0 3px}
+
 
 body.drag-mode .dash-item .card{outline:2px dashed var(--accent);outline-offset:2px;transition:outline .15s,box-shadow .15s}
 body.drag-mode .dash-item:hover .card{box-shadow:0 0 0 3px var(--ad2)}
@@ -451,21 +456,21 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- full-width row -->
       <div class="dash-row" id="row-full">
         <div class="wgt dash-item" id="wgt-ventas-mes" data-size="full">
-          <div class="card" style="position:relative">
-            <div class="size-picker">
-              <div class="size-group-label">ANCHO</div>
-              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
-              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
-              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+          <div class="card">
+              <button class="size-btn" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" onclick="setWidgetCol(this,12)" title="100%">Full</button>
               <div class="size-divider"></div>
               <div class="size-group-label">ALTO</div>
-              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
-              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
-              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
-              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
+              <button class="size-btn" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div class="rz-right" title="Cambiar ancho"></div>
+              <div class="rz-grip" title="Cambiar tamaño"><svg width="10" height="10" viewBox="0 0 10 10" fill="var(--accent)"><path d="M10 0L10 10L0 10Z"/></svg></div>
               <div><div class="ct">Ventas por mes</div><div class="cs">Ingresos reales · período</div></div>
               <button class="btn bts sm" onclick="iaChartVentas()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartVentasMes" onclick="toggleLabels('chartVentasMes',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
@@ -483,21 +488,21 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- full-width row -->
       <div class="dash-row" id="row-forecast">
         <div class="wgt dash-item" id="wgt-forecast" data-size="full">
-          <div class="card" style="position:relative">
-            <div class="size-picker">
-              <div class="size-group-label">ANCHO</div>
-              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
-              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
-              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+          <div class="card">
+              <button class="size-btn" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" onclick="setWidgetCol(this,12)" title="100%">Full</button>
               <div class="size-divider"></div>
               <div class="size-group-label">ALTO</div>
-              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
-              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
-              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
-              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
+              <button class="size-btn" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div class="rz-right" title="Cambiar ancho"></div>
+              <div class="rz-grip" title="Cambiar tamaño"><svg width="10" height="10" viewBox="0 0 10 10" fill="var(--accent)"><path d="M10 0L10 10L0 10Z"/></svg></div>
               <div><div class="ct">Ventas reales vs Forecast</div><div class="cs">Comparativo mensual</div></div>
               <button class="btn bts sm" onclick="iaChartForecast()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartForecast" onclick="toggleLabels('chartForecast',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
@@ -511,21 +516,21 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- 2-col row -->
       <div class="dash-row dash-row-2" id="row-cats">
         <div class="wgt dash-item" id="wgt-categorias" data-size="half">
-          <div class="card" style="position:relative">
-            <div class="size-picker">
-              <div class="size-group-label">ANCHO</div>
-              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
-              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
-              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+          <div class="card">
+              <button class="size-btn" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" onclick="setWidgetCol(this,12)" title="100%">Full</button>
               <div class="size-divider"></div>
               <div class="size-group-label">ALTO</div>
-              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
-              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
-              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
-              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
+              <button class="size-btn" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div class="rz-right" title="Cambiar ancho"></div>
+              <div class="rz-grip" title="Cambiar tamaño"><svg width="10" height="10" viewBox="0 0 10 10" fill="var(--accent)"><path d="M10 0L10 10L0 10Z"/></svg></div>
               <div><div class="ct">Ventas por categoría</div><div class="cs">% del total</div></div>
               <button class="btn bts sm" onclick="iaChartCats()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartCats" onclick="toggleLabels('chartCats',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
@@ -534,21 +539,21 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
           </div>
         </div>
         <div class="wgt dash-item" id="wgt-estado-ventas" data-size="half">
-          <div class="card" style="position:relative">
-            <div class="size-picker">
-              <div class="size-group-label">ANCHO</div>
-              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
-              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
-              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+          <div class="card">
+              <button class="size-btn" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" onclick="setWidgetCol(this,12)" title="100%">Full</button>
               <div class="size-divider"></div>
               <div class="size-group-label">ALTO</div>
-              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
-              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
-              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
-              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
+              <button class="size-btn" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div class="rz-right" title="Cambiar ancho"></div>
+              <div class="rz-grip" title="Cambiar tamaño"><svg width="10" height="10" viewBox="0 0 10 10" fill="var(--accent)"><path d="M10 0L10 10L0 10Z"/></svg></div>
               <div><div class="ct">Estados de ventas</div><div class="cs">Cobradas · pendientes · canceladas</div></div>
               <button class="btn bts sm" onclick="iaChartEstados()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartEstados" onclick="toggleLabels('chartEstados',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
@@ -561,21 +566,21 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- 2-col row -->
       <div class="dash-row dash-row-2" id="row-tasks">
         <div class="wgt dash-item" id="wgt-tareas-chart" data-size="half">
-          <div class="card" style="position:relative">
-            <div class="size-picker">
-              <div class="size-group-label">ANCHO</div>
-              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
-              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
-              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+          <div class="card">
+              <button class="size-btn" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" onclick="setWidgetCol(this,12)" title="100%">Full</button>
               <div class="size-divider"></div>
               <div class="size-group-label">ALTO</div>
-              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
-              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
-              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
-              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
+              <button class="size-btn" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div class="rz-right" title="Cambiar ancho"></div>
+              <div class="rz-grip" title="Cambiar tamaño"><svg width="10" height="10" viewBox="0 0 10 10" fill="var(--accent)"><path d="M10 0L10 10L0 10Z"/></svg></div>
               <div><div class="ct">Estado de tareas</div><div class="cs">Por tipo</div></div>
               <button class="btn bts sm" onclick="iaChartTareas()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartTareas" onclick="toggleLabels('chartTareas',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
@@ -584,21 +589,21 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
           </div>
         </div>
         <div class="wgt dash-item" id="wgt-top-clientes" data-size="half">
-          <div class="card" style="position:relative">
-            <div class="size-picker">
-              <div class="size-group-label">ANCHO</div>
-              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
-              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
-              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+          <div class="card">
+              <button class="size-btn" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" onclick="setWidgetCol(this,12)" title="100%">Full</button>
               <div class="size-divider"></div>
               <div class="size-group-label">ALTO</div>
-              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
-              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
-              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
-              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
+              <button class="size-btn" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div class="rz-right" title="Cambiar ancho"></div>
+              <div class="rz-grip" title="Cambiar tamaño"><svg width="10" height="10" viewBox="0 0 10 10" fill="var(--accent)"><path d="M10 0L10 10L0 10Z"/></svg></div>
               <div><div class="ct">Top 5 clientes</div><div class="cs">Por monto facturado</div></div>
               <button class="btn bts sm" onclick="iaChartClientes()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartClientes" onclick="toggleLabels('chartClientes',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
@@ -613,21 +618,21 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- WIDGET: Licitaciones resumen -->
       <div class="dash-row" id="row-licitaciones">
         <div class="wgt dash-item" id="wgt-licitaciones-dash" data-size="full">
-          <div class="card" style="position:relative">
-            <div class="size-picker">
-              <div class="size-group-label">ANCHO</div>
-              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
-              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
-              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+          <div class="card">
+              <button class="size-btn" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" onclick="setWidgetCol(this,12)" title="100%">Full</button>
               <div class="size-divider"></div>
               <div class="size-group-label">ALTO</div>
-              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
-              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
-              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
-              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
+              <button class="size-btn" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div class="rz-right" title="Cambiar ancho"></div>
+              <div class="rz-grip" title="Cambiar tamaño"><svg width="10" height="10" viewBox="0 0 10 10" fill="var(--accent)"><path d="M10 0L10 10L0 10Z"/></svg></div>
               <div><div class="ct">Licitaciones activas</div><div class="cs">Próximas a vencer · estado general</div></div>
               <button class="btn bts sm" onclick="go('licitaciones',document.querySelector('.ni[onclick*=licitaciones]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver todas →</button>
             </div>
@@ -641,21 +646,21 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- WIDGET: Proyectos + Relacionamiento 2-col -->
       <div class="dash-row dash-row-2" id="row-proy-rel">
         <div class="wgt dash-item" id="wgt-proyectos-dash" data-size="half">
-          <div class="card" style="position:relative">
-            <div class="size-picker">
-              <div class="size-group-label">ANCHO</div>
-              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
-              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
-              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+          <div class="card">
+              <button class="size-btn" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" onclick="setWidgetCol(this,12)" title="100%">Full</button>
               <div class="size-divider"></div>
               <div class="size-group-label">ALTO</div>
-              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
-              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
-              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
-              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
+              <button class="size-btn" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div class="rz-right" title="Cambiar ancho"></div>
+              <div class="rz-grip" title="Cambiar tamaño"><svg width="10" height="10" viewBox="0 0 10 10" fill="var(--accent)"><path d="M10 0L10 10L0 10Z"/></svg></div>
               <div><div class="ct">Proyectos estratégicos</div><div class="cs">Estado y riesgo</div></div>
               <button class="btn bts sm" onclick="go('proyectos',document.querySelector('.ni[onclick*=proyectos]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver →</button>
             </div>
@@ -665,21 +670,21 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
           </div>
         </div>
         <div class="wgt dash-item" id="wgt-relacionamiento-dash" data-size="half">
-          <div class="card" style="position:relative">
-            <div class="size-picker">
-              <div class="size-group-label">ANCHO</div>
-              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
-              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
-              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+          <div class="card">
+              <button class="size-btn" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" onclick="setWidgetCol(this,12)" title="100%">Full</button>
               <div class="size-divider"></div>
               <div class="size-group-label">ALTO</div>
-              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
-              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
-              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
-              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
+              <button class="size-btn" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div class="rz-right" title="Cambiar ancho"></div>
+              <div class="rz-grip" title="Cambiar tamaño"><svg width="10" height="10" viewBox="0 0 10 10" fill="var(--accent)"><path d="M10 0L10 10L0 10Z"/></svg></div>
               <div><div class="ct">Relacionamiento</div><div class="cs">Contactos · alertas de seguimiento</div></div>
               <button class="btn bts sm" onclick="go('relacionamiento',document.querySelector('.ni[onclick*=relacionamiento]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver →</button>
             </div>
@@ -693,21 +698,21 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <!-- WIDGET: Proveedores -->
       <div class="dash-row" id="row-proveedores">
         <div class="wgt dash-item" id="wgt-proveedores-dash" data-size="full">
-          <div class="card" style="position:relative">
-            <div class="size-picker">
-              <div class="size-group-label">ANCHO</div>
-              <button class="size-btn" data-col="6" onclick="setWidgetCol(this,6)" title="50%">½</button>
-              <button class="size-btn" data-col="9" onclick="setWidgetCol(this,9)" title="75%">¾</button>
-              <button class="size-btn active" data-col="12" onclick="setWidgetCol(this,12)" title="100%">Full</button>
+          <div class="card">
+              <button class="size-btn" onclick="setWidgetCol(this,6)" title="50%">½</button>
+              <button class="size-btn" onclick="setWidgetCol(this,9)" title="75%">¾</button>
+              <button class="size-btn active" onclick="setWidgetCol(this,12)" title="100%">Full</button>
               <div class="size-divider"></div>
               <div class="size-group-label">ALTO</div>
-              <button class="size-btn" data-h="s" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
-              <button class="size-btn active" data-h="m" onclick="setWidgetH(this,'m')" title="Normal">M</button>
-              <button class="size-btn" data-h="l" onclick="setWidgetH(this,'l')" title="Grande">L</button>
-              <button class="size-btn" data-h="xl" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
+              <button class="size-btn" onclick="setWidgetH(this,'s')" title="Compacto">S</button>
+              <button class="size-btn active" onclick="setWidgetH(this,'m')" title="Normal">M</button>
+              <button class="size-btn" onclick="setWidgetH(this,'l')" title="Grande">L</button>
+              <button class="size-btn" onclick="setWidgetH(this,'xl')" title="Extra grande">XL</button>
             </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div class="rz-right" title="Cambiar ancho"></div>
+              <div class="rz-grip" title="Cambiar tamaño"><svg width="10" height="10" viewBox="0 0 10 10" fill="var(--accent)"><path d="M10 0L10 10L0 10Z"/></svg></div>
               <div><div class="ct">Proveedores</div><div class="cs">Estado · margen · potencial estratégico</div></div>
               <button class="btn bts sm" onclick="go('proveedores',document.querySelector('.ni[onclick*=proveedores]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver todos →</button>
             </div>
@@ -1190,7 +1195,7 @@ function showApp(){
   document.getElementById('cemp').value=cfg.emp;
   document.getElementById('crol').value=cfg.rol;
   document.getElementById('caut').value=cfg.aut;
-  popCats();restoreWidgets();restoreDashLayout();restoreNavOrder();restoreWidgetSizes();renderAll();setSI('ok','Sheets listo');
+  popCats();restoreWidgets();restoreRzLayout();restoreNavOrder();renderAll();setSI('ok','Sheets listo');
   setupAS();checkAlarms();atimer=setInterval(checkAlarms,60000);
 }
 
@@ -2087,13 +2092,13 @@ function toggleDragMode(){
   document.getElementById('drag-mode-badge').style.display=dragModeOn?'inline-flex':'none';
   if(dragModeOn){
     initSortable();
-    showWidgetSizeControls(true);
+    
     toast('Modo edición — arrastrá y ajustá el ancho de cada widget','info');
   } else {
     destroySortable();
-    showWidgetSizeControls(false);
+    
     saveDashLayout();
-    saveWidgetSizes();
+    
     toast('Layout guardado ✓','success');
   }
 }
@@ -2113,7 +2118,7 @@ function initSortable(){
     filter:'.size-picker',
     preventOnFilter:false,
     onEnd:()=>{
-      saveDashLayout();
+      saveRzLayout();
       setTimeout(()=>{destroyDashCharts();renderDashboard();},100);
     }
   });
@@ -2123,111 +2128,130 @@ function initSortable(){
 
 
 
-// ═══ WIDGET SIZE CONTROLS ═══
-const W_HEIGHTS = {s:140, m:220, l:320, xl:440};
 
-function setWidgetCol(btn, col){
-  const card = btn.closest('.card');
-  const widget = card?.closest('.dash-item');
-  if(!widget) return;
-  // Remove previous col spans
-  widget.classList.remove('dash-item');
-  [6,9,12,3].forEach(c=>widget.classList.remove('span-'+c));
-  widget.style.gridColumn = 'span '+col;
-  widget.dataset.col = col;
-  // Mark active
-  card.querySelectorAll('[data-col]').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  saveWidgetSizes();
-  setTimeout(()=>{destroyDashCharts();renderDashboard();},80);
+// ═══ WIDGET RESIZE (drag handles) ═══
+const COLS = 12;
+const GAP  = 12;
+
+function getGridColWidth(){
+  const grid = document.getElementById('dash-grid');
+  if(!grid) return 80;
+  return (grid.offsetWidth - GAP * (COLS - 1)) / COLS;
 }
 
-function setWidgetH(btn, h){
-  const card = btn.closest('.card');
-  const widget = card?.closest('.dash-item');
-  if(!widget) return;
-  const px = W_HEIGHTS[h] || 220;
-  // Set min-height on the card
-  card.style.minHeight = px + 'px';
-  // Set canvas / cb height
+function snapToCol(px){
+  const colW = getGridColWidth();
+  return Math.min(COLS, Math.max(2, Math.round(px / (colW + GAP))));
+}
+
+function applyWidgetCols(widget, cols){
+  widget.style.gridColumn = 'span ' + cols;
+  widget.dataset.rzCol = cols;
+  saveRzLayout();
+  setTimeout(()=>{ destroyDashCharts(); renderDashboard(); }, 80);
+}
+
+function applyWidgetH(widget, h){
+  const card = widget.querySelector('.card');
+  if(!card) return;
+  card.style.minHeight = h + 'px';
   const cb = card.querySelector('.cb');
-  if(cb){
-    const cbH = Math.max(80, px - 65);
-    cb.style.minHeight = cbH + 'px';
-    const canvas = cb.querySelector('canvas');
-    if(canvas) canvas.style.height = cbH + 'px';
-  }
-  widget.dataset.h = h;
-  // Mark active
-  card.querySelectorAll('[data-h]').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  saveWidgetSizes();
-  setTimeout(()=>{destroyDashCharts();renderDashboard();},120);
+  if(cb){ cb.style.minHeight = Math.max(60, h - 70) + 'px'; }
+  widget.dataset.rzH = h;
+  saveRzLayout();
+  setTimeout(()=>{ destroyDashCharts(); renderDashboard(); }, 80);
 }
 
-function showWidgetSizeControls(show){
-  if(!show) return;
-  document.querySelectorAll('.dash-item[id]').forEach(w=>{
-    const card = w.querySelector('.card');
-    if(!card) return;
-    // Sync col buttons
-    const col = parseInt(w.dataset.col) || 12;
-    card.querySelectorAll('[data-col]').forEach(b=>{
-      b.classList.toggle('active', parseInt(b.dataset.col)===col);
-    });
-    // Sync h buttons
-    const h = w.dataset.h || 'm';
-    card.querySelectorAll('[data-h]').forEach(b=>{
-      b.classList.toggle('active', b.dataset.h===h);
-    });
+function saveRzLayout(){
+  const data = {};
+  document.querySelectorAll('#dash-grid .dash-item[id]').forEach(w => {
+    data[w.id] = { col: w.dataset.rzCol || '', h: w.dataset.rzH || '' };
   });
+  // Also save order
+  const order = [];
+  document.querySelectorAll('#dash-grid .dash-item[id]').forEach(w => order.push(w.id));
+  localStorage.setItem('apxrzlayout', JSON.stringify({ data, order }));
 }
 
-function saveWidgetSizes(){
-  const sizes={};
-  document.querySelectorAll('.dash-item[id]').forEach(w=>{
-    const card=w.querySelector('.card');
-    sizes[w.id]={
-      col: w.dataset.col || '12',
-      h: w.dataset.h || 'm',
-      cardMinH: card?card.style.minHeight||'':''
-    };
-  });
-  localStorage.setItem('apxwsizes', JSON.stringify(sizes));
-}
-
-function restoreWidgetSizes(){
+function restoreRzLayout(){
   try{
-    const raw=localStorage.getItem('apxwsizes');
+    const raw = localStorage.getItem('apxrzlayout');
     if(!raw) return;
-    const sizes=JSON.parse(raw);
-    Object.entries(sizes).forEach(([id,s])=>{
-      const w=document.getElementById(id);
+    const { data={}, order=[] } = JSON.parse(raw);
+    const grid = document.getElementById('dash-grid');
+    // Restore order
+    order.forEach(id => { const el = document.getElementById(id); if(el && grid) grid.appendChild(el); });
+    // Restore sizes
+    Object.entries(data).forEach(([id, s]) => {
+      const w = document.getElementById(id);
       if(!w) return;
-      if(s.col && s.col!=='12'){
-        w.style.gridColumn='span '+s.col;
-        w.dataset.col=s.col;
-      }
-      if(s.h && s.h!=='m'){
-        w.dataset.h=s.h;
-        const card=w.querySelector('.card');
-        const px=W_HEIGHTS[s.h]||220;
+      if(s.col){ w.style.gridColumn = 'span ' + s.col; w.dataset.rzCol = s.col; }
+      if(s.h){
+        const h = parseInt(s.h);
+        const card = w.querySelector('.card');
         if(card){
-          card.style.minHeight=px+'px';
-          const cb=card.querySelector('.cb');
-          if(cb){cb.style.minHeight=Math.max(80,px-65)+'px';}
+          card.style.minHeight = h + 'px';
+          const cb = card.querySelector('.cb');
+          if(cb) cb.style.minHeight = Math.max(60, h - 70) + 'px';
         }
-      }
-      // Sync buttons
-      const card=w.querySelector('.card');
-      if(card){
-        card.querySelectorAll('[data-col]').forEach(b=>b.classList.toggle('active',b.dataset.col===(s.col||'12')));
-        card.querySelectorAll('[data-h]').forEach(b=>b.classList.toggle('active',b.dataset.h===(s.h||'m')));
+        w.dataset.rzH = s.h;
       }
     });
-  }catch(e){console.warn(e);}
+  } catch(e){ console.warn('restoreRzLayout', e); }
 }
 
+function initResizeHandles(){
+  document.querySelectorAll('.rz-grip, .rz-right').forEach(handle => {
+    handle.onmousedown = startRz;
+  });
+}
+
+function startRz(e){
+  if(!dragModeOn) return;
+  e.preventDefault(); e.stopPropagation();
+  const handle  = e.currentTarget;
+  const widget  = handle.closest('.dash-item');
+  const card    = widget.querySelector('.card');
+  if(!widget) return;
+  const isCorner = handle.classList.contains('rz-grip');
+  const isRight  = handle.classList.contains('rz-right');
+  const startX   = e.clientX;
+  const startY   = e.clientY;
+  const startW   = widget.offsetWidth;
+  const startH   = card ? card.offsetHeight : 200;
+  const startCols= parseInt(widget.dataset.rzCol) || snapToCol(startW);
+  widget.style.transition = 'none';
+  if(card) card.style.transition = 'none';
+
+  const onMove = ev => {
+    const dx = ev.clientX - startX;
+    const dy = ev.clientY - startY;
+    if(isRight || isCorner){
+      const newCols = snapToCol(startW + dx);
+      widget.style.gridColumn = 'span ' + newCols;
+    }
+    if(isCorner){
+      const newH = Math.max(80, startH + dy);
+      if(card) card.style.minHeight = newH + 'px';
+    }
+  };
+
+  const onUp = () => {
+    widget.style.transition = '';
+    if(card) card.style.transition = '';
+    const finalCols = widget.style.gridColumn.replace('span ','').trim();
+    widget.dataset.rzCol = finalCols;
+    const finalH = card ? parseInt(card.style.minHeight) : 0;
+    if(finalH > 80) widget.dataset.rzH = finalH;
+    saveRzLayout();
+    setTimeout(()=>{ destroyDashCharts(); renderDashboard(); }, 80);
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
 
 function destroySortable(){
   sortableInstances.forEach(s=>{try{s.destroy();}catch(e){}});
