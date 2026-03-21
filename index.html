@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Intelligence</title>
+<title>Sales X</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -95,37 +95,25 @@ body.nav-edit-mode #nav-sortable .ni:hover{background:var(--ad)}
 .wgt{transition:opacity .2s}
 .wgt.hidden{display:none!important}
 /* DRAG GRID */
-#dash-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:start;width:100%}
-.dash-row{display:contents}
-.dash-row-2{display:contents}
-.dash-item{min-width:0;grid-column:span 12;position:relative}
-/* Default spans */
-.dash-item[data-col="6"]{grid-column:span 6}
-.dash-item[data-col="9"]{grid-column:span 9}
-.dash-item[data-col="3"]{grid-column:span 3}
-.dash-item[data-col="12"]{grid-column:span 12}
+#dash-grid{display:flex;flex-direction:column;gap:16px}
+.dash-row{display:flex;gap:16px}
+.dash-row-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dash-item{flex:1;min-width:0}
 /* drag handle */
 .drag-handle{color:var(--muted2);cursor:default;font-size:1rem;padding:0 6px 0 0;user-select:none;display:none;align-items:center;line-height:1;flex-shrink:0}
 /* drag mode active */
 body.drag-mode .drag-handle{display:flex;cursor:grab}
 body.drag-mode .drag-handle:active{cursor:grabbing}
 body.drag-mode .dash-item{cursor:default}
-/* ── Resize handles ── */
-.rh{display:none;position:absolute;background:var(--accent);border-radius:3px;z-index:40;opacity:.75;transition:opacity .15s}
-.rh:hover{opacity:1;cursor:grab}
-body.drag-mode .rh{display:block}
-/* bottom center → height */
-.rh-s{bottom:-5px;left:50%;transform:translateX(-50%);width:44px;height:7px;cursor:ns-resize!important;border-radius:4px}
-/* right center → width */
-.rh-e{right:-5px;top:50%;transform:translateY(-50%);width:7px;height:44px;cursor:ew-resize!important;border-radius:4px}
-/* bottom-right corner → both */
-.rh-se{bottom:-5px;right:-5px;width:14px;height:14px;cursor:se-resize!important;border-radius:3px;opacity:.9}
-
-
 /* Width size picker */
+.size-picker{display:none;position:absolute;top:8px;right:8px;z-index:20;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:4px 6px;box-shadow:0 4px 20px rgba(0,0,0,.5);flex-direction:row;gap:2px;align-items:center}
+body.drag-mode .size-picker{display:flex}
+.size-btn{display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:5px;border:none;background:none;color:var(--muted);font-family:var(--fm);font-size:.62rem;font-weight:500;cursor:pointer;white-space:nowrap;transition:background .12s,color .12s}
+.size-btn:hover{background:var(--surface2);color:var(--text)}
+.size-btn.active{background:var(--ad);color:var(--accent)}
+.size-btn span{letter-spacing:.04em}
 
-
-
+body.drag-mode .dash-item .card{outline:2px dashed var(--accent);outline-offset:2px;transition:outline .15s,box-shadow .15s}
 body.drag-mode .dash-item:hover .card{box-shadow:0 0 0 3px var(--ad2)}
 body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:var(--accent)}
 .sortable-ghost .card{opacity:.3;background:var(--accent-dim)}
@@ -143,8 +131,9 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
   .krow{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
   .kval{font-size:1.3rem}
   /* Dashboard grid */
-  .dash-item{grid-column:span 12!important}
-  #dash-grid{gap:10px}
+  .dash-row,.dash-row-2{flex-direction:column!important;grid-template-columns:1fr!important;display:flex!important}
+  .dash-item{width:100%!important;min-width:0}
+  #dash-grid{gap:12px}
   /* Charts smaller on mobile */
   .dash-item canvas{max-height:180px}
   /* Toggle bar wrap */
@@ -458,9 +447,20 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <div class="dash-row" id="row-full">
         <div class="wgt dash-item" id="wgt-ventas-mes" data-size="full">
           <div class="card" style="position:relative">
-            <div class="rh rh-s" data-dir="s"></div>
-            <div class="rh rh-e" data-dir="e"></div>
-            <div class="rh rh-se" data-dir="se"></div>
+            <div class="size-picker">
+              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>½</span>
+              </button>
+              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>¾</span>
+              </button>
+              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
+                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
+                <span>Full</span>
+              </button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Ventas por mes</div><div class="cs">Ingresos reales · período</div></div>
@@ -481,15 +481,26 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <div class="dash-row" id="row-forecast">
         <div class="wgt dash-item" id="wgt-forecast" data-size="full">
           <div class="card" style="position:relative">
-            <div class="rh rh-s" data-dir="s"></div>
-            <div class="rh rh-e" data-dir="e"></div>
-            <div class="rh rh-se" data-dir="se"></div>
+            <div class="size-picker">
+              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>½</span>
+              </button>
+              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>¾</span>
+              </button>
+              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
+                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
+                <span>Full</span>
+              </button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Ventas reales vs Forecast</div><div class="cs">Comparativo mensual</div></div>
               <button class="btn bts sm" onclick="iaChartForecast()" style="padding:3px 8px;font-size:.58rem;flex-shrink:0">🧠 IA</button>
               <button class="lbl-toggle" id="lbl-chartForecast" onclick="toggleLabels('chartForecast',this)" title="Mostrar/ocultar etiquetas">📊 Etiquetas</button>
-              <button class="btn bts sm" onclick="go('forecast',document.querySelector('[data-view=forecast]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver Forecast →</button>
+              <button class="btn bts sm" onclick="go('forecast',document.querySelector('.ni[data-view=forecast]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver Forecast →</button>
             </div>
             <div class="cb"><div style="position:relative;height:220px"><canvas id="chartForecast"></canvas></div></div>
           </div>
@@ -498,11 +509,22 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
 
       <!-- 2-col row -->
       <div class="dash-row dash-row-2" id="row-cats">
-        <div class="wgt dash-item" id="wgt-categorias" data-size="half" style="grid-column:span 6">
+        <div class="wgt dash-item" id="wgt-categorias" data-size="half">
           <div class="card" style="position:relative">
-            <div class="rh rh-s" data-dir="s"></div>
-            <div class="rh rh-e" data-dir="e"></div>
-            <div class="rh rh-se" data-dir="se"></div>
+            <div class="size-picker">
+              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>½</span>
+              </button>
+              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>¾</span>
+              </button>
+              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
+                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
+                <span>Full</span>
+              </button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Ventas por categoría</div><div class="cs">% del total</div></div>
@@ -512,11 +534,22 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="cb"><div style="position:relative;height:200px"><canvas id="chartCats"></canvas></div></div>
           </div>
         </div>
-        <div class="wgt dash-item" id="wgt-estado-ventas" data-size="half" style="grid-column:span 6">
+        <div class="wgt dash-item" id="wgt-estado-ventas" data-size="half">
           <div class="card" style="position:relative">
-            <div class="rh rh-s" data-dir="s"></div>
-            <div class="rh rh-e" data-dir="e"></div>
-            <div class="rh rh-se" data-dir="se"></div>
+            <div class="size-picker">
+              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>½</span>
+              </button>
+              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>¾</span>
+              </button>
+              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
+                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
+                <span>Full</span>
+              </button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Estados de ventas</div><div class="cs">Cobradas · pendientes · canceladas</div></div>
@@ -530,11 +563,22 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
 
       <!-- 2-col row -->
       <div class="dash-row dash-row-2" id="row-tasks">
-        <div class="wgt dash-item" id="wgt-tareas-chart" data-size="half" style="grid-column:span 6">
+        <div class="wgt dash-item" id="wgt-tareas-chart" data-size="half">
           <div class="card" style="position:relative">
-            <div class="rh rh-s" data-dir="s"></div>
-            <div class="rh rh-e" data-dir="e"></div>
-            <div class="rh rh-se" data-dir="se"></div>
+            <div class="size-picker">
+              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>½</span>
+              </button>
+              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>¾</span>
+              </button>
+              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
+                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
+                <span>Full</span>
+              </button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Estado de tareas</div><div class="cs">Por tipo</div></div>
@@ -544,11 +588,22 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="cb"><div style="position:relative;height:200px"><canvas id="chartTareas"></canvas></div></div>
           </div>
         </div>
-        <div class="wgt dash-item" id="wgt-top-clientes" data-size="half" style="grid-column:span 6">
+        <div class="wgt dash-item" id="wgt-top-clientes" data-size="half">
           <div class="card" style="position:relative">
-            <div class="rh rh-s" data-dir="s"></div>
-            <div class="rh rh-e" data-dir="e"></div>
-            <div class="rh rh-se" data-dir="se"></div>
+            <div class="size-picker">
+              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>½</span>
+              </button>
+              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>¾</span>
+              </button>
+              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
+                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
+                <span>Full</span>
+              </button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Top 5 clientes</div><div class="cs">Por monto facturado</div></div>
@@ -566,13 +621,24 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <div class="dash-row" id="row-licitaciones">
         <div class="wgt dash-item" id="wgt-licitaciones-dash" data-size="full">
           <div class="card" style="position:relative">
-            <div class="rh rh-s" data-dir="s"></div>
-            <div class="rh rh-e" data-dir="e"></div>
-            <div class="rh rh-se" data-dir="se"></div>
+            <div class="size-picker">
+              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>½</span>
+              </button>
+              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>¾</span>
+              </button>
+              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
+                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
+                <span>Full</span>
+              </button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Licitaciones activas</div><div class="cs">Próximas a vencer · estado general</div></div>
-              <button class="btn bts sm" onclick="go('licitaciones',document.querySelector('[data-view=licitaciones]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver todas →</button>
+              <button class="btn bts sm" onclick="go('licitaciones',document.querySelector('.ni[onclick*=licitaciones]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver todas →</button>
             </div>
             <div class="cb" id="dash-lic-content" style="padding:14px">
               <div style="color:var(--muted);font-size:.82rem">Cargando...</div>
@@ -583,30 +649,52 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
 
       <!-- WIDGET: Proyectos + Relacionamiento 2-col -->
       <div class="dash-row dash-row-2" id="row-proy-rel">
-        <div class="wgt dash-item" id="wgt-proyectos-dash" data-size="half" style="grid-column:span 6">
+        <div class="wgt dash-item" id="wgt-proyectos-dash" data-size="half">
           <div class="card" style="position:relative">
-            <div class="rh rh-s" data-dir="s"></div>
-            <div class="rh rh-e" data-dir="e"></div>
-            <div class="rh rh-se" data-dir="se"></div>
+            <div class="size-picker">
+              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>½</span>
+              </button>
+              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>¾</span>
+              </button>
+              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
+                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
+                <span>Full</span>
+              </button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Proyectos estratégicos</div><div class="cs">Estado y riesgo</div></div>
-              <button class="btn bts sm" onclick="go('proyectos',document.querySelector('[data-view=proyectos]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver →</button>
+              <button class="btn bts sm" onclick="go('proyectos',document.querySelector('.ni[onclick*=proyectos]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver →</button>
             </div>
             <div class="cb" id="dash-proy-content" style="padding:14px;min-height:160px">
               <div style="color:var(--muted);font-size:.82rem">Cargando...</div>
             </div>
           </div>
         </div>
-        <div class="wgt dash-item" id="wgt-relacionamiento-dash" data-size="half" style="grid-column:span 6">
+        <div class="wgt dash-item" id="wgt-relacionamiento-dash" data-size="half">
           <div class="card" style="position:relative">
-            <div class="rh rh-s" data-dir="s"></div>
-            <div class="rh rh-e" data-dir="e"></div>
-            <div class="rh rh-se" data-dir="se"></div>
+            <div class="size-picker">
+              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>½</span>
+              </button>
+              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>¾</span>
+              </button>
+              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
+                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
+                <span>Full</span>
+              </button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Relacionamiento</div><div class="cs">Contactos · alertas de seguimiento</div></div>
-              <button class="btn bts sm" onclick="go('relacionamiento',document.querySelector('[data-view=relacionamiento]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver →</button>
+              <button class="btn bts sm" onclick="go('relacionamiento',document.querySelector('.ni[onclick*=relacionamiento]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver →</button>
             </div>
             <div class="cb" id="dash-rel-content" style="padding:14px;min-height:160px">
               <div style="color:var(--muted);font-size:.82rem">Cargando...</div>
@@ -619,13 +707,24 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <div class="dash-row" id="row-proveedores">
         <div class="wgt dash-item" id="wgt-proveedores-dash" data-size="full">
           <div class="card" style="position:relative">
-            <div class="rh rh-s" data-dir="s"></div>
-            <div class="rh rh-e" data-dir="e"></div>
-            <div class="rh rh-se" data-dir="se"></div>
+            <div class="size-picker">
+              <button class="size-btn" data-pct="50" onclick="setWidgetWidth(this,50)" title="Mitad de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:10px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:10px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>½</span>
+              </button>
+              <button class="size-btn" data-pct="75" onclick="setWidgetWidth(this,75)" title="¾ de fila">
+                <div style="display:flex;gap:2px;align-items:flex-end"><div style="width:14px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div><div style="width:6px;height:10px;border:1.5px solid currentColor;border-radius:2px;opacity:.4"></div></div>
+                <span>¾</span>
+              </button>
+              <button class="size-btn active" data-pct="100" onclick="setWidgetWidth(this,100)" title="Fila completa">
+                <div style="width:20px;height:10px;background:currentColor;border-radius:2px;opacity:.9"></div>
+                <span>Full</span>
+              </button>
+            </div>
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Proveedores</div><div class="cs">Estado · margen · potencial estratégico</div></div>
-              <button class="btn bts sm" onclick="go('proveedores',document.querySelector('[data-view=proveedores]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver todos →</button>
+              <button class="btn bts sm" onclick="go('proveedores',document.querySelector('.ni[onclick*=proveedores]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver todos →</button>
             </div>
             <div class="cb" id="dash-prov-content" style="padding:14px">
               <div style="color:var(--muted);font-size:.82rem">Cargando...</div>
@@ -888,7 +987,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <div class="cb" id="members">Sincronizando...</div>
       </div>
     </div>
-  
+  </div>
 </main>
 
 <div class="tc" id="tc"></div>
@@ -991,7 +1090,7 @@ let tok=null,sid2=null,cu=null;
 // Inactividad de 5 min sin uso → cerrar sesión.
 
 const SESSION_KEY='apex_session';
-const TOKEN_MAX_AGE=58*60*1000;   // 58 min → token Google dura ~60min
+const TOKEN_MAX_AGE=55*60*1000;   // 55 min → token Google dura ~60min
 const INACTIVITY_MS=5*60*1000;    // 5 min sin actividad → cerrar sesión
 let inactivityTimer=null;
 let tokenRenewTimer=null;
@@ -1020,8 +1119,10 @@ function getSession(){
 
 function resetInactivityTimer(){
   clearTimeout(inactivityTimer);
-  // Update lastActive timestamp — but don't auto-logout on timer
-  // Session only closes explicitly via signOut()
+  inactivityTimer=setTimeout(()=>{
+    clearSession();signOut();
+    toast('Sesión cerrada por inactividad','info');
+  },INACTIVITY_MS);
   saveSession();
 }
 
@@ -1104,7 +1205,7 @@ function showApp(){
   document.getElementById('cemp').value=cfg.emp;
   document.getElementById('crol').value=cfg.rol;
   document.getElementById('caut').value=cfg.aut;
-  popCats();restoreRz();restoreWidgets();restoreRzLayout();restoreNavOrder();renderAll();setSI('ok','Sheets listo');
+  popCats();restoreWidgets();restoreDashLayout();restoreNavOrder();restoreWidgetSizes();renderAll();setSI('ok','Sheets listo');
   setupAS();checkAlarms();atimer=setInterval(checkAlarms,60000);
 }
 
@@ -2001,156 +2102,122 @@ function toggleDragMode(){
   document.getElementById('drag-mode-badge').style.display=dragModeOn?'inline-flex':'none';
   if(dragModeOn){
     initSortable();
-    initRz();
-    
+    showWidgetSizeControls(true);
     toast('Modo edición — arrastrá y ajustá el ancho de cada widget','info');
   } else {
     destroySortable();
-    
+    showWidgetSizeControls(false);
     saveDashLayout();
-    
+    saveWidgetSizes();
     toast('Layout guardado ✓','success');
   }
 }
 
 function initSortable(){
   destroySortable();
-  // Grid is flat — sort all dash-items directly
-  const grid=document.getElementById('dash-grid');
-  if(!grid) return;
-  const s=Sortable.create(grid,{
-    group:'dash-items',
+  // Make each row sortable (items within row)
+  document.querySelectorAll('.dash-row').forEach(row=>{
+    const s=Sortable.create(row,{
+      group:'dash-items',
+      animation:200,
+      handle:'.drag-handle',
+      ghostClass:'sortable-ghost',
+      chosenClass:'sortable-chosen',
+      dragClass:'sortable-drag',
+      onEnd:()=>{
+        setTimeout(()=>{destroyDashCharts();renderDashboard();},100);
+      }
+    });
+    sortableInstances.push(s);
+  });
+  // Make rows themselves sortable within dash-grid
+  const gridSort=Sortable.create(document.getElementById('dash-grid'),{
     animation:200,
     handle:'.drag-handle',
     ghostClass:'sortable-ghost',
     chosenClass:'sortable-chosen',
-    dragClass:'sortable-drag',
-    filter:'.size-picker',
-    preventOnFilter:false,
+    filter:'.dash-item', // only drag rows, not items
     onEnd:()=>{
-      saveRz();
       setTimeout(()=>{destroyDashCharts();renderDashboard();},100);
     }
   });
-  sortableInstances.push(s);
+  sortableInstances.push(gridSort);
 }
 
 
 
-
-
-
-// ═══ RESIZE WIDGETS ═══
-const GRID_COLS = 12;
-const GRID_GAP  = 12;
-let   rzState   = null;
-
-function gridColW(){
-  const g = document.getElementById('dash-grid');
-  return g ? (g.clientWidth - GRID_GAP * (GRID_COLS - 1)) / GRID_COLS : 80;
-}
-function pxToCols(px){ return Math.min(GRID_COLS, Math.max(2, Math.round(px / (gridColW() + GRID_GAP)))); }
-
-function initRz(){
-  document.querySelectorAll('.rh').forEach(h => {
-    h.addEventListener('mousedown', rzDown, {passive:false});
-  });
-}
-
-function rzDown(e){
-  if(!dragModeOn) return;
-  e.preventDefault(); e.stopPropagation();
-  const h   = e.currentTarget;
-  const dir = h.dataset.dir;               // 's' | 'e' | 'se'
-  const card   = h.closest('.card');
-  const widget = h.closest('.dash-item');
-  if(!card || !widget) return;
-
-  const startX = e.clientX;
-  const startY = e.clientY;
-  const startW = widget.offsetWidth;
-  const startH = card.offsetHeight;
-
-  card.style.transition   = 'none';
-  widget.style.transition = 'none';
-  document.body.style.userSelect = 'none';
-  document.body.style.cursor = dir === 's' ? 'ns-resize' : dir === 'e' ? 'ew-resize' : 'se-resize';
-
-  function onMove(ev){
-    const dx = ev.clientX - startX;
-    const dy = ev.clientY - startY;
-    // Width
-    if(dir === 'e' || dir === 'se'){
-      const cols = pxToCols(startW + dx);
-      widget.style.gridColumn = 'span ' + cols;
-    }
-    // Height
-    if(dir === 's' || dir === 'se'){
-      const newH = Math.max(100, startH + dy);
-      card.style.minHeight = newH + 'px';
-      card.style.height    = newH + 'px';
-      // Scale chart canvas area
-      const cb = card.querySelector('.cb');
-      if(cb){ cb.style.height = Math.max(60, newH - 70) + 'px'; }
-    }
+// ═══ WIDGET SIZE CONTROLS ═══
+function setWidgetWidth(btn, pct){
+  const card = btn.closest('.card');
+  const widget = card?.closest('.dash-item');
+  if(!widget) return;
+  if(pct === 100){
+    widget.style.flex = '1 1 0';
+    widget.style.width = '';
+    widget.style.minWidth = '';
+    widget.style.maxWidth = '';
+  } else {
+    widget.style.flex = '0 0 '+pct+'%';
+    widget.style.width = pct+'%';
+    widget.style.minWidth = '240px';
+    widget.style.maxWidth = pct+'%';
   }
+  card.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  saveWidgetSizes();
+  setTimeout(()=>{ destroyDashCharts(); renderDashboard(); }, 80);
+}
 
-  function onUp(){
-    card.style.transition   = '';
-    widget.style.transition = '';
-    document.body.style.userSelect = '';
-    document.body.style.cursor = '';
-    // Persist
-    const cols = widget.style.gridColumn.replace(/[^0-9]/g,'') || '12';
-    const h2   = parseInt(card.style.height) || 0;
-    widget.dataset.rzCol = cols;
-    if(h2 > 0) widget.dataset.rzH = h2;
-    saveRz();
-    setTimeout(()=>{ destroyDashCharts(); renderDashboard(); }, 80);
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup',   onUp);
+function showWidgetSizeControls(show){
+  // Sync active button state when entering edit mode
+  if(show){
+    document.querySelectorAll('.dash-item[id]').forEach(w => {
+      const card = w.querySelector('.card');
+      if(!card) return;
+      const currentW = w.style.width;
+      const pct = currentW ? parseInt(currentW) : 100;
+      card.querySelectorAll('.size-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.pct) === pct);
+      });
+    });
   }
-
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup',   onUp);
 }
 
-function saveRz(){
-  const out = {};
-  document.querySelectorAll('#dash-grid .dash-item[id]').forEach(w => {
-    out[w.id] = { col: w.dataset.rzCol||'', h: w.dataset.rzH||'' };
+function saveWidgetSizes(){
+  const sizes = {};
+  document.querySelectorAll('.dash-item[id]').forEach(w => {
+    sizes[w.id] = {
+      flex: w.style.flex || '',
+      width: w.style.width || '',
+      minWidth: w.style.minWidth || ''
+    };
   });
-  const order = [...document.querySelectorAll('#dash-grid .dash-item[id]')].map(w=>w.id);
-  localStorage.setItem('apxrz2', JSON.stringify({out, order}));
+  localStorage.setItem('apxwsizes', JSON.stringify(sizes));
 }
 
-function restoreRz(){
+function restoreWidgetSizes(){
   try{
-    const raw = localStorage.getItem('apxrz2');
+    const raw = localStorage.getItem('apxwsizes');
     if(!raw) return;
-    const {out={}, order=[]} = JSON.parse(raw);
-    const grid = document.getElementById('dash-grid');
-    order.forEach(id=>{ const el=document.getElementById(id); if(el&&grid) grid.appendChild(el); });
-    Object.entries(out).forEach(([id,s])=>{
+    const sizes = JSON.parse(raw);
+    Object.entries(sizes).forEach(([id, s]) => {
       const w = document.getElementById(id);
       if(!w) return;
-      if(s.col && s.col!=='12'){
-        w.style.gridColumn = 'span '+s.col;
-        w.dataset.rzCol = s.col;
-      }
-      if(s.h){
-        const h = parseInt(s.h);
-        w.dataset.rzH = s.h;
-        const card = w.querySelector('.card');
+      if(s.width){
+        const pct=parseInt(s.width);
+        w.style.flex='0 0 '+pct+'%';
+        w.style.width=pct+'%';
+        w.style.minWidth='240px';
+        w.style.maxWidth=pct+'%';
+        const card=w.querySelector('.card');
         if(card){
-          card.style.minHeight = h+'px';
-          card.style.height    = h+'px';
-          const cb = card.querySelector('.cb');
-          if(cb) cb.style.height = Math.max(60,h-70)+'px';
+          card.querySelectorAll('.size-btn').forEach(b=>{
+            b.classList.toggle('active', parseInt(b.dataset.pct)===pct);
+          });
         }
       }
     });
-  }catch(e){ console.warn(e); }
+  } catch(e){}
 }
 
 function destroySortable(){
@@ -2159,22 +2226,32 @@ function destroySortable(){
 }
 
 function saveDashLayout(){
-  const order=[];
-  document.querySelectorAll('#dash-grid .dash-item[id]').forEach(item=>order.push(item.id));
-  localStorage.setItem('apxlayout',JSON.stringify(order));
+  const rows=[];
+  document.querySelectorAll('#dash-grid .dash-row').forEach(row=>{
+    const items=[];
+    row.querySelectorAll('.dash-item[id]').forEach(item=>items.push(item.id));
+    rows.push({rowId:row.id,items});
+  });
+  localStorage.setItem('apxlayout',JSON.stringify(rows));
 }
 
 function restoreDashLayout(){
   try{
     const saved=localStorage.getItem('apxlayout');
     if(!saved)return;
-    const order=JSON.parse(saved);
+    const rows=JSON.parse(saved);
     const grid=document.getElementById('dash-grid');
-    if(!grid)return;
-    order.forEach(id=>{
-      const el=document.getElementById(id);
-      if(el)grid.appendChild(el);
+    rows.forEach(({rowId,items})=>{
+      const row=document.getElementById(rowId);
+      if(!row)return;
+      items.forEach(id=>{
+        const el=document.getElementById(id);
+        if(el&&el.parentElement!==row)row.appendChild(el);
+      });
     });
+    // Restore row order
+    const orderedRows=rows.map(r=>document.getElementById(r.rowId)).filter(Boolean);
+    orderedRows.forEach(row=>grid.appendChild(row));
   }catch(e){console.warn('restoreDashLayout',e);}
 }
 
@@ -3225,23 +3302,11 @@ function expCSV(){const exp=(data,n)=>{if(!data.length)return;const h=Object.key
 function go(vw,el){
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
-  document.getElementById('view-'+vw).classList.add('active');
-  if(el)el.classList.add('active');
+  document.getElementById('view-'+vw).classList.add('active');el.classList.add('active');
   const t={gestion:'Gestión de Ventas',ventas:'Dashboard',pipeline:'Pipeline de Ventas',tareas:'Tareas Diarias',config:'Configuración',licitaciones:'Licitaciones',proyectos:'Proyectos Estratégicos',relacionamiento:'Relacionamiento Estratégico',proveedores:'Gestión de Proveedores',forecast:'Forecast de Ventas'};
   document.getElementById('ptitle').textContent=t[vw]||vw;
-  // Render section content
-  if(vw==='gestion'){destroyDashCharts();renderDashboard();}
-  if(vw==='ventas'){renderV();renderVentasKPIs();}
-  if(vw==='pipeline'){renderK();}
   if(vw==='tareas'){checkAlarms();renderT();}
-  if(vw==='licitaciones'){renderLic();updLicKPIs();}
-  if(vw==='proyectos'){renderProy();}
-  if(vw==='relacionamiento'){renderRel();}
-  if(vw==='proveedores'){renderProv();}
-  if(vw==='forecast'){renderForecast();}
   if(vw==='config'){loadCfg();document.getElementById('cfg-sid').textContent=sid2||'─';document.getElementById('ccats').value=cfg.cats;document.getElementById('cemp').value=cfg.emp;document.getElementById('crol').value=cfg.rol;document.getElementById('caut').value=cfg.aut;regMember();}
-  // Close mobile sidebar
-  if(window.innerWidth<=768)document.getElementById('sidebar').classList.remove('open');
 }
 function om(id){document.getElementById(id).classList.add('open');if(id==='mnv')document.getElementById('vf').value=today();if(id==='mnt'){const n=new Date();document.getElementById('tini').value=n.toISOString().slice(0,16);const t=new Date(n);t.setDate(t.getDate()+1);document.getElementById('tfin').value=t.toISOString().slice(0,16);}}
 function cm(id){document.getElementById(id).classList.remove('open');}
@@ -3307,19 +3372,29 @@ async function tryAutoLogin(){
     return;
   }
 
-  // Mostrar splash (nunca login) mientras restauramos
+  // Mostrar splash mientras restauramos
   const splash=document.getElementById('splash');
   if(splash)splash.style.display='flex';
-  document.getElementById('ls').style.display='none';
   setSplashMsg('Restaurando sesión...');
 
+  // ── Leer sesión guardada ──
   const session=getSession();
-
-  // ── CASO 1: token vigente en localStorage → entrar directo ──
   if(session&&session.tok&&session.cu&&session.sid2){
     const tokenAge=Date.now()-(session.tokenSaved||0);
+    const inactive=Date.now()-(session.lastActive||0);
+
+    // Si estuvo inactivo más de 5 min → logout
+    if(inactive>INACTIVITY_MS){
+      clearSession();
+      showLoginScreen();
+      return;
+    }
+
+    // Si el token tiene menos de 50 min → usarlo directo sin llamar a Google
     if(tokenAge<TOKEN_MAX_AGE){
-      tok=session.tok; cu=session.cu; sid2=session.sid2;
+      tok=session.tok;
+      cu=session.cu;
+      sid2=session.sid2;
       setSplashMsg('Cargando datos...');
       try{
         await ensureTabs();
@@ -3330,70 +3405,15 @@ async function tryAutoLogin(){
         hideSplash();
         showApp();
         return;
-      }catch(e){ console.warn('loadAll failed, trying token renew', e); }
+      }catch(e){
+        // Si falla la carga, intentar con token nuevo
+      }
     }
   }
 
-  // ── CASO 2: token expirado → renovar silenciosamente (OAuth prompt:none) ──
-  // Mantener splash visible, NUNCA mostrar login
-  setSplashMsg('Renovando sesión...');
-  if(!window.google||!window.google.accounts){
-    // SDK no cargó todavía — esperar
-    let att=0;
-    await new Promise(res=>{
-      const w=setInterval(()=>{
-        att++;
-        if(window.google&&window.google.accounts){clearInterval(w);res();}
-        else if(att>30){clearInterval(w);res();}
-      },500);
-    });
-  }
-
-  if(!window.google||!window.google.accounts){
-    // SDK nunca cargó → mostrar login como último recurso
-    showLoginScreen();
-    return;
-  }
-
-  const sid=session?.sid2||savedSid;
-  let renewed=false;
-  await new Promise(res=>{
-    const timeout=setTimeout(()=>{ if(!renewed){renewed=true;res();} },8000);
-    try{
-      google.accounts.oauth2.initTokenClient({
-        client_id:CID, scope:SCOPES, prompt:'none',
-        callback:async(r)=>{
-          if(renewed)return;
-          renewed=true; clearTimeout(timeout);
-          if(r.access_token){
-            tok=r.access_token;
-            try{
-              const ui=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+tok}});
-              cu=await ui.json();
-            }catch(e){ cu=session?.cu||{name:'Usuario',email:''}; }
-            sid2=sid;
-            setSplashMsg('Cargando datos...');
-            try{
-              await ensureTabs();
-              await loadAll();
-              // Reset tokenSaved
-              const s=getSession();
-              if(s){s.tok=tok;s.tokenSaved=Date.now();localStorage.setItem(SESSION_KEY,JSON.stringify(s));}
-              else saveSession();
-              resetInactivityTimer();
-              scheduleTokenRenew(TOKEN_MAX_AGE);
-              hideSplash();
-              showApp();
-            }catch(e2){ showLoginScreen(); }
-          } else {
-            // prompt:none falló → mostrar login
-            showLoginScreen();
-          }
-          res();
-        }
-      }).requestAccessToken();
-    }catch(e){ showLoginScreen(); res(); }
-  });
+  // ── Token expirado o sin sesión: pedir login ──
+  // No intentar prompt:none porque falla en GitHub Pages con cookies bloqueadas
+  showLoginScreen();
 }
 
 
