@@ -319,8 +319,8 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
   <nav class="snav">
     <!-- Sortable nav items -->
     <div id="nav-sortable" style="padding:8px 0">
-      <div class="ni active" data-view="gestion" onclick="go('gestion',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10l3-4 3 3 2-3 4 5"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>Gestión de Ventas</div>
-      <div class="ni" data-view="ventas" onclick="go('ventas',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13l3-5 3 3 2-4 3 3"/><circle cx="13" cy="4" r="2"/></svg>Dashboard</div>
+      <div class="ni active" data-view="gestion" onclick="go('gestion',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10l3-4 3 3 2-3 4 5"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>Dashboard</div>
+      <div class="ni" data-view="ventas" onclick="go('ventas',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13l3-5 3 3 2-4 3 3"/><circle cx="13" cy="4" r="2"/></svg>Gestión de Ventas</div>
       <div class="ni" data-view="pipeline" onclick="go('pipeline',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="3" height="10" rx="1"/><rect x="6" y="5" width="3" height="8" rx="1"/><rect x="11" y="1" width="3" height="12" rx="1"/></svg>Pipeline<span class="nbadge" id="badgep">0</span></div>
       <div class="ni" data-view="tareas" onclick="go('tareas',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8l2 2 4-4"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>Tareas<span class="nbadge red" id="badget" style="display:none">!</span></div>
       <div class="ni" data-view="licitaciones" onclick="go('licitaciones',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M5 7h6M5 10h4M5 4h2"/></svg>Licitaciones<span class="nbadge" id="badge-lic" style="display:none">0</span></div>
@@ -379,7 +379,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
     <!-- TOOLBAR -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
       <div style="display:flex;align-items:center;gap:10px">
-        <div class="st">Dashboard</div>
+        <div class="st">Gestión de Ventas</div>
         <div id="drag-mode-badge" style="display:none;background:var(--accent);color:var(--bg);font-family:var(--fm);font-size:.58rem;padding:2px 10px;border-radius:20px;letter-spacing:.08em;text-transform:uppercase">Modo edición</div>
       </div>
       <!-- WIDGET DROPDOWN -->
@@ -561,7 +561,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
   <div class="view" id="view-ventas">
     <div class="sh">
       <div>
-        <div class="st">Gestión de Ventas</div>
+        <div class="st">Dashboard</div>
         <div style="font-family:var(--fm);font-size:.63rem;color:var(--muted);margin-top:3px" id="ventas-resumen">─</div>
       </div>
       <div class="sa">
@@ -2746,7 +2746,7 @@ function go(vw,el){
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
   document.getElementById('view-'+vw).classList.add('active');el.classList.add('active');
-  const t={gestion:'Dashboard',ventas:'Gestión de Ventas',pipeline:'Pipeline de Ventas',tareas:'Tareas Diarias',config:'Configuración',licitaciones:'Licitaciones',proyectos:'Proyectos Estratégicos',relacionamiento:'Relacionamiento Estratégico',proveedores:'Gestión de Proveedores',forecast:'Forecast de Ventas'};
+  const t={gestion:'Gestión de Ventas',ventas:'Dashboard',pipeline:'Pipeline de Ventas',tareas:'Tareas Diarias',config:'Configuración',licitaciones:'Licitaciones',proyectos:'Proyectos Estratégicos',relacionamiento:'Relacionamiento Estratégico',proveedores:'Gestión de Proveedores',forecast:'Forecast de Ventas'};
   document.getElementById('ptitle').textContent=t[vw]||vw;
   if(vw==='tareas'){checkAlarms();renderT();}
   if(vw==='config'){loadCfg();document.getElementById('cfg-sid').textContent=sid2||'─';document.getElementById('ccats').value=cfg.cats;document.getElementById('cemp').value=cfg.emp;document.getElementById('crol').value=cfg.rol;document.getElementById('caut').value=cfg.aut;regMember();}
