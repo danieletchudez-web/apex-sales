@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>APEX — Sales Intelligence</title>
+<title>Gestor de Ventas</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -903,6 +903,51 @@ const FCH=['id','anio','mes','meta','notas','usuario','creado'];
 
 // ═══ STATE ═══
 let tok=null,sid2=null,cu=null;
+
+// ─── SESSION PERSISTENCE ───
+// Guarda sesión en sessionStorage (sobrevive Cmd+R, no sobrevive cierre de tab)
+// Inactividad de 5 min → pide re-auth
+const SESSION_KEY='apex_session';
+const INACTIVITY_MS=5*60*1000; // 5 minutos
+let inactivityTimer=null;
+
+function saveSession(){
+  if(!tok||!cu||!sid2)return;
+  sessionStorage.setItem(SESSION_KEY,JSON.stringify({
+    tok,cu,sid2,saved:Date.now()
+  }));
+}
+
+function clearSession(){
+  sessionStorage.removeItem(SESSION_KEY);
+}
+
+function getSession(){
+  try{
+    const raw=sessionStorage.getItem(SESSION_KEY);
+    if(!raw)return null;
+    return JSON.parse(raw);
+  }catch{return null;}
+}
+
+function resetInactivityTimer(){
+  clearTimeout(inactivityTimer);
+  inactivityTimer=setTimeout(()=>{
+    // 5 min sin actividad → cerrar sesión silenciosamente
+    clearSession();
+    signOut();
+    toast('Sesión cerrada por inactividad','info');
+  },INACTIVITY_MS);
+  // Actualizar timestamp en session
+  saveSession();
+}
+
+// Registrar actividad del usuario
+['mousemove','keydown','click','touchstart','scroll'].forEach(ev=>{
+  document.addEventListener(ev,()=>{
+    if(tok)resetInactivityTimer();
+  },{passive:true});
+});
 let S={v:[],h:[],d:[],t:[],l:[],p:[],r:[],pr:[],fc:[]};
 let cfg={emp:'Mi Empresa',rol:'Sales Manager',cats:'Software,Servicios,Hardware,Consultoría,Soporte',a24:1,a48:1,aut:30};
 let stimer=null,atimer=null,hch=null,hpi=null,tf2='todas',pi={v:[],h:[]},dragId=null;
@@ -929,6 +974,8 @@ async function startLogin(){
         await ensureTabs();
         await loadAll();
         await regMember();
+        saveSession();
+        resetInactivityTimer();
         showApp();
       }
     }).requestAccessToken();
@@ -937,7 +984,7 @@ async function startLogin(){
 
 function gbHTML(){return `<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continuar con Google`;}
 function showErr(m){const e=document.getElementById('lerr');e.textContent=m;e.classList.add('show');}
-function signOut(){if(window.google&&tok)google.accounts.oauth2.revoke(tok,()=>{});tok=null;sid2=null;cu=null;clearInterval(stimer);clearInterval(atimer);document.getElementById('ls').classList.remove('hidden');document.getElementById('sidebar').style.display='none';document.getElementById('app').style.display='none';document.getElementById('gbtn').disabled=false;document.getElementById('gbtn').innerHTML=gbHTML();document.getElementById('lerr').classList.remove('show');}
+function signOut(){if(window.google&&tok)google.accounts.oauth2.revoke(tok,()=>{});clearSession();clearTimeout(inactivityTimer);tok=null;sid2=null;cu=null;clearInterval(stimer);clearInterval(atimer);document.getElementById('ls').classList.remove('hidden');document.getElementById('sidebar').style.display='none';document.getElementById('app').style.display='none';document.getElementById('gbtn').disabled=false;document.getElementById('gbtn').innerHTML=gbHTML();document.getElementById('lerr').classList.remove('show');}
 
 function showApp(){
   document.getElementById('ls').classList.add('hidden');
@@ -2796,36 +2843,57 @@ function showLoginScreen(msg){
   }
 }
 
-function tryAutoLogin(){
+async function tryAutoLogin(){
   const savedSid=localStorage.getItem('apex_sid');
   if(!savedSid)return;
-  if(!window.google||!window.google.accounts){setTimeout(tryAutoLogin,400);return;}
 
-  // Mostrar loading inline sin ocultar login screen todavía
+  // 1. Intentar restaurar desde sessionStorage (Cmd+R)
+  const session=getSession();
+  if(session&&session.tok&&session.cu&&session.sid2){
+    const age=Date.now()-session.saved;
+    if(age<INACTIVITY_MS){
+      // Sesión válida — restaurar sin pedir login
+      tok=session.tok;cu=session.cu;sid2=session.sid2;
+      const btn=document.getElementById('gbtn');
+      btn.innerHTML='<span style="font-size:.85rem">Restaurando sesión...</span>';
+      try{
+        // Verificar que el token sigue activo
+        const test=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+tok}});
+        if(test.ok){
+          cu=await test.json();
+          btn.disabled=false;btn.innerHTML=gbHTML();
+          await ensureTabs();
+          await loadAll();
+          saveSession();
+          resetInactivityTimer();
+          showApp();
+          return; // ← sesión restaurada, no hacer nada más
+        }
+      }catch(e){}
+      // Token expiró → caer a OAuth silent
+    }
+  }
+
+  // 2. Fallback: OAuth silencioso (sin popup)
+  if(!window.google||!window.google.accounts){setTimeout(tryAutoLogin,400);return;}
   const btn=document.getElementById('gbtn');
   btn.disabled=true;
-  btn.innerHTML='<span style="font-size:.85rem">Reconectando sesión...</span>';
+  btn.innerHTML='<span style="font-size:.85rem">Reconectando...</span>';
 
-  // Intentar renovar token silenciosamente
   let resolved=false;
   const timeout=setTimeout(()=>{
-    if(resolved)return;
-    resolved=true;
-    // Timeout: mostrar login normal para que el usuario conecte manualmente
+    if(resolved)return;resolved=true;
     btn.disabled=false;btn.innerHTML=gbHTML();
     document.getElementById('sid').value=savedSid;
-    toast('Iniciá sesión para continuar','info');
   },8000);
 
   try{
     google.accounts.oauth2.initTokenClient({
-      client_id:CID,scope:SCOPES,
-      prompt:'none',
+      client_id:CID,scope:SCOPES,prompt:'none',
       callback:async(r)=>{
         if(resolved)return;
         resolved=true;clearTimeout(timeout);
         if(r.error||!r.access_token){
-          // No se pudo renovar → mostrar login para que conecte manualmente
           btn.disabled=false;btn.innerHTML=gbHTML();
           document.getElementById('sid').value=savedSid;
           return;
@@ -2839,6 +2907,8 @@ function tryAutoLogin(){
         btn.disabled=false;btn.innerHTML=gbHTML();
         await ensureTabs();
         await loadAll();
+        saveSession();
+        resetInactivityTimer();
         showApp();
         toast('Sesión restaurada ✓','success');
       }
