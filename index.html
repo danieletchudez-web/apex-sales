@@ -319,7 +319,8 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
   <nav class="snav">
     <!-- Sortable nav items -->
     <div id="nav-sortable" style="padding:8px 0">
-      <div class="ni active" data-view="gestion" onclick="go('gestion',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Dashboard</div>
+      <div class="ni active" data-view="gestion" onclick="go('gestion',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10l3-4 3 3 2-3 4 5"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>Gestión de Ventas</div>
+      <div class="ni" data-view="ventas" onclick="go('ventas',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13l3-5 3 3 2-4 3 3"/><circle cx="13" cy="4" r="2"/></svg>Ventas</div>
       <div class="ni" data-view="pipeline" onclick="go('pipeline',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="3" height="10" rx="1"/><rect x="6" y="5" width="3" height="8" rx="1"/><rect x="11" y="1" width="3" height="12" rx="1"/></svg>Pipeline<span class="nbadge" id="badgep">0</span></div>
       <div class="ni" data-view="tareas" onclick="go('tareas',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8l2 2 4-4"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>Tareas<span class="nbadge red" id="badget" style="display:none">!</span></div>
       <div class="ni" data-view="licitaciones" onclick="go('licitaciones',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M5 7h6M5 10h4M5 4h2"/></svg>Licitaciones<span class="nbadge" id="badge-lic" style="display:none">0</span></div>
@@ -398,7 +399,6 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <label class="wgt-chk-row" data-w="tareas-chart"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>✅ Tareas</span></label>
             <label class="wgt-chk-row" data-w="top-clientes"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>🏆 Top clientes</span></label>
             <label class="wgt-chk-row" data-w="estado-ventas"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>📈 Estados de ventas</span></label>
-            <label class="wgt-chk-row" data-w="tabla-ventas"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>📋 Tabla de ventas</span></label>
             <div style="margin:4px 0;border-top:1px solid var(--border);padding-top:4px"></div>
             <label class="wgt-chk-row" data-w="licitaciones-dash"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>📄 Licitaciones</span></label>
             <label class="wgt-chk-row" data-w="proyectos-dash"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>📐 Proyectos</span></label>
@@ -441,10 +441,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <div class="ch">
               <div class="drag-handle" title="Arrastrar">⠿</div>
               <div><div class="ct">Ventas reales vs Forecast</div><div class="cs">Comparativo mensual</div></div>
-              <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
-                <span style="font-family:var(--fm);font-size:.6rem;color:var(--muted)">Meta:</span>
-                <input id="db-meta" type="number" placeholder="100000" style="width:100px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--fm);font-size:.7rem;padding:4px 8px;outline:none" oninput="renderDashboard()">
-              </div>
+              <button class="btn bts sm" onclick="go('forecast',document.querySelector('.ni[data-view=forecast]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver Forecast →</button>
             </div>
             <div class="cb"><div style="position:relative;height:220px"><canvas id="chartForecast"></canvas></div></div>
           </div>
@@ -495,27 +492,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         </div>
       </div>
 
-      <!-- full-width row -->
-      <div class="dash-row" id="row-tabla">
-        <div class="wgt dash-item" id="wgt-tabla-ventas" data-size="full">
-          <div class="card" style="overflow:visible">
-            <div class="ch">
-              <div class="drag-handle" title="Arrastrar">⠿</div>
-              <div class="st" style="font-size:.9rem">Registro de Ventas</div>
-              <div class="sa" style="margin-left:auto">
-                <input class="srch" id="vsrch" placeholder="Buscar..." oninput="fVentas()">
-                <button class="btn bts sm" onclick="om('miv')"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v9M4 8l4 4 4-4"/><path d="M2 14h12"/></svg>Importar</button>
-                <button class="btn btp sm" onclick="om('mnv')">+ Nueva Venta</button>
-              </div>
-            </div>
-            <div class="cb" style="padding:0"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Fecha</th><th>Cliente</th><th>Producto/Servicio</th><th>Categoría</th><th>Monto</th><th>Estado</th><th>Vendedor</th><th>Usuario</th><th></th></tr></thead><tbody id="vtbody"></tbody></table></div>
-              <div id="ver-mas-wrap" style="display:none;padding:12px 16px;border-top:1px solid var(--border);justify-content:center">
-                <button id="ver-mas-btn" class="btn bts sm" onclick="verMas()" style="width:100%;justify-content:center">Ver más</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       <!-- WIDGET: Licitaciones resumen -->
       <div class="dash-row" id="row-licitaciones">
@@ -578,6 +555,47 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       </div>
 
     </div><!-- end dash-grid -->
+  </div>
+
+  <!-- VENTAS -->
+  <div class="view" id="view-ventas">
+    <div class="sh">
+      <div>
+        <div class="st">Gestión de Ventas</div>
+        <div style="font-family:var(--fm);font-size:.63rem;color:var(--muted);margin-top:3px" id="ventas-resumen">─</div>
+      </div>
+      <div class="sa">
+        <input class="srch" id="vsrch" placeholder="Buscar..." oninput="fVentas()">
+        <select class="fsel" id="vfiltro" onchange="fVentas()" style="width:auto;padding:6px 28px 6px 10px">
+          <option value="todas">Todos los estados</option>
+          <option value="cobrada">Cobradas</option>
+          <option value="pendiente">Pendientes</option>
+          <option value="cancelada">Canceladas</option>
+        </select>
+        <button class="btn bts sm" onclick="om('miv')"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v9M4 8l4 4 4-4"/><path d="M2 14h12"/></svg>Importar</button>
+        <button class="btn btp sm" onclick="om('mnv')">+ Nueva Venta</button>
+      </div>
+    </div>
+    <!-- KPIs ventas -->
+    <div class="krow" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+      <div class="kpi"><div class="klbl">Ventas del mes</div><div class="kval" id="v-k1">$0</div><div class="kdelta" id="v-k1d">─</div></div>
+      <div class="kpi"><div class="klbl">Total registros</div><div class="kval" id="v-k2">0</div><div class="kdelta">en la base</div></div>
+      <div class="kpi"><div class="klbl">Ticket promedio</div><div class="kval" id="v-k3">$0</div><div class="kdelta">─</div></div>
+      <div class="kpi"><div class="klbl">Mejor cliente</div><div class="kval" style="font-size:1rem;padding-top:4px" id="v-k4">─</div><div class="kdelta" id="v-k4d">─</div></div>
+    </div>
+    <div class="card">
+      <div class="cb" style="padding:0">
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr><th>Fecha</th><th>Cliente</th><th>Producto/Servicio</th><th>Categoría</th><th>Monto</th><th>Estado</th><th>Vendedor</th><th>Usuario</th><th></th></tr></thead>
+            <tbody id="vtbody"></tbody>
+          </table>
+        </div>
+        <div id="ver-mas-wrap" style="display:none;padding:12px 16px;border-top:1px solid var(--border);justify-content:center">
+          <button id="ver-mas-btn" class="btn bts sm" onclick="verMas()" style="width:100%;justify-content:center">Ver más</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- LICITACIONES -->
@@ -1121,13 +1139,13 @@ async function saveV(){
   if(!f||!cl||!pr||!mo){toast('Completá los campos obligatorios','warning');return;}
   const row={id:uid(),fecha:f,cliente:cl,producto:pr,categoria:v('vcat'),monto:mo,moneda:v('vmon'),estado:v('vest'),vendedor:v('vven').trim(),notas:v('vnot').trim(),usuario:cu.name||cu.email,creado:new Date().toISOString()};
   S.v.unshift(row);cm('mnv');cv(['vcl','vpr','vmo','vven','vnot']);
-  renderV();updKPI();renderDashboard();toast('Guardando en Sheets...','info');setSI('go','Guardando...');
+  renderV();renderVentasKPIs();updKPI();renderDashboard();toast('Guardando en Sheets...','info');setSI('go','Guardando...');
   await appendRow(TABS.v,VH,row);setSI('ok','Guardado ✓');toast('✅ Venta guardada en Google Sheets','success');
 }
 
 async function delV(id,src){
   if(!confirm('¿Eliminar?'))return;
-  S.v=S.v.filter(x=>x.id!==id);renderV();updKPI();renderDashboard();await writeTab(TABS.v,VH,S.v);
+  S.v=S.v.filter(x=>x.id!==id);renderV();renderVentasKPIs();updKPI();renderDashboard();await writeTab(TABS.v,VH,S.v);
   toast('Eliminado','info');
 }
 
@@ -2695,6 +2713,24 @@ function restoreNavOrder(){
   }catch(e){}
 }
 
+
+function renderVentasKPIs(){
+  const now=new Date();
+  const mes=now.getMonth(),anio=now.getFullYear();
+  const mesData=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getMonth()===mes&&d.getFullYear()===anio;});
+  const totalMes=mesData.reduce((s,x)=>s+x.monto,0);
+  const tick=S.v.length?S.v.reduce((s,x)=>s+x.monto,0)/S.v.length:0;
+  const topCli=Object.entries(S.v.reduce((m,x)=>{m[x.cliente]=(m[x.cliente]||0)+x.monto;return m;},{})).sort((a,b)=>b[1]-a[1])[0];
+  const k1=document.getElementById('v-k1');if(k1)k1.textContent='$'+fn(totalMes);
+  const k1d=document.getElementById('v-k1d');if(k1d)k1d.textContent=mesData.length+' operaciones';
+  const k2=document.getElementById('v-k2');if(k2)k2.textContent=S.v.length;
+  const k3=document.getElementById('v-k3');if(k3)k3.textContent='$'+fn(tick);
+  const k4=document.getElementById('v-k4');if(k4)k4.textContent=topCli?esc(topCli[0]):'─';
+  const k4d=document.getElementById('v-k4d');if(k4d)k4d.textContent=topCli?'$'+fn(topCli[1]):'─';
+  const res=document.getElementById('ventas-resumen');
+  if(res)res.textContent=`${S.v.length} registros · mes actual: $${fn(totalMes)} en ${mesData.length} operaciones`;
+}
+
 // ═══ CONFIG ═══
 function saveCfg(){
   cfg.cats=v('ccats');cfg.a24=parseInt(v('ca24'));cfg.a48=parseInt(v('ca48'));cfg.aut=parseInt(v('caut'));
@@ -2710,7 +2746,7 @@ function go(vw,el){
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
   document.getElementById('view-'+vw).classList.add('active');el.classList.add('active');
-  const t={gestion:'Dashboard',pipeline:'Pipeline de Ventas',tareas:'Tareas Diarias',config:'Configuración',licitaciones:'Licitaciones',proyectos:'Proyectos Estratégicos',relacionamiento:'Relacionamiento Estratégico',proveedores:'Gestión de Proveedores',forecast:'Forecast de Ventas'};
+  const t={gestion:'Dashboard',ventas:'Gestión de Ventas',pipeline:'Pipeline de Ventas',tareas:'Tareas Diarias',config:'Configuración',licitaciones:'Licitaciones',proyectos:'Proyectos Estratégicos',relacionamiento:'Relacionamiento Estratégico',proveedores:'Gestión de Proveedores',forecast:'Forecast de Ventas'};
   document.getElementById('ptitle').textContent=t[vw]||vw;
   if(vw==='tareas'){checkAlarms();renderT();}
   if(vw==='config'){loadCfg();document.getElementById('cfg-sid').textContent=sid2||'─';document.getElementById('ccats').value=cfg.cats;document.getElementById('cemp').value=cfg.emp;document.getElementById('crol').value=cfg.rol;document.getElementById('caut').value=cfg.aut;regMember();}
@@ -2718,7 +2754,7 @@ function go(vw,el){
 function om(id){document.getElementById(id).classList.add('open');if(id==='mnv')document.getElementById('vf').value=today();if(id==='mnt'){const n=new Date();document.getElementById('tini').value=n.toISOString().slice(0,16);const t=new Date(n);t.setDate(t.getDate()+1);document.getElementById('tfin').value=t.toISOString().slice(0,16);}}
 function cm(id){document.getElementById(id).classList.remove('open');}
 // Modal close handled in edit section
-function renderAll(){renderV();updKPI();renderK();renderT();renderDashboard();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();}
+function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();renderDashboard();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();}
 
 // ═══ UTILS ═══
 function toggleTheme(){
