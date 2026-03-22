@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MediCross</title>
+<title>MediCross — Sales Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
@@ -1044,10 +1044,10 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
     <div class="fgrp"><label class="flbl">Moneda</label><select class="fsel" id="vmon"><option value="ARS">ARS $</option><option value="USD">USD $</option><option value="EUR">EUR €</option></select></div>
     <div class="fgrp"><label class="flbl">Estado</label><select class="fsel" id="vest"><option value="cobrada">Cobrada</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option></select></div>
     <div class="fgrp"><label class="flbl">Vendedor</label><input class="fi" id="vven" placeholder="Nombre"></div>
-    <div class="fgrp"><label class="flbl">Cantidad</label><input class="fi" id="vcant" type="number" placeholder="1" min="0" oninput="calcGrossMargin()"></div>
-    <div class="fgrp"><label class="flbl">Costo unitario</label><input class="fi" id="vcosto" type="number" placeholder="0.00" oninput="calcGrossMargin()"></div>
+    <div class="fgrp"><label class="flbl">Cantidad</label><input class="fi" id="vcant" type="number" placeholder="1" min="0" step="1" oninput="calcGrossMargin()"></div>
+    <div class="fgrp"><label class="flbl">Costo unitario</label><input class="fi" id="vcosto" type="number" placeholder="0.00 (opcional)" min="0" oninput="calcGrossMargin()"></div>
     <div class="fgrp"><label class="flbl">Markup %</label><input class="fi" id="vmarkup" type="number" placeholder="0" oninput="calcMarkupFromMargin()" style="background:var(--surf2)"></div>
-    <div class="fgrp"><label class="flbl">Gross Margin %<span id="vgm-preview" style="margin-left:8px;color:var(--green);font-size:.75rem;font-weight:700"></span></label><input class="fi" id="vgm" type="number" placeholder="─" readonly style="background:var(--surf2);color:var(--green);font-weight:700"></div>
+    <div class="fgrp"><label class="flbl" style="display:flex;align-items:center;gap:6px">Gross Margin % <span id="vgm-preview" style="font-size:.8rem;font-weight:700;transition:color .2s"></span></label><input class="fi" id="vgm" type="text" placeholder="Se calcula automáticamente" readonly tabindex="-1" style="cursor:default;font-weight:700;font-size:1rem"></div>
     <div class="fgrp" style="grid-column:1/-1"><label class="flbl">Notas</label><textarea class="fta" id="vnot"></textarea></div>
   </div></div>
   <div class="mf"><button class="btn bts sm" onclick="cm('mnv')">Cancelar</button><button class="btn btp sm" onclick="saveV()">Guardar Venta</button></div>
@@ -1524,31 +1524,46 @@ function setupAS(){
 
 // ═══ VENTAS ═══
 // ── Cálculo automático de Gross Margin y Markup ──
+// Fórmulas:
+//   Gross Margin % = (Precio Venta - Costo Total) / Precio Venta × 100
+//   Markup %       = (Precio Venta - Costo Total) / Costo Total × 100
+//   Costo Total    = Costo Unitario × Cantidad
+
 function calcGrossMargin(){
-  const monto = parseFloat(document.getElementById('vmo')?.value)||0;
-  const cant  = parseFloat(document.getElementById('vcant')?.value)||1;
-  const costo = parseFloat(document.getElementById('vcosto')?.value)||0;
-  const costoTotal = costo * (cant||1);
-  
+  const precio = parseFloat(document.getElementById('vmo')?.value) || 0;
+  const cant   = parseFloat(document.getElementById('vcant')?.value) || 1;
+  const costo  = parseFloat(document.getElementById('vcosto')?.value) || 0;
+
+  const costoTotal = costo * cant;
+
   let gm = 0, markup = 0;
-  if(monto > 0 && costoTotal > 0){
-    gm = ((monto - costoTotal) / monto) * 100;
-    markup = ((monto - costoTotal) / costoTotal) * 100;
+  if(precio > 0 && costoTotal > 0){
+    gm     = ((precio - costoTotal) / precio) * 100;
+    markup = ((precio - costoTotal) / costoTotal) * 100;
   }
-  
-  const gmEl = document.getElementById('vgm');
+
+  // Update Markup field (unless user is actively editing it)
   const mkEl = document.getElementById('vmarkup');
-  const previewEl = document.getElementById('vgm-preview');
-  
-  if(gmEl){ gmEl.value = gm > 0 ? gm.toFixed(1) : ''; }
-  if(mkEl && !document.activeElement?.id?.includes('markup')){ 
-    mkEl.value = markup > 0 ? markup.toFixed(1) : ''; 
+  if(mkEl && document.activeElement !== mkEl){
+    mkEl.value = markup > 0 ? markup.toFixed(1) : '';
   }
+
+  // Update GM field (always auto-computed — readonly display)
+  const gmEl = document.getElementById('vgm');
+  if(gmEl){
+    gmEl.value = gm !== 0 ? gm.toFixed(1) : '';
+    const color = gm >= 40 ? 'var(--green)' : gm >= 20 ? 'var(--orange)' : gm > 0 ? '#ef4444' : 'var(--muted)';
+    gmEl.style.color  = color;
+    gmEl.style.fontWeight = '700';
+  }
+
+  // Update inline preview next to label
+  const previewEl = document.getElementById('vgm-preview');
   if(previewEl){
-    if(gm > 0){
-      const color = gm>=40?'var(--green)':gm>=20?'var(--orange)':'#ef4444';
+    if(gm !== 0){
+      const color = gm >= 40 ? 'var(--green)' : gm >= 20 ? 'var(--orange)' : '#ef4444';
       previewEl.style.color = color;
-      previewEl.textContent = gm.toFixed(1)+'%';
+      previewEl.textContent = gm.toFixed(1) + '%';
     } else {
       previewEl.textContent = '';
     }
@@ -1556,19 +1571,18 @@ function calcGrossMargin(){
 }
 
 function calcMarkupFromMargin(){
-  // If user manually enters markup, recalculate GM
-  const monto  = parseFloat(document.getElementById('vmo')?.value)||0;
-  const cant   = parseFloat(document.getElementById('vcant')?.value)||1;
-  const markup = parseFloat(document.getElementById('vmarkup')?.value)||0;
-  
-  if(monto > 0 && markup > 0){
-    // costo_unit = monto / (1 + markup/100) / cant
-    const costoTotal = monto / (1 + markup/100);
-    const costoUnit  = costoTotal / (cant||1);
+  // User typed Markup manually → back-calculate Costo Unitario
+  const precio  = parseFloat(document.getElementById('vmo')?.value) || 0;
+  const cant    = parseFloat(document.getElementById('vcant')?.value) || 1;
+  const markup  = parseFloat(document.getElementById('vmarkup')?.value) || 0;
+
+  if(precio > 0 && markup > 0){
+    const costoTotal = precio / (1 + markup / 100);
+    const costoUnit  = costoTotal / cant;
     const costoEl = document.getElementById('vcosto');
     if(costoEl) costoEl.value = costoUnit.toFixed(2);
-    calcGrossMargin();
   }
+  calcGrossMargin();
 }
 
 
@@ -3159,8 +3173,9 @@ function editV(id){
   document.getElementById('vcant').value=x.cantidad||'';
   document.getElementById('vcosto').value=x.costo_unit||'';
   document.getElementById('vmarkup').value=x.markup||'';
-  document.getElementById('vgm').value=x.gross_margin||'';
-  if(x.gross_margin>0){const p=document.getElementById('vgm-preview');if(p){const c=x.gross_margin>=40?'var(--green)':x.gross_margin>=20?'var(--orange)':'#ef4444';p.style.color=c;p.textContent=x.gross_margin.toFixed(1)+'%';}}
+  document.getElementById('vgm').value='';
+  // Recalculate from source values so display is always correct
+  setTimeout(calcGrossMargin, 50);
   document.getElementById('vven').value=x.vendedor||'';
   document.getElementById('vnot').value=x.notas||'';
   // Cambiar botón guardar a actualizar
@@ -3187,6 +3202,15 @@ function resetModalV(){
   const btn=modal.querySelector('.btn.btp');
   btn.textContent='Guardar Venta';
   btn.onclick=saveV;
+  // Clear calculated fields
+  const gmEl=document.getElementById('vgm');
+  const prevEl=document.getElementById('vgm-preview');
+  const mkEl=document.getElementById('vmarkup');
+  if(gmEl){gmEl.value='';gmEl.style.color='';}
+  if(prevEl)prevEl.textContent='';
+  if(mkEl)mkEl.value='';
+  document.getElementById('vcant').value='';
+  document.getElementById('vcosto').value='';
 }
 
 // ── DEAL / PIPELINE ──
