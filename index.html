@@ -2303,7 +2303,52 @@ function mkChart(id,config){
   const el=document.getElementById(id);
   if(!el)return;
   if(dCharts[id]){try{dCharts[id].destroy();}catch(e){}}
+
+  // Inject datalabels BEFORE creating chart if state is active
+  if(labelStates[id]){
+    const isLight=document.body.classList.contains('light');
+    const lblColor=isLight?'#1a1a2e':'#e8ffe8';
+    const isDoughnut=config.type==='doughnut'||config.type==='pie';
+    const fmtLbl=(v)=>{
+      if(v===null||v===undefined||v===0||v==='')return null;
+      if(typeof v==='number'){
+        if(v>=1e9)return '$'+fn(Math.round(v/1e6))+'M';
+        if(v>=1e6)return '$'+fn(Math.round(v/1e3))+'k';
+        if(v>=1000)return '$'+fn(v);
+        return v%1===0?String(v):'$'+fn(v);
+      }
+      return null;
+    };
+    (config.data.datasets||[]).forEach(ds=>{
+      const isLine=ds.type==='line'||config.type==='line';
+      ds.datalabels={
+        display:true,
+        color:isDoughnut?'#fff':lblColor,
+        font:{family:'IBM Plex Mono',size:isDoughnut?11:9,weight:'600'},
+        anchor:isDoughnut?'center':isLine?'top':'end',
+        align:isDoughnut?'center':isLine?'top':'end',
+        offset:isDoughnut?0:3,
+        formatter:isDoughnut?(v,ctx)=>{
+          const tot=ctx.dataset.data.reduce((a,b)=>a+(b||0),0);
+          if(!tot||!v)return null;
+          const p=Math.round(v/tot*100);
+          return p>4?p+'%':null;
+        }:fmtLbl,
+        backgroundColor:isDoughnut?'rgba(0,0,0,.5)':null,
+        borderRadius:isDoughnut?4:0,
+        padding:isDoughnut?{top:2,bottom:2,left:4,right:4}:0,
+      };
+    });
+    // Ensure plugin is listed
+    if(!config.options) config.options={};
+    if(!config.options.plugins) config.options.plugins={};
+  }
+
   dCharts[id]=new Chart(el.getContext('2d'),config);
+
+  // Sync button visual state
+  const btn=document.getElementById('lbl-'+id);
+  if(btn) btn.classList.toggle('on', !!labelStates[id]);
 }
 
 
