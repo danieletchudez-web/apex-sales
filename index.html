@@ -3886,10 +3886,15 @@ function iaChartClientes(){
 }
 
 // ═══ CHART LABEL TOGGLE ═══
-const labelStates={};  // chartId → boolean
+// Label states — persist across chart re-renders
+const LABEL_KEY='apx_labels';
+function getLabelStates(){try{return JSON.parse(localStorage.getItem(LABEL_KEY)||'{}')}catch{return {}}}
+function saveLabelStates(s){localStorage.setItem(LABEL_KEY,JSON.stringify(s))}
+let labelStates=getLabelStates();
 
 function toggleLabels(chartId,btn){
   labelStates[chartId]=!labelStates[chartId];
+  saveLabelStates(labelStates);
   const show=labelStates[chartId];
   btn.classList.toggle('on',show);
   const canvas=document.getElementById(chartId);
@@ -3951,7 +3956,16 @@ function go(vw,el){
   if(el)el.classList.add('active');
   const t={gestion:'Dashboard',ventas:'Gestión de Ventas',pipeline:'Pipeline de Ventas',tareas:'Tareas Diarias',config:'Configuración',licitaciones:'Licitaciones',proyectos:'Proyectos Estratégicos',relacionamiento:'Relacionamiento Estratégico',proveedores:'Gestión de Proveedores',forecast:'Forecast de Ventas'};
   document.getElementById('ptitle').textContent=t[vw]||vw;
-  if(vw==='gestion'){destroyDashCharts();setTimeout(()=>{renderDashboard();renderKpiFcChart();updKPI();},50);}
+  if(vw==='gestion'){
+    destroyDashCharts();
+    setTimeout(()=>{
+      renderDashboard();renderKpiFcChart();updKPI();
+      // Restore label button states
+      Object.keys(labelStates).forEach(id=>{
+        if(labelStates[id]){const btn=document.getElementById('lbl-'+id);if(btn)btn.classList.add('on');}
+      });
+    },50);
+  }
   if(vw==='ventas'){renderV();renderVentasKPIs();}
   if(vw==='pipeline'){renderK();}
   if(vw==='tareas'){checkAlarms();renderT();if(!calSelDate)calSelDate=new Date().toISOString().slice(0,10);renderCalAll();}
