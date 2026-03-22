@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sales</title>
+<title>APEX — Sales Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1839,16 +1839,21 @@ function renderDashboard(){
   // ── Chart 1: Barras mensuales ──
   if(document.getElementById('wgt-ventas-mes')&&!document.getElementById('wgt-ventas-mes').classList.contains('hidden')){
     const curM=new Date().getFullYear()===yr?new Date().getMonth():11;
-    // Show at least 3 months always
+    // Show all months up to current, minimum 3
     const showM=Math.max(curM+1,3);
     const labels=MONTHS.slice(0,showM);
     const vals=byMonth.slice(0,showM);
+    const isDark=!document.body.classList.contains('light');
     mkChart('chartVentasMes',{
       type:'bar',
       data:{labels,datasets:[{
         label:'Ventas',data:vals,
-        backgroundColor:vals.map((v,i)=>i===curM?C.accent:C.accentAlpha),
-        borderColor:vals.map((v,i)=>i===curM?C.accent:'transparent'),
+        backgroundColor:vals.map((v,i)=>{
+          if(i===curM) return C.accent;                          // mes actual: acento
+          if(v>0) return isDark?'rgba(61,255,160,.55)':'rgba(26,158,90,.55)'; // con datos: verde visible
+          return isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)'; // sin datos: sutil
+        }),
+        borderColor:vals.map((v,i)=>i===curM?C.accent:v>0?(isDark?'rgba(61,255,160,.8)':'rgba(26,158,90,.8)'):'transparent'),
         borderWidth:2,borderRadius:6,borderSkipped:false
       }]},
       options:{responsive:true,maintainAspectRatio:false,
