@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Intelligence</title>
+<title>APEX</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1092,7 +1092,12 @@ function showApp(){
   document.getElementById('cemp').value=cfg.emp;
   document.getElementById('crol').value=cfg.rol;
   document.getElementById('caut').value=cfg.aut;
-  popCats();restoreRz();restoreWidgets();restoreDashLayout();restoreNavOrder();renderAll();setSI('ok','Sheets listo');
+  popCats();restoreRz();restoreWidgets();restoreDashLayout();restoreNavOrder();
+  // Defer chart rendering so DOM has time to layout properly
+  setTimeout(()=>{
+    renderAll();
+    setSI('ok','Sheets listo');
+  }, 50);
   setupAS();checkAlarms();atimer=setInterval(checkAlarms,60000);
 }
 
@@ -1224,7 +1229,6 @@ async function loadAll(){
     S.fc=safeUpdate(fcr,S.fc).filter(r=>r.id).map(r=>({...r,meta:parseFloat(r.meta)||0}));
 
     setSI('ok','Sincronizado');
-    renderAll();
   }catch(e){
     setSI('','Error');
     console.error('[loadAll] EXCEPTION',e);
@@ -1236,6 +1240,7 @@ async function syncNow(){
   if(!tok||!sid2){toast('No hay sesión activa','warning');return;}
   setSI('go','Sincronizando...');
   await loadAll();
+  renderAll();
   const hm=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('stxt').textContent=`Sync ${hm}`;
   toast('✅ Datos actualizados desde Sheets','success');
@@ -1267,6 +1272,7 @@ function setupAS(){
   if(s>0){
     stimer=setInterval(async()=>{
       await loadAll();
+      renderAll();
       const hm=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
       document.getElementById('stxt').textContent=`Sync ${hm}`;
     },s*1000);
@@ -1334,7 +1340,7 @@ function verMas(){
 
 function updKPI(){
   const now=new Date();const m=now.getMonth();const y=now.getFullYear();
-  const mv=S.v.filter(x=>{const d=new Date(x.fecha+'T12:00:00');return d.getMonth()===m&&d.getFullYear()===y&&x.estado!=='cancelada';});
+  const mv=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return !isNaN(d)&&d.getMonth()===m&&d.getFullYear()===y;});
   const ventasMes=mv.reduce((s,x)=>s+x.monto,0);
   document.getElementById('kmes').textContent='$'+fn(ventasMes);
   document.getElementById('kmesd').textContent=mv.length+' operaciones';
@@ -1410,8 +1416,13 @@ function renderKpiFcChart(){
   const C=chartColors();
   const MONTHS_S=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const reales=MONTHS_S.map((_,i)=>{
-    return S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getFullYear()===yr&&d.getMonth()===i;}).reduce((s,x)=>s+x.monto,0);
+    return S.v.filter(x=>{
+      if(!x.fecha||x.estado==='cancelada')return false;
+      const d=new Date(x.fecha+'T12:00');
+      return !isNaN(d)&&d.getFullYear()===yr&&d.getMonth()===i;
+    }).reduce((s,x)=>s+x.monto,0);
   });
+  console.log('[KpiFcChart] yr='+yr+' reales='+JSON.stringify(reales));
   const metas=MONTHS_S.map((_,i)=>getMeta(yr,i+1));
   const ctx=document.getElementById('kpiFcChart');if(!ctx)return;
   if(kpiFcChartInst){kpiFcChartInst.destroy();kpiFcChartInst=null;}
@@ -1749,9 +1760,17 @@ function renderDashboard(){
   const C=chartColors();
 
   // ── Data prep ──
-  const ventasYr=S.v.filter(v=>{if(!v.fecha||v.estado==='cancelada')return false;const d=new Date(v.fecha+'T12:00');return d.getFullYear()===yr;});
+  const ventasYr=S.v.filter(v=>{
+    if(!v.fecha||v.estado==='cancelada')return false;
+    const d=new Date(v.fecha+'T12:00');
+    return !isNaN(d)&&d.getFullYear()===yr;
+  });
   const byMonth=Array(12).fill(0);
-  ventasYr.forEach(v=>{const m=parseInt(v.fecha?.slice(5,7))-1;if(m>=0&&m<12)byMonth[m]+=v.monto;});
+  ventasYr.forEach(v=>{
+    const d=new Date(v.fecha+'T12:00');
+    if(!isNaN(d))byMonth[d.getMonth()]+=v.monto;
+  });
+  console.log('[Dashboard] yr='+yr+' ventas='+S.v.length+' ventasYr='+ventasYr.length+' byMonth='+JSON.stringify(byMonth));
 
   // ── Chart 1: Barras mensuales ──
   if(document.getElementById('wgt-ventas-mes')&&!document.getElementById('wgt-ventas-mes').classList.contains('hidden')){
@@ -3223,7 +3242,7 @@ function go(vw,el){
   if(el)el.classList.add('active');
   const t={gestion:'Dashboard',ventas:'Gestión de Ventas',pipeline:'Pipeline de Ventas',tareas:'Tareas Diarias',config:'Configuración',licitaciones:'Licitaciones',proyectos:'Proyectos Estratégicos',relacionamiento:'Relacionamiento Estratégico',proveedores:'Gestión de Proveedores',forecast:'Forecast de Ventas'};
   document.getElementById('ptitle').textContent=t[vw]||vw;
-  if(vw==='gestion'){destroyDashCharts();renderDashboard();updKPI();renderKpiFcChart();}
+  if(vw==='gestion'){destroyDashCharts();setTimeout(()=>{renderDashboard();renderKpiFcChart();updKPI();},50);}
   if(vw==='ventas'){renderV();renderVentasKPIs();}
   if(vw==='pipeline'){renderK();}
   if(vw==='tareas'){checkAlarms();renderT();}
@@ -3239,7 +3258,7 @@ function go(vw,el){
 function om(id){document.getElementById(id).classList.add('open');if(id==='mnv')document.getElementById('vf').value=today();if(id==='mnt'){const n=new Date();document.getElementById('tini').value=n.toISOString().slice(0,16);const t=new Date(n);t.setDate(t.getDate()+1);document.getElementById('tfin').value=t.toISOString().slice(0,16);}}
 function cm(id){document.getElementById(id).classList.remove('open');}
 // Modal close handled in edit section
-function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();renderDashboard();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();renderKpiFcChart();}
+function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();destroyDashCharts();renderDashboard();renderKpiFcChart();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();}
 
 // ═══ UTILS ═══
 function toggleTheme(){
