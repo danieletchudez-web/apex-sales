@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>APEX</title>
+<title>APEX — Sales Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1157,7 +1157,7 @@ async function readTab(tab){
     const h=rows[0].map(x=>String(x).toLowerCase().trim());
     return rows.slice(1)
       .filter(r=>r.some(c=>c&&String(c).trim())) // ignorar filas completamente vacías
-      .map(r=>{const o={};h.forEach((k,i)=>{o[k]=r[i]||'';});return o;});
+      .map(r=>{const o={};h.forEach((k,i)=>{const v=r[i];o[k]=v===undefined||v===null?'':String(v);});return o;});
   }catch(e){
     console.error('[readTab] ERROR en tab:',tab,e);
     return null; // null = hubo error, NO tocar el estado actual
@@ -1166,7 +1166,7 @@ async function readTab(tab){
 
 async function writeTab(tab,headers,rows){
   try{
-    const vals=[headers,...rows.map(r=>headers.map(h=>String(r[h]===undefined?'':r[h]||'')))];
+    const vals=[headers,...rows.map(r=>headers.map(h=>{const val=r[h];return val===undefined||val===null?'':String(val);}))];
     console.log('[writeTab] Escribiendo',tab,'filas:',vals.length,'token:',tok?tok.slice(0,20)+'...':'NULL');
     const url=`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=USER_ENTERED`;
     const res=await fetch(url,{
@@ -1211,14 +1211,14 @@ async function loadAll(){
       readTab(TABS.fc)
     ]);
 
-    // safeUpdate: nunca borrar datos en memoria si Sheet devuelve vacío o error
+    // safeUpdate: solo conservar datos en memoria si Sheet da error (null)
+    // Si Sheet devuelve [] es porque está vacía — aceptar eso
     function safeUpdate(sheetData, current){
-      if(sheetData===null) return current;
-      if(sheetData.length===0 && current.length>0) return current;
-      return sheetData;
+      if(sheetData===null) return current; // error de red → mantener lo que hay
+      return sheetData; // datos reales de sheet, incluso vacío
     }
 
-    S.v=safeUpdate(vr,S.v).filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
+    S.v=safeUpdate(vr,S.v).filter(r=>r.id).map(r=>({...r,monto:parseFloat(String(r.monto||'0').replace(',','.'))||0}));
     S.h=safeUpdate(hr,S.h).filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
     S.d=safeUpdate(dr,S.d).filter(r=>r.id).map(r=>({...r,valor:parseFloat(r.valor)||0,prob:parseInt(r.prob)||50}));
     S.t=safeUpdate(tr,S.t).filter(r=>r.id).map(r=>({...r,done:r.done==='true',alarm24:r.alarm24!=='false',alarm48:r.alarm48!=='false',alerted24:r.alerted24==='true',alerted48:r.alerted48==='true'}));
@@ -1474,7 +1474,7 @@ function procXL(file,type){
 function normRow(r,type){
   const ks=Object.keys(r).map(k=>k.toLowerCase().trim());
   const get=ns=>{for(const n of ns){const k=ks.find(k=>k.includes(n));if(k!==undefined)return String(r[Object.keys(r)[ks.indexOf(k)]]||'').trim();}return '';};
-  const mo=parseFloat(get(['monto','importe','total','precio','amount'])||0)||0;
+  const moStr=get(['monto','importe','total','precio','amount'])||'0';const mo=parseFloat(moStr.toString().replace(/[^0-9.,-]/g,'').replace(',','.'))||0;
   const base={id:uid(),fecha:normD(get(['fecha','date','fec'])),cliente:get(['cliente','client','empresa','company','customer']),producto:get(['producto','product','servicio','service','item','descripcion']),categoria:get(['categoria','category','cat','rubro']),monto:mo,moneda:get(['moneda','currency'])||'ARS',notas:get(['notas','notes','obs','comentarios']),usuario:cu.name||cu.email,creado:new Date().toISOString()};
   if(type==='ventas'){base.estado=get(['estado','status'])||'cobrada';base.vendedor=get(['vendedor','seller','asesor','comercial']);}
   else base.canal=get(['canal','channel','origen'])||'directo';
@@ -1770,13 +1770,15 @@ function renderDashboard(){
     const d=new Date(v.fecha+'T12:00');
     if(!isNaN(d))byMonth[d.getMonth()]+=v.monto;
   });
-  console.log('[Dashboard] yr='+yr+' ventas='+S.v.length+' ventasYr='+ventasYr.length+' byMonth='+JSON.stringify(byMonth));
+  console.log('[Dashboard] yr='+yr+' S.v='+S.v.length+' ventasYr='+ventasYr.length+' byMonth sum='+byMonth.reduce((a,b)=>a+b,0)+' byMonth='+JSON.stringify(byMonth.map(v=>Math.round(v))));
 
   // ── Chart 1: Barras mensuales ──
   if(document.getElementById('wgt-ventas-mes')&&!document.getElementById('wgt-ventas-mes').classList.contains('hidden')){
     const curM=new Date().getFullYear()===yr?new Date().getMonth():11;
-    const labels=MONTHS.slice(0,curM+1);
-    const vals=byMonth.slice(0,curM+1);
+    // Show at least 3 months always
+    const showM=Math.max(curM+1,3);
+    const labels=MONTHS.slice(0,showM);
+    const vals=byMonth.slice(0,showM);
     mkChart('chartVentasMes',{
       type:'bar',
       data:{labels,datasets:[{
