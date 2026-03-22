@@ -3,9 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>APEX</title>
+<title>Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script>
+// Registrar plugin globalmente — necesario para que funcione en todos los charts
+window.addEventListener('load',()=>{
+  if(window.Chart&&window.ChartDataLabels){
+    Chart.register(ChartDataLabels);
+    // Por defecto: desactivado en todos los charts
+    Chart.defaults.plugins.datalabels={display:false};
+  }
+});
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -3278,31 +3288,47 @@ const labelStates={};  // chartId → boolean
 
 function toggleLabels(chartId,btn){
   labelStates[chartId]=!labelStates[chartId];
-  btn.classList.toggle('on',labelStates[chartId]);
-  // Find chart instance
+  const show=labelStates[chartId];
+  btn.classList.toggle('on',show);
   const canvas=document.getElementById(chartId);
   if(!canvas)return;
   const inst=Chart.getChart(canvas);
   if(!inst)return;
-  const show=labelStates[chartId];
-  // Toggle datalabels plugin if available
-  if(inst.options.plugins.datalabels){
-    inst.options.plugins.datalabels.display=show;
-  } else {
-    // Fallback: toggle data values on the chart
-    inst.options.plugins.datalabels={
+  const isLight=document.body.classList.contains('light');
+  const lblColor=isLight?'#1a1a2e':'#e8ffe8';
+  const fmt=(v,ctx)=>{
+    if(v===null||v===undefined||v===0||v==='')return null;
+    if(typeof v==='number'){
+      if(v>=1e9)return '$'+fn(Math.round(v/1e6))+'M';
+      if(v>=1e6)return '$'+fn(Math.round(v/1e3))+'k';
+      if(v>=1000)return '$'+fn(v);
+      if(v>0)return v%1===0?String(v):'$'+fn(v);
+    }
+    return null;
+  };
+  // Configurar datalabels en cada dataset
+  inst.data.datasets.forEach((ds,di)=>{
+    const isLine=ds.type==='line'||inst.config.type==='line';
+    const isDoughnut=inst.config.type==='doughnut'||inst.config.type==='pie';
+    const anchor=isDoughnut?'center':(isLine?'top':'end');
+    const align=isDoughnut?'center':(isLine?'top':'end');
+    ds.datalabels={
       display:show,
-      color:document.body.classList.contains('light')?'#1a1a2e':'#e8e8ec',
-      font:{family:'IBM Plex Mono',size:9,weight:'500'},
-      anchor:'end',align:'end',offset:2,
-      formatter:(v)=>{
-        if(v===null||v===undefined||v===0)return '';
-        if(typeof v==='number'&&v>999)return '$'+Math.round(v/1000)+'k';
-        return v;
-      }
+      color:isDoughnut?'#fff':lblColor,
+      font:{family:'IBM Plex Mono',size:isDoughnut?11:9,weight:'600'},
+      anchor,align,offset:isDoughnut?0:3,
+      formatter:isDoughnut?(v,ctx)=>{
+        const total=ctx.dataset.data.reduce((a,b)=>a+(b||0),0);
+        if(!total||!v)return null;
+        const pct=Math.round(v/total*100);
+        return pct>4?pct+'%':null;
+      }:fmt,
+      backgroundColor:isDoughnut?'rgba(0,0,0,.5)':null,
+      borderRadius:isDoughnut?4:0,
+      padding:isDoughnut?{top:2,bottom:2,left:4,right:4}:0,
     };
-  }
-  inst.update('none');
+  });
+  inst.update();
 }
 
 // ═══ CONFIG ═══
