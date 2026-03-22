@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>APEX — Sales Intelligence</title>
+<title>APEX</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -979,7 +979,7 @@ let tok=null,sid2=null,cu=null;
 // Inactividad de 5 min sin uso → cerrar sesión.
 
 const SESSION_KEY='apex_session';
-const TOKEN_MAX_AGE=58*60*1000;   // 58 min → token Google dura ~60min
+const TOKEN_MAX_AGE=55*60*1000;   // 55 min → renovamos antes que expire
 const INACTIVITY_MS=5*60*1000;    // 5 min sin actividad → cerrar sesión
 let inactivityTimer=null;
 let tokenRenewTimer=null;
@@ -1026,7 +1026,7 @@ function scheduleTokenRenew(msUntilExpiry){
             tok=r.access_token;
             // Resetear tokenSaved
             const s=getSession();
-            if(s){s.tok=tok;s.tokenSaved=Date.now();sessionStorage.setItem(SESSION_KEY,JSON.stringify(s));}
+            if(s){s.tok=tok;s.tokenSaved=Date.now();localStorage.setItem(SESSION_KEY,JSON.stringify(s));}
             scheduleTokenRenew(TOKEN_MAX_AGE);
           }
         }
@@ -3443,7 +3443,13 @@ async function tryAutoLogin(){
   }
 
   if(!window.google||!window.google.accounts){
-    // SDK nunca cargó → mostrar login como último recurso
+    // SDK nunca cargó → intentar con token guardado
+    const fs=getSession();
+    if(fs?.tok&&fs?.cu){
+      tok=fs.tok;cu=fs.cu;sid2=fs.sid2||savedSid;
+      setSplashMsg('Cargando datos...');
+      try{ await ensureTabs();await loadAll();hideSplash();showApp();return; }catch(e){}
+    }
     showLoginScreen();
     return;
   }
@@ -3451,7 +3457,7 @@ async function tryAutoLogin(){
   const sid=session?.sid2||savedSid;
   let renewed=false;
   await new Promise(res=>{
-    const timeout=setTimeout(()=>{ if(!renewed){renewed=true;res();} },8000);
+    const timeout=setTimeout(()=>{ if(!renewed){renewed=true;res();} },15000);
     try{
       google.accounts.oauth2.initTokenClient({
         client_id:CID, scope:SCOPES, prompt:'none',
@@ -3479,8 +3485,21 @@ async function tryAutoLogin(){
               showApp();
             }catch(e2){ showLoginScreen(); }
           } else {
-            // prompt:none falló → mostrar login
-            showLoginScreen();
+            // prompt:none falló — intentar con el token guardado igual
+            // (puede que siga válido unos minutos extra)
+            const fallbackSession=getSession();
+            if(fallbackSession?.tok&&fallbackSession?.cu){
+              tok=fallbackSession.tok; cu=fallbackSession.cu; sid2=fallbackSession.sid2||savedSid;
+              setSplashMsg('Cargando datos...');
+              try{
+                await ensureTabs();
+                await loadAll();
+                hideSplash();
+                showApp();
+              }catch(e3){ showLoginScreen('Tu sesión expiró. Iniciá sesión nuevamente.'); }
+            } else {
+              showLoginScreen();
+            }
           }
           res();
         }
