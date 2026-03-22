@@ -35,6 +35,56 @@ body.light .logo-img{
   filter:none;
   opacity:1
 }
+/* ── TASK CALENDAR ── */
+.tcal-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.tcal-wrap{grid-template-columns:1fr}}
+.tcal{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.tcal-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.tcal-hdr h3{margin:0;font-size:.85rem;font-weight:700;font-family:var(--fd);letter-spacing:.03em}
+.tcal-nav{display:flex;gap:4px}
+.tcal-nav button{background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 10px;font-size:.75rem;cursor:pointer;transition:background .15s}
+.tcal-nav button:hover{background:var(--surf3)}
+.tcal-nav .tcal-today{font-size:.7rem;padding:4px 8px;color:var(--muted)}
+.tcal-grid{padding:10px 12px 14px}
+.tcal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px}
+.tcal-dow span{text-align:center;font-size:.6rem;font-family:var(--fm);color:var(--muted);font-weight:600;padding:4px 0;text-transform:uppercase}
+.tcal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.tcal-day{min-height:48px;border-radius:8px;padding:4px;cursor:pointer;border:1px solid transparent;transition:all .15s;position:relative}
+.tcal-day:hover{background:var(--surf2);border-color:var(--border)}
+.tcal-day.other-month{opacity:.3}
+.tcal-day.today{background:rgba(232,255,71,.08);border-color:var(--accent)!important}
+body.light .tcal-day.today{background:rgba(26,158,90,.08);border-color:var(--accent)!important}
+.tcal-day.selected{background:var(--accent)!important;border-color:var(--accent)!important}
+.tcal-day.selected .tcd-num,.tcal-day.selected .tcd-dot{color:#000!important}
+body.light .tcal-day.selected{background:var(--accent)!important}
+.tcd-num{font-size:.72rem;font-weight:700;font-family:var(--fm);color:var(--text);line-height:1}
+.tcal-day.today .tcd-num{color:var(--accent)}
+.tcd-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px}
+.tcd-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.tcd-dot.p-critica{background:#ef4444}
+.tcd-dot.p-alta{background:var(--orange)}
+.tcd-dot.p-media{background:var(--blue)}
+.tcd-dot.p-baja{background:var(--green)}
+.tcd-dot.done{background:var(--muted2);opacity:.5}
+.tcd-count{font-size:.58rem;color:var(--muted);margin-top:2px;font-family:var(--fm)}
+/* Upcoming panel */
+.tcal-upcoming{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.tcal-up-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.tcal-up-hdr h3{margin:0;font-size:.85rem;font-weight:700;font-family:var(--fd)}
+.tcal-up-sel{font-size:.72rem;color:var(--accent);font-family:var(--fm);font-weight:600}
+.tcal-up-list{flex:1;overflow-y:auto;max-height:380px;padding:8px}
+.tcal-up-item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;margin-bottom:4px;border:1px solid transparent;cursor:pointer;transition:background .12s}
+.tcal-up-item:hover{background:var(--surf2)}
+.tcal-up-item.ov{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.05)}
+.tcal-up-item.a24{border-color:rgba(232,255,71,.3);background:rgba(232,255,71,.05)}
+body.light .tcal-up-item.a24{border-color:rgba(202,138,4,.3);background:rgba(202,138,4,.05)}
+.tcal-up-item.done-t{opacity:.45}
+.tcal-up-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.tcal-up-body{flex:1;min-width:0}
+.tcal-up-tit{font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tcal-up-meta{font-size:.68rem;color:var(--muted);font-family:var(--fm);margin-top:2px}
+.tcal-up-empty{padding:24px;text-align:center;color:var(--muted);font-size:.78rem}
+
 body.light .kpi::after{background:radial-gradient(circle at top right,var(--ad),transparent 70%)}
 body.light .logo-dot{box-shadow:0 0 8px var(--accent)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -452,6 +502,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
             <label class="wgt-chk-row" data-w="forecast"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>🎯 Forecast</span></label>
             <label class="wgt-chk-row" data-w="categorias"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>🥧 Categorías</span></label>
             <label class="wgt-chk-row" data-w="tareas-chart"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>✅ Tareas</span></label>
+            <label class="wgt-chk-row" data-w="proximas-tareas"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>📅 Próximas tareas</span></label>
             <label class="wgt-chk-row" data-w="top-clientes"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>🏆 Top clientes</span></label>
             <label class="wgt-chk-row" data-w="estado-ventas"><input type="checkbox" checked onchange="toggleWidgetChk(this)"><span>📈 Estados de ventas</span></label>
             <div style="margin:4px 0;border-top:1px solid var(--border);padding-top:4px"></div>
@@ -572,6 +623,24 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       </div>
 
 
+
+      <!-- WIDGET: Próximas tareas en dashboard -->
+      <div class="dash-row" id="row-proximas-tareas">
+        <div class="wgt dash-item" id="wgt-proximas-tareas" data-size="full">
+          <div class="card" style="position:relative">
+            <div class="rh rh-s" data-dir="s"></div>
+            <div class="rh rh-se" data-dir="se"></div>
+            <div class="ch">
+              <div class="drag-handle" title="Arrastrar">⠿</div>
+              <div><div class="ct">Próximas tareas</div><div class="cs">Pendientes · próximos 7 días</div></div>
+              <button class="btn bts sm" onclick="go('tareas',document.querySelector('[data-view=tareas]'))" style="margin-left:auto;padding:4px 10px;font-size:.58rem">Ver calendario →</button>
+            </div>
+            <div class="cb" id="dash-tareas-content" style="padding:10px 14px">
+              <div style="color:var(--muted);font-size:.82rem">Cargando...</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- WIDGET: Licitaciones resumen -->
       <div class="dash-row" id="row-licitaciones">
@@ -841,6 +910,35 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
   <!-- TAREAS -->
   <div class="view" id="view-tareas">
     <div class="sh"><div><div class="st">Tareas Diarias</div><div style="font-family:var(--fm);font-size:.63rem;color:var(--muted);margin-top:3px" id="tresumen"></div></div><button class="btn btp sm" onclick="om('mnt')">+ Nueva Tarea</button></div>
+
+    <!-- CALENDARIO DE TAREAS -->
+    <div class="tcal-wrap">
+      <div class="tcal">
+        <div class="tcal-hdr">
+          <h3 id="tcal-title">Marzo 2026</h3>
+          <div class="tcal-nav">
+            <button onclick="calNav(-1)">‹</button>
+            <button class="tcal-today" onclick="calToday()">Hoy</button>
+            <button onclick="calNav(1)">›</button>
+          </div>
+        </div>
+        <div class="tcal-grid">
+          <div class="tcal-dow">
+            <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+          </div>
+          <div class="tcal-days" id="tcal-days"></div>
+        </div>
+      </div>
+      <div class="tcal-upcoming">
+        <div class="tcal-up-hdr">
+          <h3>Tareas del día</h3>
+          <span class="tcal-up-sel" id="tcal-up-label">Hoy</span>
+        </div>
+        <div class="tcal-up-list" id="tcal-up-list"></div>
+      </div>
+    </div>
+
+    <!-- FILTROS Y LISTA -->
     <div class="tf">
       <button class="tfb active" onclick="setTF('todas',this)">Todas</button>
       <button class="tfb" onclick="setTF('pendiente',this)">Pendientes</button>
@@ -1662,7 +1760,7 @@ async function saveT(){
   await appendRow(TABS.t,TH,row);toast('✅ Tarea creada y sincronizada','success');
 }
 
-async function togT(id){const t=S.t.find(x=>x.id===id);if(t){t.done=!t.done;renderT();await writeTab(TABS.t,TH,S.t);}}
+async function togT(id){const t=S.t.find(x=>x.id===id);if(t){t.done=!t.done;renderT();renderDashTareas();await writeTab(TABS.t,TH,S.t);}}
 async function delT(id){if(!confirm('¿Eliminar?'))return;S.t=S.t.filter(x=>x.id!==id);renderT();await writeTab(TABS.t,TH,S.t);toast('Eliminada','info');}
 
 function setTF(f,el){tf2=f;document.querySelectorAll('.tfb').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderT();}
@@ -1679,6 +1777,154 @@ function checkAlarms(){
   const b=document.getElementById('badget');
   if(ac>0){b.style.display='inline-flex';b.textContent=ac;}else b.style.display='none';
 }
+
+// ═══ TASK CALENDAR ═══
+let calYear=new Date().getFullYear();
+let calMonth=new Date().getMonth();
+let calSelDate=null; // selected date string YYYY-MM-DD
+
+const MESES_CAL=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const PRIORIDAD_DOT={critica:'p-critica',alta:'p-alta',media:'p-media',baja:'p-baja'};
+
+function calNav(dir){
+  calMonth+=dir;
+  if(calMonth>11){calMonth=0;calYear++;}
+  if(calMonth<0){calMonth=11;calYear--;}
+  calSelDate=null;
+  renderCal();
+  renderCalUpcoming();
+}
+function calToday(){
+  const n=new Date();
+  calYear=n.getFullYear();calMonth=n.getMonth();
+  calSelDate=new Date().toISOString().slice(0,10);
+  renderCal();renderCalUpcoming();
+}
+function calSelectDay(dateStr,el){
+  if(calSelDate===dateStr){
+    // deselect — show today
+    calSelDate=new Date().toISOString().slice(0,10);
+  } else {
+    calSelDate=dateStr;
+  }
+  renderCal();
+  renderCalUpcoming();
+}
+
+function renderCal(){
+  const title=document.getElementById('tcal-title');
+  if(title)title.textContent=MESES_CAL[calMonth]+' '+calYear;
+  const grid=document.getElementById('tcal-days');
+  if(!grid)return;
+
+  const today=new Date().toISOString().slice(0,10);
+  const firstDay=new Date(calYear,calMonth,1).getDay(); // 0=Sun
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const daysInPrev=new Date(calYear,calMonth,0).getDate();
+
+  // Build task index: date → [{task}]
+  const taskMap={};
+  S.t.forEach(t=>{
+    if(!t.fin)return;
+    const d=t.fin.slice(0,10);
+    if(!taskMap[d])taskMap[d]=[];
+    taskMap[d].push(t);
+  });
+
+  let html='';
+  // Previous month padding
+  for(let i=firstDay-1;i>=0;i--){
+    const d=daysInPrev-i;
+    const ds=`${calYear}-${String(calMonth===0?12:calMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    html+=`<div class="tcal-day other-month" onclick="calSelectDay('${ds}',this)">
+      <div class="tcd-num">${d}</div>
+    </div>`;
+  }
+  // Current month days
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const tasks=taskMap[ds]||[];
+    const isToday=ds===today;
+    const isSel=ds===calSelDate;
+    const pendCount=tasks.filter(t=>!t.done).length;
+    const dots=tasks.slice(0,6).map(t=>`<div class="tcd-dot ${PRIORIDAD_DOT[t.prioridad]||'p-media'} ${t.done?'done':''}"></div>`).join('');
+    html+=`<div class="tcal-day${isToday?' today':''}${isSel?' selected':''}" onclick="calSelectDay('${ds}',this)">
+      <div class="tcd-num">${d}</div>
+      ${dots?`<div class="tcd-dots">${dots}</div>`:''}
+      ${pendCount>0&&!isSel?`<div class="tcd-count">${pendCount}</div>`:''}
+    </div>`;
+  }
+  // Fill remaining cells to complete 6 rows = 42 cells
+  const totalCells=firstDay+daysInMonth;
+  const remaining=(Math.ceil(totalCells/7)*7)-totalCells;
+  for(let d=1;d<=remaining;d++){
+    const ds=`${calYear}-${String(calMonth+2>12?1:calMonth+2).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    html+=`<div class="tcal-day other-month" onclick="calSelectDay('${ds}',this)">
+      <div class="tcd-num">${d}</div>
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+
+function renderCalUpcoming(){
+  const el=document.getElementById('tcal-up-list');
+  const lbl=document.getElementById('tcal-up-label');
+  if(!el)return;
+
+  const selDate=calSelDate||new Date().toISOString().slice(0,10);
+  const today=new Date().toISOString().slice(0,10);
+  const now=new Date();
+
+  // Label
+  if(lbl){
+    if(selDate===today)lbl.textContent='Hoy';
+    else{
+      const [y,m,d]=selDate.split('-');
+      lbl.textContent=`${parseInt(d)} ${MESES_CAL[parseInt(m)-1].slice(0,3)} ${y}`;
+    }
+  }
+
+  // Tasks for selected date (match fin date)
+  let tasks=S.t.filter(t=>t.fin&&t.fin.slice(0,10)===selDate);
+  tasks.sort((a,b)=>{
+    if(a.done&&!b.done)return 1;
+    if(!a.done&&b.done)return -1;
+    return new Date(a.fin)-new Date(b.fin);
+  });
+
+  if(!tasks.length){
+    el.innerHTML=`<div class="tcal-up-empty">Sin tareas para este día</div>`;
+    return;
+  }
+
+  const dotColor={critica:'#ef4444',alta:'var(--orange)',media:'var(--blue)',baja:'var(--green)'};
+  el.innerHTML=tasks.map(t=>{
+    const fin=new Date(t.fin);
+    const diff=(fin-now)/3600000;
+    let cls='';
+    if(!t.done){if(diff<0)cls='ov';else if(diff<=24)cls='a24';}
+    if(t.done)cls='done-t';
+    const hora=t.fin.length>10?new Date(t.fin).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}):'';
+    return `<div class="tcal-up-item ${cls}" onclick="editT('${t.id}')">
+      <div class="tcal-up-dot" style="background:${dotColor[t.prioridad]||'var(--blue)'}"></div>
+      <div class="tcal-up-body">
+        <div class="tcal-up-tit">${t.done?'✓ ':''}${TICOS[t.tipo]||'📌'} ${esc(t.titulo)}</div>
+        <div class="tcal-up-meta">
+          ${hora?hora+' · ':''}${t.cliente?'🏢 '+esc(t.cliente)+' · ':''}${t.prioridad||'media'}
+          ${!t.done&&diff<0?' · <span style="color:#ef4444">vencida</span>':''}
+          ${!t.done&&diff>=0&&diff<=24?' · <span style="color:var(--accent)">⏰ vence hoy</span>':''}
+        </div>
+      </div>
+      <button class="btn ic sm" style="background:none;border:none;color:var(--muted);font-size:.9rem;padding:2px 4px" onclick="event.stopPropagation();togT('${t.id}')" title="${t.done?'Reabrir':'Completar'}">${t.done?'↩':'✓'}</button>
+    </div>`;
+  }).join('');
+}
+
+function renderCalAll(){
+  renderCal();
+  renderCalUpcoming();
+}
+
 
 function renderT(){
   checkAlarms();
@@ -1720,6 +1966,8 @@ function renderT(){
       </div>
     </div>`;
   }).join('');
+  // Refresh calendar in sync
+  renderCalAll();
 }
 
 
@@ -1838,6 +2086,61 @@ function getReal(anio,mes){
   }).reduce((s,x)=>s+x.monto,0);
 }
 
+// ── Dashboard: Próximas tareas (7 días) ──
+function renderDashTareas(){
+  const el=document.getElementById('dash-tareas-content');
+  if(!el)return;
+  const now=new Date();
+  const in7=new Date(now.getTime()+7*24*3600000);
+  const dotColor={critica:'#ef4444',alta:'var(--orange)',media:'var(--blue)',baja:'var(--green)'};
+  const pending=S.t
+    .filter(t=>!t.done&&t.fin)
+    .map(t=>({...t,_fin:new Date(t.fin)}))
+    .filter(t=>!isNaN(t._fin))
+    .sort((a,b)=>a._fin-b._fin)
+    .slice(0,12); // max 12 items
+
+  const overdue=pending.filter(t=>t._fin<now).length;
+  const soon=pending.filter(t=>t._fin>=now&&t._fin<=in7).length;
+
+  if(!pending.length){
+    el.innerHTML=`<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem">✅ Sin tareas pendientes</div>`;
+    return;
+  }
+
+  // Summary chips
+  let html=`<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">`;
+  if(overdue)html+=`<span class="pill pr" style="font-size:.68rem">⚠️ ${overdue} vencida${overdue>1?'s':''}</span>`;
+  if(soon)html+=`<span class="pill po" style="font-size:.68rem">⏰ ${soon} esta semana</span>`;
+  html+=`<span class="pill" style="font-size:.68rem;background:var(--surf2)">📋 ${S.t.filter(t=>!t.done).length} pendientes total</span>`;
+  html+=`</div>`;
+
+  // Compact task rows
+  html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px">`;
+  pending.forEach(t=>{
+    const fin=t._fin;
+    const diff=(fin-now)/3600000;
+    const isOv=diff<0;
+    const is24=!isOv&&diff<=24;
+    const borderColor=isOv?'rgba(239,68,68,.4)':is24?'rgba(232,255,71,.3)':'var(--border)';
+    const hora=t.fin.length>10?fin.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}):'';
+    const dayLabel=isOv?`<span style="color:#ef4444;font-size:.62rem">vencida</span>`:
+                   is24?`<span style="color:var(--accent);font-size:.62rem">hoy ${hora}</span>`:
+                   `<span style="color:var(--muted);font-size:.62rem">${fin.toLocaleDateString('es-AR',{day:'2-digit',month:'short'})}${hora?' '+hora:''}</span>`;
+    html+=`<div onclick="editT('${t.id}')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid ${borderColor};background:var(--surf);cursor:pointer;transition:background .12s" onmouseover="this.style.background='var(--surf2)'" onmouseout="this.style.background='var(--surf)'">
+      <div style="width:8px;height:8px;border-radius:50%;background:${dotColor[t.prioridad]||'var(--blue)'};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.76rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${TICOS[t.tipo]||'📌'} ${esc(t.titulo)}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px">${dayLabel}${t.cliente?`<span style="color:var(--muted);font-size:.62rem">· ${esc(t.cliente)}</span>`:''}
+        </div>
+      </div>
+      <button onclick="event.stopPropagation();togT('${t.id}');renderDashTareas()" style="background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:.65rem;padding:2px 6px;cursor:pointer" title="Completar">✓</button>
+    </div>`;
+  });
+  html+=`</div>`;
+  el.innerHTML=html;
+}
+
 function renderDashboard(){
   const yr=parseInt(document.getElementById('db-year')?.value||new Date().getFullYear());
   const C=chartColors();
@@ -1853,6 +2156,7 @@ function renderDashboard(){
     const d=new Date(v.fecha+'T12:00');
     if(!isNaN(d))byMonth[d.getMonth()]+=v.monto;
   });
+  renderDashTareas();
   console.log('[Dashboard] yr='+yr+' S.v='+S.v.length+' ventasYr='+ventasYr.length+' byMonth sum='+byMonth.reduce((a,b)=>a+b,0)+' byMonth='+JSON.stringify(byMonth.map(v=>Math.round(v))));
 
   // ── Chart 1: Barras mensuales ──
@@ -3361,7 +3665,7 @@ function go(vw,el){
   if(vw==='gestion'){destroyDashCharts();setTimeout(()=>{renderDashboard();renderKpiFcChart();updKPI();},50);}
   if(vw==='ventas'){renderV();renderVentasKPIs();}
   if(vw==='pipeline'){renderK();}
-  if(vw==='tareas'){checkAlarms();renderT();}
+  if(vw==='tareas'){checkAlarms();renderT();if(!calSelDate)calSelDate=new Date().toISOString().slice(0,10);renderCalAll();}
   if(vw==='licitaciones'){renderLic();updLicKPIs();}
   if(vw==='proyectos'){renderProy();}
   if(vw==='relacionamiento'){renderRel();}
