@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>gence</title>
+<title>Sales</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1487,25 +1487,30 @@ function renderKpiFcChart(){
   if(kpiFcChartInst){kpiFcChartInst.destroy();kpiFcChartInst=null;}
   const g=ctx.getContext('2d').createLinearGradient(0,0,0,130);
   g.addColorStop(0,'rgba(61,255,160,.18)');g.addColorStop(1,'rgba(61,255,160,0)');
+  const hasMeta=metas.some(m=>m>0);
+  const isDark=!document.body.classList.contains('light');
+  const metaColor=isDark?'rgba(232,255,71,.9)':'rgba(91,94,244,.9)';
+  // Use two Y axes so Meta is always visible even if scale differs
   kpiFcChartInst=new Chart(ctx,{
     type:'line',
     data:{
       labels:MONTHS_S,
       datasets:[
-        {label:'Meta',data:metas,borderColor:document.body.classList.contains('light')?'rgba(91,94,244,.8)':'rgba(232,255,71,.7)',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false,tension:.4},
-        {label:'Real',data:reales,borderColor:C.green,borderWidth:2,backgroundColor:g,fill:true,tension:.4,pointRadius:3,pointBackgroundColor:C.green,pointHoverRadius:5},
+        {label:'Real',data:reales,borderColor:C.green,borderWidth:2.5,backgroundColor:g,fill:true,tension:.4,pointRadius:3,pointBackgroundColor:C.green,pointHoverRadius:5,yAxisID:'yReal'},
+        ...(hasMeta?[{label:'Meta',data:metas,borderColor:metaColor,borderWidth:2,borderDash:[8,4],pointRadius:4,pointBackgroundColor:metaColor,fill:false,tension:.3,yAxisID:'yMeta'}]:[]),
       ]
     },
     options:{
       responsive:true,maintainAspectRatio:false,
       interaction:{mode:'index',intersect:false},
       plugins:{
-        legend:{labels:{color:C.tick,boxWidth:10,font:{size:10}}},
+        legend:{labels:{color:C.tick,boxWidth:10,font:{size:10},usePointStyle:true}},
         tooltip:{backgroundColor:C.tooltip.bg,borderColor:C.tooltip.border,borderWidth:1,titleColor:C.tooltip.color,bodyColor:C.tooltip.color,callbacks:{label:c=>` ${c.dataset.label}: $${fn(c.parsed.y)}`}},
       },
       scales:{
         x:{grid:{display:false},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:9}}},
-        y:{grid:{color:C.grid},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:9},callback:v=>'$'+fn(v)}}
+        yReal:{position:'left',grid:{color:C.grid},ticks:{color:C.green,font:{family:'IBM Plex Mono',size:9},callback:v=>'$'+fn(v)}},
+        ...(hasMeta?{yMeta:{position:'right',grid:{display:false},ticks:{color:metaColor,font:{family:'IBM Plex Mono',size:9},callback:v=>'$'+fn(v)}}}:{})
       }
     }
   });
@@ -1870,12 +1875,22 @@ function renderDashboard(){
       {label:'Proyección',data:forecast,backgroundColor:'rgba(92,168,255,.15)',borderColor:C.blue,borderWidth:2,borderRadius:5,type:'bar'},
     ];
     if(metaLine)datasets.push({label:'Meta',data:metaLine,borderColor:document.body.classList.contains('light')?C.blue:'rgba(232,255,71,.7)',borderWidth:2,borderDash:[6,3],type:'line',pointRadius:3,fill:false,pointBackgroundColor:document.body.classList.contains('light')?C.blue:'rgba(232,255,71,.7)'});
+    // Si hay meta, usar eje Y secundario para que sea visible
+    const hasMeta2=metaLine&&metaLine.some(m=>m>0);
+    const metaColor2=document.body.classList.contains('light')?C.blue:'rgba(232,255,71,.9)';
+    if(hasMeta2){
+      datasets.find(d=>d.label==='Meta').yAxisID='yMeta';
+      datasets.filter(d=>d.label!=='Meta').forEach(d=>d.yAxisID='yReal');
+    }
     mkChart('chartForecast',{
       type:'bar',data:{labels,datasets},
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{labels:{color:C.tick,boxWidth:12,font:{size:11}}},tooltip:{backgroundColor:C.tooltip.bg,borderColor:C.tooltip.border,borderWidth:1,titleColor:C.tooltip.color,bodyColor:C.tooltip.color,callbacks:{label:c=>' '+c.dataset.label+': $'+fn(c.parsed.y)}}},
-        scales:{x:{grid:{display:false},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:10}}},
-                y:{grid:{color:C.grid},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:10},callback:v=>'$'+fn(v)}}}}
+        scales:{
+          x:{grid:{display:false},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:10}}},
+          yReal:{position:'left',grid:{color:C.grid},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:10},callback:v=>'$'+fn(v)}},
+          ...(hasMeta2?{yMeta:{position:'right',grid:{display:false},ticks:{color:metaColor2,font:{family:'IBM Plex Mono',size:9},callback:v=>'$'+fn(v)}}}:{})
+        }}
     });
   }
 
