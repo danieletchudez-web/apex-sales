@@ -1148,56 +1148,83 @@ async function ensureTabs(){
   }catch(e){console.error('[ensureTabs]',e);}
 }
 
-// readTab: devuelve null si hay error (para distinguir "vacío" de "falla")
+// ── Serializar valor para Sheets — preserva números como números ──
+function serVal(v){
+  if(v===undefined||v===null||v==='')return '';
+  const n=Number(v);
+  // Si es un número válido y no es una fecha/ID (no contiene letras), guardarlo como número
+  if(!isNaN(n)&&String(v).trim()!==''&&!/[a-zA-Z\-T:]/.test(String(v)))return n;
+  return String(v);
+}
+
+// readTab: devuelve null si hay error, [] si vacío
 async function readTab(tab){
   try{
     const d=await sReq(`/${sid2}/values/${encodeURIComponent(tab)}`);
     const rows=d.values||[];
-    if(rows.length<2)return[]; // solo headers o vacío = legítimamente vacío
+    if(rows.length<2)return[];
     const h=rows[0].map(x=>String(x).toLowerCase().trim());
-    return rows.slice(1)
-      .filter(r=>r.some(c=>c&&String(c).trim())) // ignorar filas completamente vacías
-      .map(r=>{const o={};h.forEach((k,i)=>{const v=r[i];o[k]=v===undefined||v===null?'':String(v);});return o;});
+    const data=rows.slice(1)
+      .filter(r=>r.some(c=>c!==undefined&&c!==null&&String(c).trim()!==''))
+      .map(r=>{
+        const o={};
+        h.forEach((k,i)=>{
+          const raw=r[i];
+          o[k]=(raw===undefined||raw===null)?'':String(raw);
+        });
+        return o;
+      });
+    console.log('[readTab]',tab,'→',data.length,'filas, primera:',data[0]?JSON.stringify(data[0]).slice(0,100):'vacía');
+    return data;
   }catch(e){
-    console.error('[readTab] ERROR en tab:',tab,e);
-    return null; // null = hubo error, NO tocar el estado actual
+    console.error('[readTab] ERROR',tab,e);
+    return null;
   }
 }
 
+// writeTab: usa RAW para preservar valores exactos sin que Sheets los reformatee
 async function writeTab(tab,headers,rows){
   try{
-    const vals=[headers,...rows.map(r=>headers.map(h=>{const val=r[h];return val===undefined||val===null?'':String(val);}))];
-    console.log('[writeTab] Escribiendo',tab,'filas:',vals.length,'token:',tok?tok.slice(0,20)+'...':'NULL');
-    const url=`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=USER_ENTERED`;
+    const vals=[
+      headers,
+      ...rows.map(r=>headers.map(h=>serVal(r[h])))
+    ];
+    console.log('[writeTab]',tab,'filas:',vals.length,'muestra fila 1:',vals[1]?JSON.stringify(vals[1]).slice(0,120):'solo headers');
+    const url=`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=RAW`;
     const res=await fetch(url,{
       method:'PUT',
       headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
       body:JSON.stringify({range:tab,majorDimension:'ROWS',values:vals})
     });
-    const resText=await res.text();
     if(!res.ok){
-      console.error('[writeTab] FALLO HTTP',res.status,resText);
-      toast('Error al guardar ('+res.status+'): verificá permisos de la Sheet','error');
-    } else {
-      console.log('[writeTab] OK',tab,resText.slice(0,100));
+      const txt=await res.text();
+      console.error('[writeTab] HTTP',res.status,txt);
+      toast('Error al guardar ('+res.status+')','error');
+    }else{
+      console.log('[writeTab] OK',tab);
     }
-  }catch(e){console.error('[writeTab] EXCEPTION',e);toast('Error de red al guardar','error');}
+  }catch(e){console.error('[writeTab] EX',e);toast('Error de red al guardar','error');}
 }
 
+// appendRow: agrega una fila sin reescribir todo — usa append de Sheets API
 async function appendRow(tab,headers,row){
   try{
-    console.log('[appendRow] Agregando a',tab,'id:',row.id);
-    const existing=await readTab(tab);
-    if(existing===null){
-      console.error('[appendRow] readTab devolvió null para',tab);
-      toast('No se pudo leer la Sheet para guardar','error');
-      return;
+    const values=[headers.map(h=>serVal(row[h]))];
+    console.log('[appendRow]',tab,'valores:',JSON.stringify(values[0]).slice(0,120));
+    const url=`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+    const res=await fetch(url,{
+      method:'POST',
+      headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
+      body:JSON.stringify({range:tab,majorDimension:'ROWS',values})
+    });
+    if(!res.ok){
+      const txt=await res.text();
+      console.error('[appendRow] HTTP',res.status,txt);
+      toast('Error al guardar fila','error');
+    }else{
+      console.log('[appendRow] OK',tab,'id:',row.id);
     }
-    if(existing.some(r=>r.id===row.id)){
-      console.warn('[appendRow] ID duplicado ignorado',row.id);return;
-    }
-    await writeTab(tab,headers,[...existing,row]);
-  }catch(e){console.error('[appendRow] EXCEPTION',e);}
+  }catch(e){console.error('[appendRow] EX',e);}
 }
 
 // ═══ SYNC ═══
