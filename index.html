@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sales</title>
+<title>Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1182,14 +1182,23 @@ async function readTab(tab){
   }
 }
 
-// writeTab: usa RAW para preservar valores exactos sin que Sheets los reformatee
+// writeTab: limpia el tab y reescribe completo con headers + datos
 async function writeTab(tab,headers,rows){
   try{
     const vals=[
       headers,
       ...rows.map(r=>headers.map(h=>serVal(r[h])))
     ];
-    console.log('[writeTab]',tab,'filas:',vals.length,'muestra fila 1:',vals[1]?JSON.stringify(vals[1]).slice(0,120):'solo headers');
+    console.log('[writeTab]',tab,'filas totales:',vals.length,'monto en fila 1:',vals[1]?vals[1][headers.indexOf('monto')]:'─');
+    
+    // Paso 1: limpiar el tab (borra filas viejas que quedarían huérfanas)
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}:clear`,{
+      method:'POST',
+      headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
+      body:'{}'
+    });
+    
+    // Paso 2: escribir datos frescos
     const url=`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=RAW`;
     const res=await fetch(url,{
       method:'PUT',
@@ -1206,24 +1215,15 @@ async function writeTab(tab,headers,rows){
   }catch(e){console.error('[writeTab] EX',e);toast('Error de red al guardar','error');}
 }
 
-// appendRow: agrega una fila sin reescribir todo — usa append de Sheets API
+// appendRow: lee tab actual y reescribe completo con la nueva fila
 async function appendRow(tab,headers,row){
   try{
-    const values=[headers.map(h=>serVal(row[h]))];
-    console.log('[appendRow]',tab,'valores:',JSON.stringify(values[0]).slice(0,120));
-    const url=`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
-    const res=await fetch(url,{
-      method:'POST',
-      headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
-      body:JSON.stringify({range:tab,majorDimension:'ROWS',values})
-    });
-    if(!res.ok){
-      const txt=await res.text();
-      console.error('[appendRow] HTTP',res.status,txt);
-      toast('Error al guardar fila','error');
-    }else{
-      console.log('[appendRow] OK',tab,'id:',row.id);
-    }
+    const existing=await readTab(tab);
+    if(existing===null){toast('Error al leer la Sheet','error');return;}
+    // Evitar duplicados
+    if(existing.some(r=>r.id===row.id)){console.warn('[appendRow] duplicado',row.id);return;}
+    await writeTab(tab,headers,[...existing,row]);
+    console.log('[appendRow] OK',tab,'id:',row.id,'total filas:',(existing.length+1));
   }catch(e){console.error('[appendRow] EX',e);}
 }
 
@@ -1245,7 +1245,12 @@ async function loadAll(){
       return sheetData; // datos reales de sheet, incluso vacío
     }
 
-    S.v=safeUpdate(vr,S.v).filter(r=>r.id).map(r=>({...r,monto:parseFloat(String(r.monto||'0').replace(',','.'))||0}));
+    console.log('[loadAll] raw S.v sample:', vr&&vr[0]?JSON.stringify(vr[0]):'empty/null');
+    S.v=safeUpdate(vr,S.v).filter(r=>r.id).map(r=>({
+      ...r,
+      monto:parseFloat(String(r.monto||'0').replace(/[^\d.-]/g,''))||0
+    }));
+    console.log('[loadAll] S.v loaded:', S.v.length, 'montos sample:', S.v.slice(0,3).map(x=>x.monto));
     S.h=safeUpdate(hr,S.h).filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
     S.d=safeUpdate(dr,S.d).filter(r=>r.id).map(r=>({...r,valor:parseFloat(r.valor)||0,prob:parseInt(r.prob)||50}));
     S.t=safeUpdate(tr,S.t).filter(r=>r.id).map(r=>({...r,done:r.done==='true',alarm24:r.alarm24!=='false',alarm48:r.alarm48!=='false',alerted24:r.alerted24==='true',alerted48:r.alerted48==='true'}));
@@ -1313,7 +1318,9 @@ async function saveV(){
   const row={id:uid(),fecha:f,cliente:cl,producto:pr,categoria:v('vcat'),monto:mo,moneda:v('vmon'),estado:v('vest'),vendedor:v('vven').trim(),notas:v('vnot').trim(),usuario:cu.name||cu.email,creado:new Date().toISOString()};
   S.v.unshift(row);cm('mnv');cv(['vcl','vpr','vmo','vven','vnot']);
   renderV();renderVentasKPIs();updKPI();renderDashboard();toast('Guardando en Sheets...','info');setSI('go','Guardando...');
-  await appendRow(TABS.v,VH,row);setSI('ok','Guardado ✓');toast('✅ Venta guardada en Google Sheets','success');
+  // Usar writeTab completo para garantizar consistencia
+  await writeTab(TABS.v,VH,S.v);
+  setSI('ok','Guardado ✓');toast('✅ Venta guardada en Google Sheets','success');
 }
 
 async function delV(id,src){
