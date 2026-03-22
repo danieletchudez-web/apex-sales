@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MediCross — Sales Intelligence</title>
+<title>MediCross</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
@@ -494,10 +494,11 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
 
   <!-- DASHBOARD -->
   <div class="view active" id="view-gestion">
-    <div class="krow">
+    <div class="krow" style="grid-template-columns:repeat(5,1fr)">
       <div class="kpi"><div class="klbl">Ventas del mes</div><div class="kval" id="kmes">$0</div><div class="kdelta" id="kmesd">─</div></div>
       <div class="kpi"><div class="klbl">Ventas mes anterior</div><div class="kval" id="ktot">$0</div><div class="kdelta" id="ktotd">─</div></div>
       <div class="kpi" id="kpi-gauge" style="padding:14px 18px 10px"><div class="klbl">Forecast del mes</div><canvas id="gaugeChart" style="display:block;margin:0 auto" width="160" height="90"></canvas><div class="kdelta" style="text-align:center;margin-top:-4px" id="ktickd">─</div></div>
+      <div class="kpi"><div class="klbl">Gross Margin mes</div><div class="kval" id="kgm" style="font-size:1.6rem">─</div><div class="kdelta" id="kgmd">─</div></div>
       <div class="kpi"><div class="klbl">Top 3 clientes</div><div id="kcli" style="margin-bottom:4px">─</div><div class="kdelta" id="kcliv">sin ventas</div></div>
     </div>
 
@@ -768,6 +769,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <div class="kpi"><div class="klbl">Ventas del mes</div><div class="kval" id="v-k1">$0</div><div class="kdelta" id="v-k1d">─</div></div>
       <div class="kpi"><div class="klbl">Total registros</div><div class="kval" id="v-k2">0</div><div class="kdelta">en la base</div></div>
       <div class="kpi"><div class="klbl">Ticket promedio</div><div class="kval" id="v-k3">$0</div><div class="kdelta">─</div></div>
+      <div class="kpi"><div class="klbl">Gross Margin prom.</div><div class="kval" id="v-k5" style="font-size:1.5rem">─</div><div class="kdelta" id="v-k5d">─</div></div>
       <div class="kpi"><div class="klbl">Mejor cliente</div><div class="kval" style="font-size:1rem;padding-top:4px" id="v-k4">─</div><div class="kdelta" id="v-k4d">─</div></div>
     </div>
     <div class="card">
@@ -1297,19 +1299,33 @@ async function ensureTabs(){
         body:JSON.stringify({requests:need.map(t=>({addSheet:{properties:{title:t}}}))})
       });
     }
-    // Escribir headers en cada tab si está vacía
+    // Sincronizar headers: agregar columnas faltantes sin borrar datos existentes
     const hmap={[TABS.v]:VH,[TABS.h]:HH,[TABS.d]:DH,[TABS.t]:TH,[TABS.m]:['email','name','lastLogin'],[TABS.l]:LH,[TABS.p]:PH,[TABS.r]:RH,[TABS.pr]:PRH,[TABS.fc]:FCH};
     for(const [tab,headers] of Object.entries(hmap)){
       try{
-        const r=await sReq(`/${sid2}/values/${encodeURIComponent(tab)}!A1:A1`);
-        const first=(r.values||[])[0]?.[0]||'';
-        if(!first){
+        const r=await sReq(`/${sid2}/values/${encodeURIComponent(tab)}!1:1`);
+        const existingHeaders=(r.values||[])[0]||[];
+        const existingSet=existingHeaders.map(h=>String(h).toLowerCase().trim());
+        
+        if(existingSet.length===0){
+          // Tab vacía — escribir headers
           await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=RAW`,{
             method:'PUT',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
             body:JSON.stringify({range:tab,majorDimension:'ROWS',values:[headers]})
           });
+        } else {
+          // Tab con datos — verificar si faltan columnas
+          const missingCols=headers.filter(h=>!existingSet.includes(h.toLowerCase()));
+          if(missingCols.length>0){
+            console.log('[ensureTabs] Migrando columnas en',tab,':',missingCols);
+            // Leer todos los datos actuales
+            const allData=await readTab(tab);
+            // Reescribir con headers completos (las nuevas cols quedan vacías en filas existentes)
+            await writeTab(tab,headers,allData);
+            console.log('[ensureTabs] Migración OK',tab);
+          }
         }
-      }catch(e){console.warn('[apex] header init',tab,e);}
+      }catch(e){console.warn('[apex] header sync',tab,e);}
     }
   }catch(e){console.error('[ensureTabs]',e);}
 }
@@ -1561,9 +1577,12 @@ async function saveV(){
   if(!f||!cl||!pr||!mo){toast('Completá los campos obligatorios','warning');return;}
   const cant=parseFloat(v('vcant'))||0;
   const costo=parseFloat(v('vcosto'))||0;
-  const markup=parseFloat(v('vmarkup'))||0;
-  const gm=parseFloat(v('vgm'))||0;
-  const row={id:uid(),fecha:f,cliente:cl,producto:pr,categoria:v('vcat'),monto:mo,moneda:v('vmon'),estado:v('vest'),vendedor:v('vven').trim(),cantidad:cant,costo_unit:costo,markup:markup,gross_margin:gm,notas:v('vnot').trim(),usuario:cu.name||cu.email,creado:new Date().toISOString()};
+  const markup_val=parseFloat(v('vmarkup'))||0;
+  const gm_val=parseFloat(v('vgm'))||0;
+  // Auto-recalc margin if not computed yet
+  const finalGm = gm_val || (mo>0&&costo>0 ? ((mo-(costo*(cant||1)))/mo*100) : 0);
+  const finalMarkup = markup_val || (costo>0&&mo>0 ? ((mo-(costo*(cant||1)))/(costo*(cant||1))*100) : 0);
+  const row={id:uid(),fecha:f,cliente:cl,producto:pr,categoria:v('vcat'),monto:mo,moneda:v('vmon'),estado:v('vest'),vendedor:v('vven').trim(),cantidad:cant,costo_unit:costo,markup:Math.round(finalMarkup*10)/10,gross_margin:Math.round(finalGm*10)/10,notas:v('vnot').trim(),usuario:cu.name||cu.email,creado:new Date().toISOString()};
   S.v.unshift(row);cm('mnv');cv(['vcl','vpr','vmo','vven','vnot','vcant','vcosto','vmarkup','vgm']);
   renderV();renderVentasKPIs();updKPI();renderDashboard();toast('Guardando en Sheets...','info');setSI('go','Guardando...');
   // Usar writeTab completo para garantizar consistencia
@@ -1654,6 +1673,28 @@ function updKPI(){
   // Velocímetro: ventas mes vs meta del forecast
   const metaMes=getMeta(y,m+1);
   renderGauge(ventasMes,metaMes);
+
+  // Gross Margin del mes
+  const mvGm=mv.filter(x=>x.gross_margin>0);
+  const gmEl=document.getElementById('kgm');
+  const gmdEl=document.getElementById('kgmd');
+  if(gmEl){
+    if(mvGm.length){
+      const avgGm=mvGm.reduce((s,x)=>s+x.gross_margin,0)/mvGm.length;
+      const gmColor=avgGm>=40?'var(--green)':avgGm>=20?'var(--orange)':'#ef4444';
+      gmEl.textContent=avgGm.toFixed(1)+'%';
+      gmEl.style.color=gmColor;
+      if(gmdEl){
+        // Revenue - Costo total del mes
+        const costoTotal=mv.reduce((s,x)=>s+(x.costo_unit||0)*(x.cantidad||1),0);
+        const gp=ventasMes-costoTotal;
+        gmdEl.textContent=(gp>0?'GP: $'+fn(Math.round(gp)):'')+' · '+mvGm.length+' ops con margen';
+      }
+    } else {
+      gmEl.textContent='─';gmEl.style.color='';
+      if(gmdEl)gmdEl.textContent='Sin datos de costo';
+    }
+  }
 
   // Top 3 clientes
   const act=S.v.filter(x=>x.estado!=='cancelada');
@@ -3622,6 +3663,24 @@ function renderVentasKPIs(){
   const k3=document.getElementById('v-k3');if(k3)k3.textContent='$'+fn(tick);
   const k4=document.getElementById('v-k4');if(k4)k4.textContent=topCli?esc(topCli[0]):'─';
   const k4d=document.getElementById('v-k4d');if(k4d)k4d.textContent=topCli?'$'+fn(topCli[1]):'─';
+  // Gross Margin promedio
+  const withGm=S.v.filter(x=>x.gross_margin>0);
+  const k5=document.getElementById('v-k5');
+  const k5d=document.getElementById('v-k5d');
+  if(k5){
+    if(withGm.length){
+      const avgGm=withGm.reduce((s,x)=>s+x.gross_margin,0)/withGm.length;
+      const gmColor=avgGm>=40?'var(--green)':avgGm>=20?'var(--orange)':'#ef4444';
+      k5.textContent=avgGm.toFixed(1)+'%';
+      k5.style.color=gmColor;
+      // Gross profit total
+      const gp=S.v.reduce((s,x)=>s+(x.monto-(x.costo_unit||0)*(x.cantidad||1)),0);
+      if(k5d)k5d.textContent='GP total: $'+fn(Math.round(gp));
+    } else {
+      k5.textContent='─';k5.style.color='';
+      if(k5d)k5d.textContent='Cargá costo para calcular';
+    }
+  }
   const res=document.getElementById('ventas-resumen');
   if(res)res.textContent=`${S.v.length} registros · mes actual: $${fn(totalMes)} en ${mesData.length} operaciones`;
 }
