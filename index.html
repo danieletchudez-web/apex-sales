@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sales</title>
+<title>Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1730,13 +1730,26 @@ function mkChart(id,config){
   dCharts[id]=new Chart(el.getContext('2d'),config);
 }
 
+
+function getMeta(anio,mes){
+  const fc=S.fc.find(x=>parseInt(x.anio)===anio&&parseInt(x.mes)===mes);
+  return fc?fc.meta:0;
+}
+
+function getReal(anio,mes){
+  return S.v.filter(x=>{
+    if(!x.fecha||x.estado==='cancelada')return false;
+    const d=new Date(x.fecha+'T12:00');
+    return d.getFullYear()===anio&&(d.getMonth()+1)===mes;
+  }).reduce((s,x)=>s+x.monto,0);
+}
+
 function renderDashboard(){
   const yr=parseInt(document.getElementById('db-year')?.value||new Date().getFullYear());
-  const meta=parseFloat(document.getElementById('db-meta')?.value)||0;
   const C=chartColors();
 
   // ── Data prep ──
-  const ventasYr=S.v.filter(v=>v.fecha?.startsWith(yr)&&v.estado!=='cancelada');
+  const ventasYr=S.v.filter(v=>{if(!v.fecha||v.estado==='cancelada')return false;const d=new Date(v.fecha+'T12:00');return d.getFullYear()===yr;});
   const byMonth=Array(12).fill(0);
   ventasYr.forEach(v=>{const m=parseInt(v.fecha?.slice(5,7))-1;if(m>=0&&m<12)byMonth[m]+=v.monto;});
 
@@ -1769,12 +1782,14 @@ function renderDashboard(){
     const mesesConDatos=reales.filter(v=>v>0);
     const avg=mesesConDatos.length?mesesConDatos.reduce((a,b)=>a+b,0)/mesesConDatos.length:0;
     const forecast=reales.map((v,i)=>i<=curM?null:Math.round(avg*(0.9+Math.random()*0.3)));
-    const metaLine=meta>0?labels.map(()=>meta):null;
+    const metas=labels.map((_,i)=>getMeta(yr,i+1));
+    const hasMetaData=metas.some(m=>m>0);
+    const metaLine=hasMetaData?metas:null;
     const datasets=[
       {label:'Real',data:reales,backgroundColor:C.accentAlpha,borderColor:C.accent,borderWidth:2,borderRadius:5,type:'bar'},
       {label:'Proyección',data:forecast,backgroundColor:'rgba(92,168,255,.15)',borderColor:C.blue,borderWidth:2,borderRadius:5,type:'bar'},
     ];
-    if(metaLine)datasets.push({label:'Meta',data:metaLine,borderColor:document.body.classList.contains('light')?C.blue:C.accent,borderWidth:2,borderDash:[6,3],type:'line',pointRadius:0,fill:false});
+    if(metaLine)datasets.push({label:'Meta',data:metaLine,borderColor:document.body.classList.contains('light')?C.blue:'rgba(232,255,71,.7)',borderWidth:2,borderDash:[6,3],type:'line',pointRadius:3,fill:false,pointBackgroundColor:document.body.classList.contains('light')?C.blue:'rgba(232,255,71,.7)'});
     mkChart('chartForecast',{
       type:'bar',data:{labels,datasets},
       options:{responsive:true,maintainAspectRatio:false,
@@ -2899,18 +2914,7 @@ function editFc(id){
   om('modal-fc');
 }
 
-function getMeta(anio,mes){
-  const fc=S.fc.find(x=>parseInt(x.anio)===anio&&parseInt(x.mes)===mes);
-  return fc?fc.meta:0;
-}
 
-function getReal(anio,mes){
-  return S.v.filter(x=>{
-    if(!x.fecha||x.estado==='cancelada')return false;
-    const d=new Date(x.fecha+'T12:00');
-    return d.getFullYear()===anio&&(d.getMonth()+1)===mes;
-  }).reduce((s,x)=>s+x.monto,0);
-}
 
 function renderForecast(){
   const yr=parseInt(document.getElementById('fc-year-sel')?.value||new Date().getFullYear());
