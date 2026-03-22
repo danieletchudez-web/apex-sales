@@ -25,16 +25,11 @@ window.addEventListener('load',()=>{
 body.light{--bg:#f4f4f6;--surface:#ffffff;--surface2:#f0f0f4;--border:#e0e0e8;--border2:#d0d0dc;--text:#1a1a2e;--muted:#6b6b88;--muted2:#9090aa;--accent:#5b5ef4;--ad:rgba(91,94,244,.08);--ad2:rgba(91,94,244,.15);--red:#e03535;--green:#1a9e5a;--blue:#2070d0;--orange:#d07020;--purple:#8040c0;}
 body.light .ld,body.light .ldot{box-shadow:0 0 10px var(--accent)}
 .logo-img{
-  /* Dark mode: mix-blend-mode lighten hace que el fondo blanco sea transparente */
-  mix-blend-mode:lighten;
-  filter:none;
-  opacity:.95;
-  transition:opacity .3s
-}
-body.light .logo-img{
+  /* Fondo transparente — funciona en modo oscuro y claro sin filtros */
   mix-blend-mode:normal;
   filter:none;
-  opacity:1
+  opacity:1;
+  transition:opacity .3s
 }
 /* ── TASK CALENDAR ── */
 .tcal-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
