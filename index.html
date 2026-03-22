@@ -1123,8 +1123,8 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
     <div class="fgrp"><label class="flbl">Vendedor</label><input class="fi" id="vven" placeholder="Nombre"></div>
     <div class="fgrp"><label class="flbl">Cantidad</label><input class="fi" id="vcant" type="number" placeholder="1" min="0" step="1" oninput="calcGrossMargin()"></div>
     <div class="fgrp"><label class="flbl">Costo unitario</label><input class="fi" id="vcosto" type="number" placeholder="0.00 (opcional)" min="0" oninput="calcGrossMargin()"></div>
-    <div class="fgrp"><label class="flbl">Markup %</label><input class="fi" id="vmarkup" type="number" placeholder="0" oninput="calcMarkupFromMargin()" style="background:var(--surf2)"></div>
-    <div class="fgrp"><label class="flbl" style="display:flex;align-items:center;gap:6px">Gross Margin % <span id="vgm-preview" style="font-size:.8rem;font-weight:700;transition:color .2s"></span></label><input class="fi" id="vgm" type="text" placeholder="Se calcula automáticamente" readonly tabindex="-1" style="cursor:default;font-weight:700;font-size:1rem"></div>
+    <div class="fgrp"><label class="flbl">Markup % = (PVU−CU)/CU</label><input class="fi" id="vmarkup" type="number" placeholder="0" oninput="calcMarkupFromMargin()" style="background:var(--surf2)"></div>
+    <div class="fgrp"><label class="flbl" style="display:flex;align-items:center;gap:6px">Gross Margin % = (PVU−CU)/PVU <span id="vgm-preview" style="font-size:.8rem;font-weight:700;transition:color .2s"></span></label><input class="fi" id="vgm" type="text" placeholder="Se calcula automáticamente" readonly tabindex="-1" style="cursor:default;font-weight:700;font-size:1rem"></div>
     <div class="fgrp"><label class="flbl">IVA</label><select class="fsel" id="viva" onchange="calcGrossMargin()"><option value="0">Sin IVA</option><option value="10.5">10.5%</option><option value="21">21%</option></select></div>
     <div class="fgrp"><label class="flbl">Total con IVA <span id="vtotal-preview" style="margin-left:6px;color:var(--accent);font-size:.8rem;font-weight:700"></span></label><input class="fi" id="vtotaliva" type="text" placeholder="Se calcula automáticamente" readonly tabindex="-1" style="cursor:default;font-weight:700"></div>
     <div class="fgrp" style="grid-column:1/-1"><label class="flbl">Notas</label><textarea class="fta" id="vnot"></textarea></div>
@@ -1429,24 +1429,35 @@ function serVal(v){
 // parseFloat falla con múltiples separadores
 function parseMonto(s){
   if(s===null||s===undefined||s==='')return 0;
+  // Si ya es número, devolverlo directo
+  if(typeof s==='number')return isNaN(s)?0:s;
   let str=String(s).trim().replace(/[^\d.,\-]/g,'');
   if(!str)return 0;
-  const dots=str.split('.').length-1;
+  const dots  =str.split('.').length-1;
   const commas=str.split(',').length-1;
   if(dots>1){
-    // "5.555.555" → puntos son miles, sin decimal
+    // "1.234.567" o "99.999.999" → puntos son separadores de miles
     str=str.replace(/\./g,'');
   } else if(commas>1){
-    // "5,555,555" → comas son miles, sin decimal
+    // "1,234,567" → comas son separadores de miles
     str=str.replace(/,/g,'');
   } else if(dots===1&&commas===1){
-    // "5.555,55" → punto=miles, coma=decimal
+    // "1.234,56" → punto=miles, coma=decimal
     str=str.replace('.','').replace(',','.');
   } else if(commas===1&&dots===0){
-    // "5555,55" → coma es decimal
+    // "1234,56" → coma es decimal
     str=str.replace(',','.');
+  } else if(dots===1){
+    // CASO CRÍTICO: un solo punto → puede ser miles o decimal
+    // Regla: si hay exactamente 3 dígitos después del punto = miles (formato es-AR)
+    // Ejemplos: "21.433"→21433, "42.678"→42678, "1.500"→1500
+    // Pero: "21.43"→21.43, "0.5"→0.5, "3.14"→3.14
+    const parts=str.split('.');
+    if(parts[1]&&parts[1].length===3){
+      str=str.replace('.',''); // miles
+    }
+    // else: decimal — no cambiar
   }
-  // else: "5555.55" → punto es decimal — no cambiar
   return parseFloat(str)||0;
 }
 
@@ -4165,7 +4176,8 @@ function renderRent(){
   const rows=Object.values(groups).map(g=>{
     const gp   = g.revenue - g.costo;
     const gm   = g.revenue>0&&g.costo>0 ? (g.revenue-g.costo)/g.revenue*100 : 0;
-    const mk   = g.costo>0 ? (g.revenue-g.costo)/g.costo*100 : 0;
+    // Markup = GP/Costo — mathematically correct at group level too
+    const mk   = g.costo>0&&g.revenue>0 ? (g.revenue-g.costo)/g.costo*100 : 0;
     const tick = g.ops>0 ? g.revenue/g.ops : 0;
     return{...g, gp, gm, mk, tick};
   });
@@ -4182,10 +4194,15 @@ function renderRent(){
   const totalCost = rows.reduce((s,r)=>s+r.costo,0);
   const totalGp   = totalRev-totalCost;
   const totalCant = rows.reduce((s,r)=>s+r.cant,0);
-  const avgGm     = rows.filter(r=>r.gm>0).length
-    ? rows.filter(r=>r.gm>0).reduce((s,r)=>s+r.gm,0)/rows.filter(r=>r.gm>0).length : 0;
-  const avgMk     = rows.filter(r=>r.mk>0).length
-    ? rows.filter(r=>r.mk>0).reduce((s,r)=>s+r.mk,0)/rows.filter(r=>r.mk>0).length : 0;
+  // Weighted average GM% (by revenue, not simple average)
+  const rowsWithCost = rows.filter(r=>r.gm!==0&&r.costo>0);
+  const totalRevWithCost = rowsWithCost.reduce((s,r)=>s+r.revenue,0);
+  const avgGm = totalRevWithCost>0
+    ? rowsWithCost.reduce((s,r)=>s+r.gm*(r.revenue/totalRevWithCost),0) : 0;
+  // Weighted average Markup% (by cost)
+  const totalCostForMk = rowsWithCost.reduce((s,r)=>s+r.costo,0);
+  const avgMk = totalCostForMk>0
+    ? rowsWithCost.reduce((s,r)=>s+r.mk*(r.costo/totalCostForMk),0) : 0;
 
   // ── KPIs ──
   const k1=document.getElementById('rent-k1'); if(k1)k1.textContent='$'+fn(Math.round(totalRev));
