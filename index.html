@@ -1530,9 +1530,10 @@ function setupAS(){
 //   Costo Total    = Costo Unitario × Cantidad
 
 function calcGrossMargin(){
-  const precio = parseFloat(document.getElementById('vmo')?.value) || 0;
-  const cant   = parseFloat(document.getElementById('vcant')?.value) || 1;
-  const costo  = parseFloat(document.getElementById('vcosto')?.value) || 0;
+  const precio    = parseFloat(document.getElementById('vmo')?.value)    || 0;
+  const cantRaw   = document.getElementById('vcant')?.value;
+  const cant      = cantRaw && cantRaw !== '' ? parseFloat(cantRaw) : 1;
+  const costo     = parseFloat(document.getElementById('vcosto')?.value)  || 0;
 
   const costoTotal = costo * cant;
 
@@ -1589,14 +1590,12 @@ function calcMarkupFromMargin(){
 async function saveV(){
   const f=v('vf'),cl=v('vcl').trim(),pr=v('vpr').trim(),mo=parseFloat(v('vmo'))||0;
   if(!f||!cl||!pr||!mo){toast('Completá los campos obligatorios','warning');return;}
-  const cant=parseFloat(v('vcant'))||0;
-  const costo=parseFloat(v('vcosto'))||0;
-  const markup_val=parseFloat(v('vmarkup'))||0;
-  const gm_val=parseFloat(v('vgm'))||0;
-  // Auto-recalc margin if not computed yet
-  const finalGm = gm_val || (mo>0&&costo>0 ? ((mo-(costo*(cant||1)))/mo*100) : 0);
-  const finalMarkup = markup_val || (costo>0&&mo>0 ? ((mo-(costo*(cant||1)))/(costo*(cant||1))*100) : 0);
-  const row={id:uid(),fecha:f,cliente:cl,producto:pr,categoria:v('vcat'),monto:mo,moneda:v('vmon'),estado:v('vest'),vendedor:v('vven').trim(),cantidad:cant,costo_unit:costo,markup:Math.round(finalMarkup*10)/10,gross_margin:Math.round(finalGm*10)/10,notas:v('vnot').trim(),usuario:cu.name||cu.email,creado:new Date().toISOString()};
+  const cant     = parseFloat(v('vcant'))  || 0;
+  const costo    = parseFloat(v('vcosto')) || 0;
+  const costoT   = costo * (cant || 1);
+  const finalGm  = (mo > 0 && costoT > 0) ? ((mo - costoT) / mo * 100)    : 0;
+  const finalMk  = (costoT > 0 && mo > 0) ? ((mo - costoT) / costoT * 100) : 0;
+  const row={id:uid(),fecha:f,cliente:cl,producto:pr,categoria:v('vcat'),monto:mo,moneda:v('vmon'),estado:v('vest'),vendedor:v('vven').trim(),cantidad:cant,costo_unit:costo,markup:Math.round(finalMk*10)/10,gross_margin:Math.round(finalGm*10)/10,notas:v('vnot').trim(),usuario:cu.name||cu.email,creado:new Date().toISOString()};
   S.v.unshift(row);cm('mnv');cv(['vcl','vpr','vmo','vven','vnot','vcant','vcosto','vmarkup','vgm']);
   renderV();renderVentasKPIs();updKPI();renderDashboard();toast('Guardando en Sheets...','info');setSI('go','Guardando...');
   // Usar writeTab completo para garantizar consistencia
@@ -1627,10 +1626,20 @@ function renderV(){
   const visible=data.slice(0,vLimit);
   const remaining=data.length-vLimit;
   const rowHTML=x=>{
-    const gm=x.gross_margin||0;
-    const gmColor=gm>=40?'var(--green)':gm>=20?'var(--orange)':gm>0?'#ef4444':'var(--muted)';
-    const markupStr=x.markup>0?`${fn(x.markup)}%`:'─';
-    const gmStr=gm>0?`${fn(gm)}%`:'─';
+    // Recalculate GM on-the-fly in case it wasn't saved correctly
+    let gm = x.gross_margin || 0;
+    let mk = x.markup || 0;
+    if((gm === 0 || mk === 0) && x.costo_unit > 0 && x.monto > 0){
+      const ct = x.costo_unit * (x.cantidad || 1);
+      console.log('[GM calc]',x.cliente,'monto='+x.monto,'costo_unit='+x.costo_unit,'cant='+x.cantidad,'costoTotal='+ct,'gm%='+((x.monto-ct)/x.monto*100).toFixed(1));
+      if(ct > 0){
+        gm = Math.round((x.monto - ct) / x.monto * 1000) / 10;
+        mk = ct > 0 ? Math.round((x.monto - ct) / ct * 1000) / 10 : 0;
+      }
+    }
+    const gmColor=gm>=40?'var(--green)':gm>=20?'var(--orange)':gm!==0?'#ef4444':'var(--muted)';
+    const markupStr=(mk!==0)?`${mk.toFixed(1)}%`:'─';
+    const gmStr=(gm!==0)?`${gm.toFixed(1)}%`:'─';
     const cantStr=x.cantidad>0?fn(x.cantidad):'─';
     const costoStr=x.costo_unit>0?`${x.moneda||'ARS'} ${fn(x.costo_unit)}`:'─';
     return `<tr>
@@ -1688,19 +1697,27 @@ function updKPI(){
   const metaMes=getMeta(y,m+1);
   renderGauge(ventasMes,metaMes);
 
-  // Gross Margin del mes
-  const mvGm=mv.filter(x=>x.gross_margin>0);
+  // Gross Margin del mes — recalculate on-the-fly for all records with cost data
+  const getEffGm = x => {
+    if(x.gross_margin > 0) return x.gross_margin;
+    if(x.costo_unit > 0 && x.monto > 0){
+      const ct = x.costo_unit * (x.cantidad || 1);
+      if(ct > 0) return (x.monto - ct) / x.monto * 100;
+    }
+    return 0;
+  };
+  const mvGm=mv.filter(x=>getEffGm(x)>0);
   const gmEl=document.getElementById('kgm');
   const gmdEl=document.getElementById('kgmd');
   if(gmEl){
     if(mvGm.length){
-      const avgGm=mvGm.reduce((s,x)=>s+x.gross_margin,0)/mvGm.length;
+      const avgGm=mvGm.reduce((s,x)=>s+getEffGm(x),0)/mvGm.length;
       const gmColor=avgGm>=40?'var(--green)':avgGm>=20?'var(--orange)':'#ef4444';
       gmEl.textContent=avgGm.toFixed(1)+'%';
       gmEl.style.color=gmColor;
       if(gmdEl){
         // Revenue - Costo total del mes
-        const costoTotal=mv.reduce((s,x)=>s+(x.costo_unit||0)*(x.cantidad||1),0);
+        const costoTotal=mv.filter(x=>x.costo_unit>0).reduce((s,x)=>s+(x.costo_unit||0)*(x.cantidad||1),0);
         const gp=ventasMes-costoTotal;
         gmdEl.textContent=(gp>0?'GP: $'+fn(Math.round(gp)):'')+' · '+mvGm.length+' ops con margen';
       }
@@ -3186,8 +3203,11 @@ function editV(id){
   btn.onclick=async()=>{
     x.fecha=v('vf');x.cliente=v('vcl').trim();x.producto=v('vpr').trim();
     x.categoria=v('vcat');x.monto=parseFloat(v('vmo'))||0;x.moneda=v('vmon');
-    x.cantidad=parseFloat(v('vcant'))||0;x.costo_unit=parseFloat(v('vcosto'))||0;
-    x.markup=parseFloat(v('vmarkup'))||0;x.gross_margin=parseFloat(v('vgm'))||0;
+    x.cantidad  = parseFloat(v('vcant'))  || 0;
+    x.costo_unit= parseFloat(v('vcosto')) || 0;
+    const _costoT = x.costo_unit * (x.cantidad || 1);
+    x.gross_margin= (x.monto>0&&_costoT>0) ? Math.round((x.monto-_costoT)/x.monto*1000)/10 : 0;
+    x.markup      = (_costoT>0&&x.monto>0) ? Math.round((x.monto-_costoT)/_costoT*1000)/10 : 0;
     x.estado=v('vest');x.vendedor=v('vven').trim();x.notas=v('vnot').trim();
     cm('mnv');resetModalV();renderV();updKPI();renderDashboard();
     toast('Guardando cambios...','info');
@@ -3688,17 +3708,25 @@ function renderVentasKPIs(){
   const k4=document.getElementById('v-k4');if(k4)k4.textContent=topCli?esc(topCli[0]):'─';
   const k4d=document.getElementById('v-k4d');if(k4d)k4d.textContent=topCli?'$'+fn(topCli[1]):'─';
   // Gross Margin promedio
-  const withGm=S.v.filter(x=>x.gross_margin>0);
+  const getGm2 = x => {
+    if(x.gross_margin > 0) return x.gross_margin;
+    if(x.costo_unit > 0 && x.monto > 0){
+      const ct = x.costo_unit * (x.cantidad || 1);
+      if(ct > 0) return (x.monto - ct) / x.monto * 100;
+    }
+    return 0;
+  };
+  const withGm=S.v.filter(x=>getGm2(x)>0);
   const k5=document.getElementById('v-k5');
   const k5d=document.getElementById('v-k5d');
   if(k5){
     if(withGm.length){
-      const avgGm=withGm.reduce((s,x)=>s+x.gross_margin,0)/withGm.length;
+      const avgGm=withGm.reduce((s,x)=>s+getGm2(x),0)/withGm.length;
       const gmColor=avgGm>=40?'var(--green)':avgGm>=20?'var(--orange)':'#ef4444';
       k5.textContent=avgGm.toFixed(1)+'%';
       k5.style.color=gmColor;
       // Gross profit total
-      const gp=S.v.reduce((s,x)=>s+(x.monto-(x.costo_unit||0)*(x.cantidad||1)),0);
+      const gp=S.v.filter(x=>x.costo_unit>0).reduce((s,x)=>s+(x.monto-(x.costo_unit||0)*(x.cantidad||1)),0);
       if(k5d)k5d.textContent='GP total: $'+fn(Math.round(gp));
     } else {
       k5.textContent='─';k5.style.color='';
