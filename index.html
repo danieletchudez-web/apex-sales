@@ -62,6 +62,16 @@ body.light .co-item.active{background:rgba(26,158,90,.07)}
 .co-logo-preview{width:52px;height:52px;border-radius:8px;background:var(--surf2);border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:1.4rem;overflow:hidden;flex-shrink:0}
 .co-logo-preview img{width:48px;height:48px;object-fit:contain}
 
+/* ── RENTABILIDAD ── */
+.rent-bar-wrap{display:flex;align-items:center;gap:8px;width:100%}
+.rent-bar-bg{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;min-width:60px}
+.rent-bar-fill{height:100%;border-radius:4px;transition:width .4s ease}
+.rent-badge{display:inline-flex;align-items:center;justify-content:center;padding:2px 7px;border-radius:5px;font-size:.65rem;font-weight:700;font-family:var(--fm)}
+.rent-badge.hi{background:rgba(61,255,160,.15);color:var(--green)}
+.rent-badge.mid{background:rgba(255,170,61,.15);color:var(--orange)}
+.rent-badge.lo{background:rgba(255,92,92,.15);color:var(--red)}
+.rent-row-top{background:rgba(232,255,71,.04)}
+body.light .rent-row-top{background:rgba(26,158,90,.05)}
 /* ── TASK CALENDAR ── */
 .tcal-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 @media(max-width:900px){.tcal-wrap{grid-template-columns:1fr}}
@@ -453,6 +463,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <div class="ni" data-view="relacionamiento" onclick="go('relacionamiento',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3"/><circle cx="11" cy="5" r="3"/><path d="M2 14c0-3 6-3 6-3s6 0 6 3"/></svg>Relacionamiento</div>
       <div class="ni" data-view="proveedores" onclick="go('proveedores',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4l2-2h10l2 2v8l-2 2H3l-2-2V4z"/><path d="M5 4v2a3 3 0 0 0 6 0V4"/></svg>Proveedores</div>
       <div class="ni" data-view="forecast" onclick="go('forecast',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l3-4 3 2 3-5 3 3"/><path d="M14 2v12H2"/></svg>Forecast</div>
+      <div class="ni" data-view="rentabilidad" onclick="go('rentabilidad',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/><path d="M5 2.5C6.1 2 7 1.8 8 1.8"/></svg>Rentabilidad</div>
     </div>
     <div style="border-top:1px solid var(--border);margin:6px 12px"></div>
     <div style="padding:6px 12px">
@@ -982,6 +993,72 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <button class="tfb" onclick="setTF('vencidas',this)">⚠️ Vencidas</button>
     </div>
     <div id="tlist"></div>
+  </div>
+
+  <!-- RENTABILIDAD -->
+  <div class="view" id="view-rentabilidad">
+    <div class="sh">
+      <div>
+        <div class="st">Análisis de Rentabilidad</div>
+        <div style="font-family:var(--fm);font-size:.63rem;color:var(--muted);margin-top:3px" id="rent-resumen">─</div>
+      </div>
+      <div class="sa" style="gap:8px">
+        <select class="fsel" id="rent-year" onchange="renderRent()" style="width:auto;padding:5px 28px 5px 10px;font-size:.72rem"></select>
+        <select class="fsel" id="rent-grupo" onchange="renderRent()" style="width:auto;padding:5px 28px 5px 10px;font-size:.72rem">
+          <option value="categoria">Por Categoría</option>
+          <option value="producto">Por Producto</option>
+          <option value="cliente">Por Cliente</option>
+          <option value="vendedor">Por Vendedor</option>
+          <option value="mes">Por Mes</option>
+        </select>
+        <select class="fsel" id="rent-ord" onchange="renderRent()" style="width:auto;padding:5px 28px 5px 10px;font-size:.72rem">
+          <option value="revenue">↓ Revenue</option>
+          <option value="gm">↓ Gross Margin %</option>
+          <option value="gp">↓ Gross Profit</option>
+          <option value="cant">↓ Unidades</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- KPIs resumen -->
+    <div class="krow" style="grid-template-columns:repeat(5,1fr);margin-bottom:18px">
+      <div class="kpi"><div class="klbl">Revenue Total</div><div class="kval" id="rent-k1" style="font-size:1.3rem">─</div><div class="kdelta" id="rent-k1d">─</div></div>
+      <div class="kpi"><div class="klbl">Costo Total</div><div class="kval" id="rent-k2" style="font-size:1.3rem;color:var(--red)">─</div><div class="kdelta" id="rent-k2d">─</div></div>
+      <div class="kpi"><div class="klbl">Gross Profit</div><div class="kval" id="rent-k3" style="font-size:1.3rem;color:var(--green)">─</div><div class="kdelta" id="rent-k3d">─</div></div>
+      <div class="kpi"><div class="klbl">GM % Promedio</div><div class="kval" id="rent-k4" style="font-size:1.5rem">─</div><div class="kdelta" id="rent-k4d">─</div></div>
+      <div class="kpi"><div class="klbl">Markup Promedio</div><div class="kval" id="rent-k5" style="font-size:1.5rem">─</div><div class="kdelta" id="rent-k5d">─</div></div>
+    </div>
+
+    <!-- Gráfico + Tabla side by side -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <!-- Chart GM por grupo -->
+      <div class="card">
+        <div class="ch"><div><div class="ct">Gross Margin % por grupo</div><div class="cs">Comparativo</div></div></div>
+        <div class="cb"><div style="position:relative;height:260px"><canvas id="rentGmChart"></canvas></div></div>
+      </div>
+      <!-- Chart Revenue vs GP -->
+      <div class="card">
+        <div class="ch"><div><div class="ct">Revenue vs Gross Profit</div><div class="cs">Por grupo · en $</div></div></div>
+        <div class="cb"><div style="position:relative;height:260px"><canvas id="rentRevGpChart"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Tabla detalle -->
+    <div class="card">
+      <div class="cb" style="padding:0">
+        <div style="overflow-x:auto">
+          <table class="tbl" id="rent-table">
+            <thead><tr>
+              <th>Grupo</th><th>Unidades</th><th>Revenue</th>
+              <th>Costo Total</th><th>Gross Profit</th>
+              <th>GM %</th><th>Markup %</th><th>% del Total</th>
+              <th>Ticket Prom.</th>
+            </tr></thead>
+            <tbody id="rent-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- CONFIG -->
@@ -3999,7 +4076,7 @@ function go(vw,el){
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
   document.getElementById('view-'+vw).classList.add('active');
   if(el)el.classList.add('active');
-  const t={gestion:'Dashboard',ventas:'Gestión de Ventas',pipeline:'Pipeline de Ventas',tareas:'Tareas Diarias',config:'Configuración',licitaciones:'Licitaciones',proyectos:'Proyectos Estratégicos',relacionamiento:'Relacionamiento Estratégico',proveedores:'Gestión de Proveedores',forecast:'Forecast de Ventas'};
+  const t={gestion:'Dashboard',ventas:'Gestión de Ventas',pipeline:'Pipeline de Ventas',tareas:'Tareas Diarias',config:'Configuración',licitaciones:'Licitaciones',proyectos:'Proyectos Estratégicos',relacionamiento:'Relacionamiento Estratégico',proveedores:'Gestión de Proveedores',forecast:'Forecast de Ventas',rentabilidad:'Análisis de Rentabilidad'};
   document.getElementById('ptitle').textContent=t[vw]||vw;
   if(vw==='gestion'){
     destroyDashCharts();
@@ -4019,6 +4096,7 @@ function go(vw,el){
   if(vw==='relacionamiento'){renderRel();}
   if(vw==='proveedores'){renderProv();}
   if(vw==='forecast'){renderForecast();}
+  if(vw==='rentabilidad'){initRentYear();renderRent();}
   if(vw==='config'){loadCfg();document.getElementById('cfg-sid').textContent=sid2||'─';document.getElementById('ccats').value=cfg.cats;document.getElementById('cemp').value=cfg.emp;document.getElementById('crol').value=cfg.rol;document.getElementById('caut').value=cfg.aut;regMember();}
   if(window.innerWidth<=768)document.getElementById('sidebar').classList.remove('open');
 }
@@ -4026,7 +4104,200 @@ function go(vw,el){
 function om(id){document.getElementById(id).classList.add('open');if(id==='mnv')document.getElementById('vf').value=today();if(id==='mnt'){const n=new Date();document.getElementById('tini').value=n.toISOString().slice(0,16);const t=new Date(n);t.setDate(t.getDate()+1);document.getElementById('tfin').value=t.toISOString().slice(0,16);}}
 function cm(id){document.getElementById(id).classList.remove('open');}
 // Modal close handled in edit section
-function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();destroyDashCharts();renderDashboard();renderKpiFcChart();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();}
+// ═══ RENTABILIDAD ═══
+let rentChartGm=null, rentChartRev=null;
+
+function initRentYear(){
+  const sel=document.getElementById('rent-year');
+  if(!sel)return;
+  const years=[...new Set(S.v.map(x=>x.fecha?.slice(0,4)).filter(Boolean))].sort().reverse();
+  if(!years.length)years.push(new Date().getFullYear().toString());
+  const cur=sel.value||years[0];
+  sel.innerHTML=years.map(y=>`<option value="${y}"${y===cur?' selected':''}>${y}</option>`).join('');
+}
+
+function renderRent(){
+  initRentYear();
+  const yr   = document.getElementById('rent-year')?.value || new Date().getFullYear().toString();
+  const grp  = document.getElementById('rent-grupo')?.value || 'categoria';
+  const ord  = document.getElementById('rent-ord')?.value   || 'revenue';
+
+  // Filter: year + not cancelled + has monto
+  const data = S.v.filter(x=>{
+    if(!x.fecha||x.estado==='cancelada'||!x.monto)return false;
+    return x.fecha.startsWith(yr);
+  });
+
+  if(!data.length){
+    document.getElementById('rent-tbody').innerHTML=`<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--muted)">Sin datos para ${yr}</td></tr>`;
+    ['rent-k1','rent-k2','rent-k3','rent-k4','rent-k5'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='─';});
+    return;
+  }
+
+  // Group key function
+  const MESES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const getKey = x => {
+    if(grp==='categoria') return x.categoria||'Sin categoría';
+    if(grp==='producto')  return x.producto||'Sin producto';
+    if(grp==='cliente')   return x.cliente||'Sin cliente';
+    if(grp==='vendedor')  return x.vendedor||'Sin asignar';
+    if(grp==='mes'){
+      const m=parseInt(x.fecha?.slice(5,7))-1;
+      return (MESES[m]||'?')+' '+yr;
+    }
+    return '─';
+  };
+
+  // Build groups
+  const groups={};
+  data.forEach(x=>{
+    const k=getKey(x);
+    if(!groups[k]) groups[k]={key:k,cant:0,revenue:0,costo:0,ops:0};
+    const g=groups[k];
+    const cant=x.cantidad||1;
+    g.revenue += x.monto*cant;
+    g.costo   += x.costo_unit>0 ? x.costo_unit*cant : 0;
+    g.cant    += cant;
+    g.ops     ++;
+  });
+
+  // Calculate metrics per group
+  const rows=Object.values(groups).map(g=>{
+    const gp   = g.revenue - g.costo;
+    const gm   = g.revenue>0&&g.costo>0 ? (g.revenue-g.costo)/g.revenue*100 : 0;
+    const mk   = g.costo>0 ? (g.revenue-g.costo)/g.costo*100 : 0;
+    const tick = g.ops>0 ? g.revenue/g.ops : 0;
+    return{...g, gp, gm, mk, tick};
+  });
+
+  // Sort
+  rows.sort((a,b)=>{
+    if(ord==='gm')    return b.gm-a.gm;
+    if(ord==='gp')    return b.gp-a.gp;
+    if(ord==='cant')  return b.cant-a.cant;
+    return b.revenue-a.revenue;
+  });
+
+  const totalRev  = rows.reduce((s,r)=>s+r.revenue,0);
+  const totalCost = rows.reduce((s,r)=>s+r.costo,0);
+  const totalGp   = totalRev-totalCost;
+  const totalCant = rows.reduce((s,r)=>s+r.cant,0);
+  const avgGm     = rows.filter(r=>r.gm>0).length
+    ? rows.filter(r=>r.gm>0).reduce((s,r)=>s+r.gm,0)/rows.filter(r=>r.gm>0).length : 0;
+  const avgMk     = rows.filter(r=>r.mk>0).length
+    ? rows.filter(r=>r.mk>0).reduce((s,r)=>s+r.mk,0)/rows.filter(r=>r.mk>0).length : 0;
+
+  // ── KPIs ──
+  const k1=document.getElementById('rent-k1'); if(k1)k1.textContent='$'+fn(Math.round(totalRev));
+  const k1d=document.getElementById('rent-k1d'); if(k1d)k1d.textContent=fn(totalCant)+' unidades · '+data.length+' ops';
+  const k2=document.getElementById('rent-k2'); if(k2)k2.textContent='$'+fn(Math.round(totalCost));
+  const k2d=document.getElementById('rent-k2d'); if(k2d)k2d.textContent=totalRev>0?(totalCost/totalRev*100).toFixed(1)+'% del revenue':'sin costo cargado';
+  const k3=document.getElementById('rent-k3');
+  if(k3){k3.textContent='$'+fn(Math.round(totalGp));k3.style.color=totalGp>0?'var(--green)':'var(--red)';}
+  const k3d=document.getElementById('rent-k3d'); if(k3d)k3d.textContent=totalRev>0?'margen bruto: '+(totalGp/totalRev*100).toFixed(1)+'%':'─';
+  const k4=document.getElementById('rent-k4');
+  if(k4){k4.textContent=avgGm>0?avgGm.toFixed(1)+'%':'─';k4.style.color=avgGm>=40?'var(--green)':avgGm>=20?'var(--orange)':'var(--red)';}
+  const k4d=document.getElementById('rent-k4d'); if(k4d)k4d.textContent=rows.filter(r=>r.gm>0).length+' grupos con costo';
+  const k5=document.getElementById('rent-k5');
+  if(k5){k5.textContent=avgMk>0?avgMk.toFixed(1)+'%':'─';k5.style.color=avgMk>0?'var(--blue)':'';}
+  const k5d=document.getElementById('rent-k5d'); if(k5d)k5d.textContent='sobre costo unitario';
+
+  document.getElementById('rent-resumen').textContent=
+    `${rows.length} grupos · ${data.length} ventas · ${yr}`;
+
+  // ── Charts ──
+  const C=chartColors();
+  const labels=rows.slice(0,10).map(r=>r.key.length>14?r.key.slice(0,13)+'…':r.key);
+  const gmVals=rows.slice(0,10).map(r=>r.gm>0?parseFloat(r.gm.toFixed(1)):0);
+  const gmColors=gmVals.map(v=>v>=40?'rgba(61,255,160,.8)':v>=20?'rgba(255,170,61,.8)':'rgba(255,92,92,.8)');
+
+  if(rentChartGm){try{rentChartGm.destroy();}catch(e){}}
+  const ctx1=document.getElementById('rentGmChart');
+  if(ctx1) rentChartGm=new Chart(ctx1,{
+    type:'bar',
+    data:{labels,datasets:[{
+      label:'GM %',data:gmVals,
+      backgroundColor:gmColors,borderColor:gmColors.map(c=>c.replace('.8','.9')),
+      borderWidth:1,borderRadius:6,borderSkipped:false
+    }]},
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:C.tooltip.bg,borderColor:C.tooltip.border,borderWidth:1,
+          titleColor:C.tooltip.color,bodyColor:C.tooltip.color,
+          callbacks:{label:c=>' GM: '+c.parsed.x.toFixed(1)+'%'}},
+        datalabels:{display:true,color:'#fff',font:{size:9,weight:'700'},
+          formatter:v=>v>0?v.toFixed(1)+'%':null,anchor:'end',align:'start',offset:4}
+      },
+      scales:{
+        x:{grid:{color:C.grid},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:9},callback:v=>v+'%'},
+           suggestedMax:Math.max(...gmVals)*1.15||100},
+        y:{grid:{display:false},ticks:{color:C.tick,font:{size:10}}}
+      }
+    }
+  });
+
+  if(rentChartRev){try{rentChartRev.destroy();}catch(e){}}
+  const ctx2=document.getElementById('rentRevGpChart');
+  const revVals=rows.slice(0,10).map(r=>Math.round(r.revenue));
+  const gpVals =rows.slice(0,10).map(r=>Math.round(Math.max(r.gp,0)));
+  if(ctx2) rentChartRev=new Chart(ctx2,{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Revenue',data:revVals,backgroundColor:'rgba(92,168,255,.5)',borderColor:'rgba(92,168,255,.8)',borderWidth:1,borderRadius:4},
+      {label:'Gross Profit',data:gpVals,backgroundColor:'rgba(61,255,160,.5)',borderColor:'rgba(61,255,160,.8)',borderWidth:1,borderRadius:4}
+    ]},
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:C.tick,boxWidth:10,font:{size:10}}},
+        tooltip:{backgroundColor:C.tooltip.bg,borderColor:C.tooltip.border,borderWidth:1,
+          titleColor:C.tooltip.color,bodyColor:C.tooltip.color,
+          callbacks:{label:c=>' '+c.dataset.label+': $'+fn(c.parsed.x)}}
+      },
+      scales:{
+        x:{grid:{color:C.grid},ticks:{color:C.tick,font:{family:'IBM Plex Mono',size:9},callback:v=>'$'+fn(v)}},
+        y:{grid:{display:false},ticks:{color:C.tick,font:{size:10}}}
+      }
+    }
+  });
+
+  // ── Tabla ──
+  const maxRev=rows[0]?.revenue||1;
+  const tbody=document.getElementById('rent-tbody');
+  tbody.innerHTML=rows.map((r,i)=>{
+    const pct=totalRev>0?(r.revenue/totalRev*100).toFixed(1):'0';
+    const gmBadge=r.gm>=40?'hi':r.gm>=20?'mid':'lo';
+    const gmTxt=r.gm>0?r.gm.toFixed(1)+'%':'─';
+    const mkTxt=r.mk>0?r.mk.toFixed(1)+'%':'─';
+    const barW=Math.round(r.revenue/maxRev*100);
+    const barColor=r.gm>=40?'var(--green)':r.gm>=20?'var(--orange)':'var(--blue)';
+    return `<tr class="${i<3?'rent-row-top':''}">
+      <td style="font-weight:600;min-width:120px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="color:var(--muted2);font-family:var(--fm);font-size:.65rem;width:16px">${i+1}</span>
+          ${esc(r.key)}
+        </div>
+      </td>
+      <td class="tm" style="color:var(--muted)">${fn(Math.round(r.cant))}</td>
+      <td class="tm" style="font-weight:600">
+        <div class="rent-bar-wrap">
+          <span>$${fn(Math.round(r.revenue))}</span>
+          <div class="rent-bar-bg"><div class="rent-bar-fill" style="width:${barW}%;background:${barColor}"></div></div>
+        </div>
+      </td>
+      <td class="tm" style="color:var(--muted)">${r.costo>0?'$'+fn(Math.round(r.costo)):'─'}</td>
+      <td class="tm" style="color:${r.gp>0?'var(--green)':'var(--red)'}">${r.gp!==0?'$'+fn(Math.round(r.gp)):'─'}</td>
+      <td class="tm"><span class="rent-badge ${gmBadge}">${gmTxt}</span></td>
+      <td class="tm" style="font-size:.8rem;color:var(--blue)">${mkTxt}</td>
+      <td class="tm" style="font-family:var(--fm);font-size:.75rem;color:var(--muted)">${pct}%</td>
+      <td class="tm" style="color:var(--muted);font-size:.8rem">$${fn(Math.round(r.tick))}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();destroyDashCharts();renderDashboard();renderKpiFcChart();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();initRentYear();}
 
 // ═══ UTILS ═══
 function toggleTheme(){
