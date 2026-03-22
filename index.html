@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MediCross</title>
+<title>MediCross — Sales Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
@@ -49,6 +49,7 @@ body.light .co-item.active{background:rgba(26,158,90,.07)}
 .co-item-del{background:none;border:none;color:var(--muted);font-size:.9rem;cursor:pointer;padding:4px;border-radius:4px;opacity:0;transition:opacity .15s}
 .co-item:hover .co-item-del{opacity:1}
 .co-item-del:hover{color:#ef4444;background:rgba(239,68,68,.1)}
+.co-item-logo:hover .co-logo-hover{opacity:1!important}
 .co-add-btn{width:100%;padding:10px;border:1px dashed var(--border);border-radius:10px;background:none;color:var(--muted);font-size:.82rem;cursor:pointer;transition:all .15s;font-family:var(--fm)}
 .co-add-btn:hover{border-color:var(--accent);color:var(--accent)}
 /* Logo area in sidebar — clickable */
@@ -3805,10 +3806,13 @@ function renderCoList(){
       ? `<img src="${co.logo}" style="width:40px;height:40px;object-fit:contain">`
       : `<span style="font-size:1.3rem">🏢</span>`;
     return `<div class="co-item${isActive?' active':''}" onclick="switchCompany('${co.id}')">
-      <div class="co-item-logo">${logoHtml}</div>
+      <div class="co-item-logo" style="position:relative;cursor:pointer" onclick="event.stopPropagation();triggerLogoUpload('${co.id}')" title="Cambiar logo">
+        ${logoHtml}
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.45);border-radius:8px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s" class="co-logo-hover">📷</div>
+      </div>
       <div class="co-item-info">
         <div class="co-item-name">${esc(co.name)}</div>
-        <div class="co-item-sub">Sheet: ${co.sid ? co.sid.slice(0,20)+'...' : 'pendiente'}</div>
+        <div class="co-item-sub">Sheet: ${co.sid ? co.sid.slice(0,20)+'...' : 'pendiente'} · <span style="color:var(--accent);cursor:pointer" onclick="event.stopPropagation();triggerLogoUpload('${co.id}')">cambiar logo</span></div>
       </div>
       ${isActive ? '<span class="co-item-badge">ACTIVA</span>' : ''}
       <button class="co-item-del" onclick="event.stopPropagation();deleteCompany('${co.id}')" title="Eliminar">✕</button>
@@ -3867,6 +3871,37 @@ function deleteCompany(coId){
     switchCompany(companies[0].id);
   }
   renderCoList();
+}
+
+function triggerLogoUpload(coId){
+  // Create hidden file input and trigger it
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      updateCompanyLogo(coId, ev.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+function updateCompanyLogo(coId, logoB64){
+  const companies = getCompanies();
+  const co = companies.find(c => c.id === coId);
+  if(!co) return;
+  co.logo = logoB64;
+  saveCompanies(companies);
+  // If active company, update sidebar logo too
+  if(coId === getCurrentCoId()){
+    updateSidebarLogo(co);
+  }
+  renderCoList();
+  toast('Logo actualizado ✓', 'success');
 }
 
 function showCoNewForm(){
