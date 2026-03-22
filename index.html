@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MediCross — Sales Intelligence</title>
+<title>MediCross</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
@@ -25,11 +25,15 @@ window.addEventListener('load',()=>{
 body.light{--bg:#f4f4f6;--surface:#ffffff;--surface2:#f0f0f4;--border:#e0e0e8;--border2:#d0d0dc;--text:#1a1a2e;--muted:#6b6b88;--muted2:#9090aa;--accent:#5b5ef4;--ad:rgba(91,94,244,.08);--ad2:rgba(91,94,244,.15);--red:#e03535;--green:#1a9e5a;--blue:#2070d0;--orange:#d07020;--purple:#8040c0;}
 body.light .ld,body.light .ldot{box-shadow:0 0 10px var(--accent)}
 .logo-img{
-  /* Fondo transparente — funciona en modo oscuro y claro sin filtros */
-  mix-blend-mode:normal;
+  /* Modo oscuro: logo en blanco — estándar para dark mode */
+  filter:brightness(0) invert(1);
+  opacity:.9;
+  transition:filter .3s,opacity .3s
+}
+body.light .logo-img{
+  /* Modo claro: colores originales */
   filter:none;
-  opacity:1;
-  transition:opacity .3s
+  opacity:1
 }
 /* ── TASK CALENDAR ── */
 .tcal-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
