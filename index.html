@@ -1721,7 +1721,7 @@ function verMas(){
 function updKPI(){
   const now=new Date();const m=now.getMonth();const y=now.getFullYear();
   const mv=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return !isNaN(d)&&d.getMonth()===m&&d.getFullYear()===y;});
-  const ventasMes=mv.reduce((s,x)=>s+x.monto,0);
+  const ventasMes=mv.reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
   document.getElementById('kmes').textContent='$'+fn(ventasMes);
   document.getElementById('kmesd').textContent=mv.length+' operaciones';
 
@@ -1729,7 +1729,7 @@ function updKPI(){
   const mesAnt=m===0?11:m-1;
   const anioAnt=m===0?y-1:y;
   const mvAnt=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getMonth()===mesAnt&&d.getFullYear()===anioAnt;});
-  const totalAnt=mvAnt.reduce((s,x)=>s+x.monto,0);
+  const totalAnt=mvAnt.reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
   const MESES_N=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   document.getElementById('ktot').textContent='$'+fn(totalAnt);
   document.getElementById('ktot').style.color='';
@@ -2388,7 +2388,8 @@ function renderDashboard(){
   const byMonth=Array(12).fill(0);
   ventasYr.forEach(v=>{
     const d=new Date(v.fecha+'T12:00');
-    if(!isNaN(d))byMonth[d.getMonth()]+=v.monto;
+    // Revenue = precio unitario × cantidad (o solo precio si cant=0)
+    if(!isNaN(d)) byMonth[d.getMonth()] += v.monto * (v.cantidad||1);
   });
   renderDashTareas();
   console.log('[Dashboard] yr='+yr+' S.v='+S.v.length+' ventasYr='+ventasYr.length+' byMonth sum='+byMonth.reduce((a,b)=>a+b,0)+' byMonth='+JSON.stringify(byMonth.map(v=>Math.round(v))));
