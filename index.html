@@ -774,7 +774,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <div class="cb" style="padding:0">
         <div style="overflow-x:auto">
           <table class="tbl">
-            <thead><tr><th>Fecha</th><th>Cliente</th><th>Producto/Servicio</th><th>Categoría</th><th>Monto</th><th>Estado</th><th>Vendedor</th><th>Usuario</th><th></th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Cliente</th><th>Producto/Servicio</th><th>Categoría</th><th>Monto</th><th>Cant.</th><th>Costo Unit.</th><th>Markup</th><th>G. Margin</th><th>Estado</th><th>Vendedor</th><th>Usuario</th><th></th></tr></thead>
             <tbody id="vtbody"></tbody>
           </table>
         </div>
@@ -1038,10 +1038,14 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
     <div class="fgrp"><label class="flbl">Cliente *</label><input class="fi" id="vcl" placeholder="Nombre del cliente"></div>
     <div class="fgrp" style="grid-column:1/-1"><label class="flbl">Producto / Servicio *</label><input class="fi" id="vpr" placeholder="Descripción"></div>
     <div class="fgrp"><label class="flbl">Categoría</label><select class="fsel" id="vcat"><option value="">Sin categoría</option></select></div>
-    <div class="fgrp"><label class="flbl">Monto *</label><input class="fi" id="vmo" type="number" placeholder="0.00"></div>
+    <div class="fgrp"><label class="flbl">Monto *</label><input class="fi" id="vmo" type="number" placeholder="0.00" oninput="calcGrossMargin()"></div>
     <div class="fgrp"><label class="flbl">Moneda</label><select class="fsel" id="vmon"><option value="ARS">ARS $</option><option value="USD">USD $</option><option value="EUR">EUR €</option></select></div>
     <div class="fgrp"><label class="flbl">Estado</label><select class="fsel" id="vest"><option value="cobrada">Cobrada</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option></select></div>
     <div class="fgrp"><label class="flbl">Vendedor</label><input class="fi" id="vven" placeholder="Nombre"></div>
+    <div class="fgrp"><label class="flbl">Cantidad</label><input class="fi" id="vcant" type="number" placeholder="1" min="0" oninput="calcGrossMargin()"></div>
+    <div class="fgrp"><label class="flbl">Costo unitario</label><input class="fi" id="vcosto" type="number" placeholder="0.00" oninput="calcGrossMargin()"></div>
+    <div class="fgrp"><label class="flbl">Markup %</label><input class="fi" id="vmarkup" type="number" placeholder="0" oninput="calcMarkupFromMargin()" style="background:var(--surf2)"></div>
+    <div class="fgrp"><label class="flbl">Gross Margin %<span id="vgm-preview" style="margin-left:8px;color:var(--green);font-size:.75rem;font-weight:700"></span></label><input class="fi" id="vgm" type="number" placeholder="─" readonly style="background:var(--surf2);color:var(--green);font-weight:700"></div>
     <div class="fgrp" style="grid-column:1/-1"><label class="flbl">Notas</label><textarea class="fta" id="vnot"></textarea></div>
   </div></div>
   <div class="mf"><button class="btn bts sm" onclick="cm('mnv')">Cancelar</button><button class="btn btp sm" onclick="saveV()">Guardar Venta</button></div>
@@ -1107,7 +1111,7 @@ const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapi
 const TABS={v:'Ventas',h:'Historicas',d:'Pipeline',t:'Tareas',m:'Members',l:'Licitaciones',p:'Proyectos',r:'Relacionamiento',pr:'Proveedores',fc:'Forecast'};
 const STAGES=[{id:'lead',lbl:'Lead',col:'var(--muted)'},{id:'propuesta',lbl:'Propuesta',col:'var(--blue)'},{id:'negociacion',lbl:'Negociación',col:'var(--orange)'},{id:'cierre',lbl:'Cierre',col:'var(--green)'}];
 const TICOS={llamada:'📞',visita:'🚗',reunion:'📅',propuesta:'📄',seguimiento:'🔄',otro:'📌'};
-const VH=['id','fecha','cliente','producto','categoria','monto','moneda','estado','vendedor','notas','usuario','creado'];
+const VH=['id','fecha','cliente','producto','categoria','monto','moneda','estado','vendedor','cantidad','costo_unit','markup','gross_margin','notas','usuario','creado'];
 const HH=['id','fecha','cliente','producto','categoria','monto','moneda','canal','notas','usuario','creado'];
 const DH=['id','nombre','cliente','valor','moneda','prob','etapa','fecha','responsable','desc','usuario','creado'];
 const TH=['id','titulo','tipo','prioridad','inicio','fin','cliente','responsable','notas','alarm24','alarm48','done','alerted24','alerted48','usuario','creado'];
@@ -1435,7 +1439,11 @@ async function loadAll(){
     console.log('[loadAll] raw S.v[0]:', vr&&vr[0]?JSON.stringify(vr[0]):'empty/null');
     S.v=safeUpdate(vr,S.v).filter(r=>r.id).map(r=>({
       ...r,
-      monto:parseMonto(r.monto)
+      monto:parseMonto(r.monto),
+      cantidad:parseMonto(r.cantidad)||0,
+      costo_unit:parseMonto(r.costo_unit)||0,
+      markup:parseMonto(r.markup)||0,
+      gross_margin:parseMonto(r.gross_margin)||0
     }));
     console.log('[loadAll] S.v loaded:', S.v.length, 'montos:', S.v.slice(0,3).map(x=>x.monto));
     S.h=safeUpdate(hr,S.h).filter(r=>r.id).map(r=>({...r,monto:parseMonto(r.monto)}));
@@ -1499,11 +1507,64 @@ function setupAS(){
 }
 
 // ═══ VENTAS ═══
+// ── Cálculo automático de Gross Margin y Markup ──
+function calcGrossMargin(){
+  const monto = parseFloat(document.getElementById('vmo')?.value)||0;
+  const cant  = parseFloat(document.getElementById('vcant')?.value)||1;
+  const costo = parseFloat(document.getElementById('vcosto')?.value)||0;
+  const costoTotal = costo * (cant||1);
+  
+  let gm = 0, markup = 0;
+  if(monto > 0 && costoTotal > 0){
+    gm = ((monto - costoTotal) / monto) * 100;
+    markup = ((monto - costoTotal) / costoTotal) * 100;
+  }
+  
+  const gmEl = document.getElementById('vgm');
+  const mkEl = document.getElementById('vmarkup');
+  const previewEl = document.getElementById('vgm-preview');
+  
+  if(gmEl){ gmEl.value = gm > 0 ? gm.toFixed(1) : ''; }
+  if(mkEl && !document.activeElement?.id?.includes('markup')){ 
+    mkEl.value = markup > 0 ? markup.toFixed(1) : ''; 
+  }
+  if(previewEl){
+    if(gm > 0){
+      const color = gm>=40?'var(--green)':gm>=20?'var(--orange)':'#ef4444';
+      previewEl.style.color = color;
+      previewEl.textContent = gm.toFixed(1)+'%';
+    } else {
+      previewEl.textContent = '';
+    }
+  }
+}
+
+function calcMarkupFromMargin(){
+  // If user manually enters markup, recalculate GM
+  const monto  = parseFloat(document.getElementById('vmo')?.value)||0;
+  const cant   = parseFloat(document.getElementById('vcant')?.value)||1;
+  const markup = parseFloat(document.getElementById('vmarkup')?.value)||0;
+  
+  if(monto > 0 && markup > 0){
+    // costo_unit = monto / (1 + markup/100) / cant
+    const costoTotal = monto / (1 + markup/100);
+    const costoUnit  = costoTotal / (cant||1);
+    const costoEl = document.getElementById('vcosto');
+    if(costoEl) costoEl.value = costoUnit.toFixed(2);
+    calcGrossMargin();
+  }
+}
+
+
 async function saveV(){
   const f=v('vf'),cl=v('vcl').trim(),pr=v('vpr').trim(),mo=parseFloat(v('vmo'))||0;
   if(!f||!cl||!pr||!mo){toast('Completá los campos obligatorios','warning');return;}
-  const row={id:uid(),fecha:f,cliente:cl,producto:pr,categoria:v('vcat'),monto:mo,moneda:v('vmon'),estado:v('vest'),vendedor:v('vven').trim(),notas:v('vnot').trim(),usuario:cu.name||cu.email,creado:new Date().toISOString()};
-  S.v.unshift(row);cm('mnv');cv(['vcl','vpr','vmo','vven','vnot']);
+  const cant=parseFloat(v('vcant'))||0;
+  const costo=parseFloat(v('vcosto'))||0;
+  const markup=parseFloat(v('vmarkup'))||0;
+  const gm=parseFloat(v('vgm'))||0;
+  const row={id:uid(),fecha:f,cliente:cl,producto:pr,categoria:v('vcat'),monto:mo,moneda:v('vmon'),estado:v('vest'),vendedor:v('vven').trim(),cantidad:cant,costo_unit:costo,markup:markup,gross_margin:gm,notas:v('vnot').trim(),usuario:cu.name||cu.email,creado:new Date().toISOString()};
+  S.v.unshift(row);cm('mnv');cv(['vcl','vpr','vmo','vven','vnot','vcant','vcosto','vmarkup','vgm']);
   renderV();renderVentasKPIs();updKPI();renderDashboard();toast('Guardando en Sheets...','info');setSI('go','Guardando...');
   // Usar writeTab completo para garantizar consistencia
   await writeTab(TABS.v,VH,S.v);
@@ -1526,22 +1587,34 @@ function renderV(){
   const tb=document.getElementById('vtbody');
   const verMasEl=document.getElementById('ver-mas-wrap');
   if(!data.length){
-    tb.innerHTML=`<tr><td colspan="9"><div class="es"><div class="ei">📊</div><div class="et">Sin ventas aún</div><div class="esb">Cargá una venta o importá un Excel</div></div></td></tr>`;
+    tb.innerHTML=`<tr><td colspan="13"><div class="es"><div class="ei">📊</div><div class="et">Sin ventas aún</div><div class="esb">Cargá una venta o importá un Excel</div></div></td></tr>`;
     if(verMasEl)verMasEl.style.display='none';
     return;
   }
   const visible=data.slice(0,vLimit);
   const remaining=data.length-vLimit;
-  const rowHTML=x=>`<tr>
+  const rowHTML=x=>{
+    const gm=x.gross_margin||0;
+    const gmColor=gm>=40?'var(--green)':gm>=20?'var(--orange)':gm>0?'#ef4444':'var(--muted)';
+    const markupStr=x.markup>0?`${fn(x.markup)}%`:'─';
+    const gmStr=gm>0?`${fn(gm)}%`:'─';
+    const cantStr=x.cantidad>0?fn(x.cantidad):'─';
+    const costoStr=x.costo_unit>0?`${x.moneda||'ARS'} ${fn(x.costo_unit)}`:'─';
+    return `<tr>
     <td class="tm">${fmtD(x.fecha)}</td><td style="font-weight:500">${esc(x.cliente)}</td>
     <td style="color:var(--muted)">${esc(x.producto)}</td>
     <td>${x.categoria?`<span class="pill pb">${esc(x.categoria)}</span>`:'─'}</td>
     <td class="tm" style="color:var(--accent)">${x.moneda} ${fn(x.monto)}</td>
+    <td class="tm" style="color:var(--muted);font-size:.78rem">${cantStr}</td>
+    <td class="tm" style="color:var(--muted);font-size:.78rem">${costoStr}</td>
+    <td class="tm" style="font-size:.78rem">${markupStr}</td>
+    <td class="tm" style="color:${gmColor};font-weight:700;font-size:.8rem">${gmStr}</td>
     <td><span class="pill ${x.estado==='cobrada'?'pg':x.estado==='pendiente'?'po':'pr'}">${x.estado}</span></td>
     <td style="color:var(--muted);font-size:.75rem">${esc(x.vendedor)||'─'}</td>
     <td style="color:var(--muted2);font-size:.7rem">${esc(x.usuario)||'─'}</td>
     <td style="display:flex;gap:4px"><button class="btn bts ic sm" onclick="editV('${x.id}')" title="Editar">✏️</button><button class="btn btd ic sm" onclick="delV('${x.id}','v')">✕</button></td>
   </tr>`;
+  };
   tb.innerHTML=visible.map(rowHTML).join('');
   // Mostrar/ocultar botón ver más
   if(verMasEl){
@@ -3042,6 +3115,11 @@ function editV(id){
   document.getElementById('vmo').value=x.monto||'';
   document.getElementById('vmon').value=x.moneda||'ARS';
   document.getElementById('vest').value=x.estado||'cobrada';
+  document.getElementById('vcant').value=x.cantidad||'';
+  document.getElementById('vcosto').value=x.costo_unit||'';
+  document.getElementById('vmarkup').value=x.markup||'';
+  document.getElementById('vgm').value=x.gross_margin||'';
+  if(x.gross_margin>0){const p=document.getElementById('vgm-preview');if(p){const c=x.gross_margin>=40?'var(--green)':x.gross_margin>=20?'var(--orange)':'#ef4444';p.style.color=c;p.textContent=x.gross_margin.toFixed(1)+'%';}}
   document.getElementById('vven').value=x.vendedor||'';
   document.getElementById('vnot').value=x.notas||'';
   // Cambiar botón guardar a actualizar
@@ -3052,6 +3130,8 @@ function editV(id){
   btn.onclick=async()=>{
     x.fecha=v('vf');x.cliente=v('vcl').trim();x.producto=v('vpr').trim();
     x.categoria=v('vcat');x.monto=parseFloat(v('vmo'))||0;x.moneda=v('vmon');
+    x.cantidad=parseFloat(v('vcant'))||0;x.costo_unit=parseFloat(v('vcosto'))||0;
+    x.markup=parseFloat(v('vmarkup'))||0;x.gross_margin=parseFloat(v('vgm'))||0;
     x.estado=v('vest');x.vendedor=v('vven').trim();x.notas=v('vnot').trim();
     cm('mnv');resetModalV();renderV();updKPI();renderDashboard();
     toast('Guardando cambios...','info');
