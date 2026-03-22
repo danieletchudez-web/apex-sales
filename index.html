@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Intelligence</title>
+<title>gence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1148,13 +1148,45 @@ async function ensureTabs(){
   }catch(e){console.error('[ensureTabs]',e);}
 }
 
-// ── Serializar valor para Sheets — preserva números como números ──
+// ── Serializar valor para Sheets ──
 function serVal(v){
   if(v===undefined||v===null||v==='')return '';
-  const n=Number(v);
-  // Si es un número válido y no es una fecha/ID (no contiene letras), guardarlo como número
-  if(!isNaN(n)&&String(v).trim()!==''&&!/[a-zA-Z\-T:]/.test(String(v)))return n;
-  return String(v);
+  // Guardar números como números reales (sin formato)
+  if(typeof v==='number'&&!isNaN(v))return v;
+  const s=String(v).trim();
+  if(!s)return '';
+  // Si parece número puro (sin letras), guardarlo como número
+  if(/^-?[\d.,]+$/.test(s)){
+    const n=parseMonto(s);
+    if(!isNaN(n))return n;
+  }
+  return s;
+}
+
+// ── Parsear monto desde Sheets (maneja formatos locales) ──
+// Sheets devuelve "5.555.555" (es-AR) o "5,555,555" (en-US)
+// parseFloat falla con múltiples separadores
+function parseMonto(s){
+  if(s===null||s===undefined||s==='')return 0;
+  let str=String(s).trim().replace(/[^\d.,\-]/g,'');
+  if(!str)return 0;
+  const dots=str.split('.').length-1;
+  const commas=str.split(',').length-1;
+  if(dots>1){
+    // "5.555.555" → puntos son miles, sin decimal
+    str=str.replace(/\./g,'');
+  } else if(commas>1){
+    // "5,555,555" → comas son miles, sin decimal
+    str=str.replace(/,/g,'');
+  } else if(dots===1&&commas===1){
+    // "5.555,55" → punto=miles, coma=decimal
+    str=str.replace('.','').replace(',','.');
+  } else if(commas===1&&dots===0){
+    // "5555,55" → coma es decimal
+    str=str.replace(',','.');
+  }
+  // else: "5555.55" → punto es decimal — no cambiar
+  return parseFloat(str)||0;
 }
 
 // readTab: devuelve null si hay error, [] si vacío
@@ -1191,14 +1223,7 @@ async function writeTab(tab,headers,rows){
     ];
     console.log('[writeTab]',tab,'filas totales:',vals.length,'monto en fila 1:',vals[1]?vals[1][headers.indexOf('monto')]:'─');
     
-    // Paso 1: limpiar el tab (borra filas viejas que quedarían huérfanas)
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}:clear`,{
-      method:'POST',
-      headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
-      body:'{}'
-    });
-    
-    // Paso 2: escribir datos frescos
+    // Escribir datos (PUT sobreescribe todo el rango)
     const url=`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=RAW`;
     const res=await fetch(url,{
       method:'PUT',
@@ -1245,20 +1270,20 @@ async function loadAll(){
       return sheetData; // datos reales de sheet, incluso vacío
     }
 
-    console.log('[loadAll] raw S.v sample:', vr&&vr[0]?JSON.stringify(vr[0]):'empty/null');
+    console.log('[loadAll] raw S.v[0]:', vr&&vr[0]?JSON.stringify(vr[0]):'empty/null');
     S.v=safeUpdate(vr,S.v).filter(r=>r.id).map(r=>({
       ...r,
-      monto:parseFloat(String(r.monto||'0').replace(/[^\d.-]/g,''))||0
+      monto:parseMonto(r.monto)
     }));
-    console.log('[loadAll] S.v loaded:', S.v.length, 'montos sample:', S.v.slice(0,3).map(x=>x.monto));
-    S.h=safeUpdate(hr,S.h).filter(r=>r.id).map(r=>({...r,monto:parseFloat(r.monto)||0}));
-    S.d=safeUpdate(dr,S.d).filter(r=>r.id).map(r=>({...r,valor:parseFloat(r.valor)||0,prob:parseInt(r.prob)||50}));
+    console.log('[loadAll] S.v loaded:', S.v.length, 'montos:', S.v.slice(0,3).map(x=>x.monto));
+    S.h=safeUpdate(hr,S.h).filter(r=>r.id).map(r=>({...r,monto:parseMonto(r.monto)}));
+    S.d=safeUpdate(dr,S.d).filter(r=>r.id).map(r=>({...r,valor:parseMonto(r.valor),prob:parseInt(r.prob)||50}));
     S.t=safeUpdate(tr,S.t).filter(r=>r.id).map(r=>({...r,done:r.done==='true',alarm24:r.alarm24!=='false',alarm48:r.alarm48!=='false',alerted24:r.alerted24==='true',alerted48:r.alerted48==='true'}));
-    S.l=safeUpdate(lr,S.l).filter(r=>r.id).map(r=>({...r,ofertado:parseFloat(r.ofertado)||0,ganador:parseFloat(r.ganador)||0}));
-    S.p=safeUpdate(pr2,S.p).filter(r=>r.id).map(r=>({...r,inversion:parseFloat(r.inversion)||0,roi:parseFloat(r.roi)||0}));
+    S.l=safeUpdate(lr,S.l).filter(r=>r.id).map(r=>({...r,ofertado:parseMonto(r.ofertado),ganador:parseMonto(r.ganador)}));
+    S.p=safeUpdate(pr2,S.p).filter(r=>r.id).map(r=>({...r,inversion:parseMonto(r.inversion),roi:parseMonto(r.roi)}));
     S.r=safeUpdate(rr,S.r).filter(r=>r.id);
-    S.pr=safeUpdate(prr,S.pr).filter(r=>r.id).map(r=>({...r,margen:parseFloat(r.margen)||0}));
-    S.fc=safeUpdate(fcr,S.fc).filter(r=>r.id).map(r=>({...r,meta:parseFloat(r.meta)||0}));
+    S.pr=safeUpdate(prr,S.pr).filter(r=>r.id).map(r=>({...r,margen:parseMonto(r.margen)}));
+    S.fc=safeUpdate(fcr,S.fc).filter(r=>r.id).map(r=>({...r,meta:parseMonto(r.meta)}));
 
     setSI('ok','Sincronizado');
   }catch(e){
