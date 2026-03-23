@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sales Intelligence</title>
+<title>MediCross — Sales Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
@@ -939,8 +939,14 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <!-- Columna derecha: input + resultados -->
         <div style="display:flex;flex-direction:column;gap:12px">
           <div class="scan-box">
-            <h3>📄 Pegá el texto de la licitación</h3>
-            <p>Copiá y pegá el contenido de la publicación desde BAC, PBAC, Boletín Oficial o cualquier portal. Puede ser texto plano, HTML o una descripción completa. La IA extrae los datos relevantes y evalúa la oportunidad.</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <h3 style="margin:0">📄 Pegá el texto de la licitación</h3>
+              <label class="btn bts sm" style="cursor:pointer;font-size:.72rem" title="Importar Excel de BAC/PBAC">
+                📂 Importar Excel
+                <input type="file" accept=".xlsx,.xls,.csv" id="scan-xl-input" style="display:none" onchange="importarReporteXL(this)">
+              </label>
+            </div>
+            <p>Pegá texto de una licitación individual, o importá el Excel completo de BAC/PBAC para analizar todas las licitaciones automáticamente con IA.</p>
             <textarea class="scan-textarea" id="scan-input" placeholder="Pegá aquí el texto completo de la licitación o convocatoria...
 
 Ejemplo:
@@ -950,14 +956,33 @@ Objeto: Provisión de insumos descartables para hemodiálisis
 Monto estimado: $45.000.000
 Fecha de apertura: 15/04/2026
 Rubros: Material descartable, Filtros de diálisis..."></textarea>
-            <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+            <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
               <button class="btn btp sm" onclick="analizarLicitacion()" id="scan-btn" style="min-width:140px">🤖 Analizar con IA</button>
               <button class="btn bts sm" onclick="limpiarScanner()">Limpiar</button>
-              <span style="font-size:.7rem;color:var(--muted);font-family:var(--fm);margin-left:4px">Ctrl+Enter para analizar</span>
+              <span style="font-size:.7rem;color:var(--muted);font-family:var(--fm)">Ctrl+Enter para analizar</span>
             </div>
           </div>
 
           <!-- Resultados -->
+          <!-- Progress bar (bulk mode) -->
+          <div id="scan-progress-wrap" style="display:none;margin-bottom:12px">
+            <div class="scan-box" style="padding:14px 16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <span style="font-size:.82rem;font-weight:600" id="scan-progress-label">Analizando...</span>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <span style="font-family:var(--fm);font-size:.75rem;color:var(--muted)" id="scan-progress-count">0/0</span>
+                  <button class="btn btd sm" onclick="cancelarAnalisisMasivo()" style="font-size:.65rem;padding:2px 8px">Detener</button>
+                </div>
+              </div>
+              <div style="background:var(--surface2);border-radius:4px;height:8px;overflow:hidden">
+                <div id="scan-progress-bar" style="height:100%;background:var(--accent);border-radius:4px;width:0%;transition:width .3s"></div>
+              </div>
+              <div style="margin-top:6px;font-size:.7rem;color:var(--muted);font-family:var(--fm)" id="scan-progress-current"></div>
+            </div>
+          </div>
+          <!-- Bulk results summary (tabla) -->
+          <div id="scan-bulk-summary" style="display:none;margin-bottom:12px"></div>
+          <!-- Individual results -->
           <div id="scan-results"></div>
         </div>
       </div>
@@ -4800,6 +4825,339 @@ function copiarAnalisis(r){
     'Acción: '+r.accion_sugerida
   ].filter(Boolean).join('\n');
   navigator.clipboard.writeText(txt).then(()=>toast('📋 Resumen copiado','success'));
+}
+
+// ═══ IMPORTAR REPORTE EXCEL (BAC/PBAC) ═══
+let bulkLicitaciones = [];   // parsed from Excel
+let bulkCancelado    = false;
+let bulkResultados   = [];   // IA results accumulator
+
+async function importarReporteXL(input){
+  const file = input.files[0];
+  if(!file) return;
+  input.value = ''; // reset so same file can be re-imported
+
+  // Use SheetJS (already loaded via XLSX global)
+  const ab = await file.arrayBuffer();
+  const wb = XLSX.read(ab, {type:'array'});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+
+  if(!rows.length){ toast('El archivo está vacío o no tiene datos','warning'); return; }
+
+  // Detect column names (flexible)
+  const sample = rows[0];
+  const keys   = Object.keys(sample);
+  const getCol = (aliases) => aliases.find(a => keys.some(k=>k.toLowerCase().includes(a))
+    ? keys.find(k=>k.toLowerCase().includes(a)) : null) || keys[0];
+
+  const colNum    = keys.find(k=>k.toLowerCase().includes('número')||k.toLowerCase().includes('numero')||k.toLowerCase().includes('proceso')) || keys[0];
+  const colNombre = keys.find(k=>k.toLowerCase().includes('nombre')) || keys[1];
+  const colTipo   = keys.find(k=>k.toLowerCase().includes('tipo'))   || keys[2];
+  const colFecha  = keys.find(k=>k.toLowerCase().includes('fecha'))  || keys[3];
+  const colEstado = keys.find(k=>k.toLowerCase().includes('estado')) || keys[4];
+  const colUnidad = keys.find(k=>k.toLowerCase().includes('unidad')||k.toLowerCase().includes('organismo')||k.toLowerCase().includes('ejecutora')) || keys[5];
+
+  bulkLicitaciones = rows.map(r=>({
+    numero : String(r[colNum]   ||'').trim(),
+    nombre : String(r[colNombre]||'').trim(),
+    tipo   : String(r[colTipo]  ||'').trim(),
+    fecha  : String(r[colFecha] ||'').trim(),
+    estado : String(r[colEstado]||'').trim(),
+    unidad : String(r[colUnidad]||'').trim(),
+  })).filter(r=>r.nombre&&r.numero);
+
+  toast(`✅ ${bulkLicitaciones.length} licitaciones cargadas del Excel`, 'success');
+  mostrarVistaPrevia();
+}
+
+function mostrarVistaPrevia(){
+  const results = document.getElementById('scan-results');
+  const kws = scanKeywords;
+
+  // Pre-filter: highlight rows with keyword matches
+  const conMatch = bulkLicitaciones.filter(l=>{
+    const texto = (l.nombre+' '+l.unidad).toLowerCase();
+    return kws.some(k=>texto.includes(k.toLowerCase()));
+  });
+
+  results.innerHTML = `
+    <div class="scan-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <h3 style="margin:0 0 2px">📊 ${bulkLicitaciones.length} licitaciones cargadas</h3>
+          <p style="margin:0;font-size:.72rem;color:var(--muted)">${conMatch.length} con posibles coincidencias de palabras clave · ${bulkLicitaciones.length - conMatch.length} sin coincidencias</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn bts sm" onclick="analizarSoloCoincidencias()" style="font-size:.72rem">
+            🎯 Analizar solo coincidencias (${conMatch.length})
+          </button>
+          <button class="btn btp sm" onclick="analizarTodas()" style="font-size:.72rem">
+            🤖 Analizar todas (${bulkLicitaciones.length})
+          </button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:320px;overflow-y:auto">
+        <table class="tbl" style="font-size:.72rem">
+          <thead><tr><th>N° Proceso</th><th>Nombre</th><th>Tipo</th><th>Fecha Apertura</th><th>Unidad Ejecutora</th><th>Match</th></tr></thead>
+          <tbody>${bulkLicitaciones.map(l=>{
+            const texto=(l.nombre+' '+l.unidad).toLowerCase();
+            const matches=scanKeywords.filter(k=>texto.includes(k.toLowerCase()));
+            const hasMatch=matches.length>0;
+            return `<tr style="${hasMatch?'background:rgba(232,255,71,.04)':''}">
+              <td class="tm" style="font-size:.68rem;white-space:nowrap">${esc(l.numero)}</td>
+              <td style="max-width:300px">${esc(l.nombre)}</td>
+              <td style="white-space:nowrap;color:var(--muted);font-size:.68rem">${esc(l.tipo)}</td>
+              <td class="tm" style="white-space:nowrap;font-size:.68rem">${esc(l.fecha)}</td>
+              <td style="color:var(--muted);font-size:.68rem">${esc(l.unidad)}</td>
+              <td style="text-align:center">${hasMatch?matches.map(m=>`<span class="kw-tag match" style="font-size:.6rem">${esc(m)}</span>`).join(' '):'─'}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function analizarSoloCoincidencias(){
+  const kws = scanKeywords;
+  const filtradas = bulkLicitaciones.filter(l=>{
+    const texto = (l.nombre+' '+l.unidad).toLowerCase();
+    return kws.some(k=>texto.includes(k.toLowerCase()));
+  });
+  if(!filtradas.length){ toast('No hay coincidencias con tus palabras clave','warning'); return; }
+  iniciarAnalisisMasivo(filtradas);
+}
+
+function analizarTodas(){
+  if(!bulkLicitaciones.length){ toast('Importá un Excel primero','warning'); return; }
+  iniciarAnalisisMasivo(bulkLicitaciones);
+}
+
+function cancelarAnalisisMasivo(){
+  bulkCancelado = true;
+  toast('Análisis detenido','info');
+}
+
+async function iniciarAnalisisMasivo(licitaciones){
+  if(!scanKeywords.length){ toast('Agregá palabras clave primero','warning'); return; }
+  bulkCancelado  = false;
+  bulkResultados = [];
+
+  const progressWrap = document.getElementById('scan-progress-wrap');
+  const progressBar  = document.getElementById('scan-progress-bar');
+  const progressCount= document.getElementById('scan-progress-count');
+  const progressLbl  = document.getElementById('scan-progress-label');
+  const progressCur  = document.getElementById('scan-progress-current');
+  const summaryEl    = document.getElementById('scan-bulk-summary');
+  const resultsEl    = document.getElementById('scan-results');
+
+  progressWrap.style.display='block';
+  summaryEl.style.display='none';
+  resultsEl.innerHTML='';
+
+  const total = licitaciones.length;
+  const instrExtra = document.getElementById('scan-instrucciones')?.value.trim()||'';
+  const montoMin   = parseFloat(document.getElementById('scan-monto-min')?.value)||0;
+
+  // Batch: 5 licitaciones por prompt para ser eficiente
+  const BATCH = 5;
+  for(let i=0; i<total && !bulkCancelado; i+=BATCH){
+    const batch = licitaciones.slice(i, i+BATCH);
+    const pct   = Math.round(i/total*100);
+    progressBar.style.width  = pct+'%';
+    progressCount.textContent = `${Math.min(i+BATCH,total)}/${total}`;
+    progressLbl.textContent   = `Analizando licitaciones...`;
+    progressCur.textContent   = batch.map(l=>l.numero).join(' · ');
+
+    const prompt = `Sos experto en licitaciones públicas argentinas del sector médico-salud.
+Analizá las siguientes ${batch.length} licitaciones y evaluá si son relevantes para una empresa que vende: ${scanKeywords.join(', ')}.
+${instrExtra?'Instrucciones adicionales: '+instrExtra:''}
+${montoMin>0?'Solo considerar relevante si el monto supera $'+montoMin.toLocaleString('es-AR'):''}
+
+LICITACIONES:
+${batch.map((l,idx)=>`${idx+1}. [${l.numero}] ${l.nombre} | Organismo: ${l.unidad} | Tipo: ${l.tipo} | Apertura: ${l.fecha}`).join('\n')}
+
+Respondé ÚNICAMENTE con un array JSON (sin texto extra, sin markdown):
+[
+  {
+    "numero": "número de proceso exacto",
+    "relevancia": "RELEVANTE"|"POSIBLE"|"IRRELEVANTE",
+    "puntaje": 0-100,
+    "palabras_encontradas": ["keywords que coinciden"],
+    "razon": "una oración explicando por qué",
+    "accion": "qué hacer"
+  }
+]`;
+
+    try{
+      const resp = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:1500,
+          messages:[{role:'user',content:prompt}]
+        })
+      });
+      const data = await resp.json();
+      const raw  = (data.content||[]).map(b=>b.text||'').join('');
+      const clean= raw.replace(/```json?\n?/g,'').replace(/```/g,'').trim();
+      const batchResults = JSON.parse(clean);
+
+      // Merge with original data
+      batchResults.forEach(r=>{
+        const orig = batch.find(l=>l.numero===r.numero) || batch[0];
+        bulkResultados.push({...r, ...orig});
+      });
+    }catch(e){
+      console.error('[Bulk scan] batch error',e);
+      // Mark as error and continue
+      batch.forEach(l=>bulkResultados.push({...l,relevancia:'ERROR',puntaje:0,razon:'Error al analizar',accion:'Revisar manualmente'}));
+    }
+
+    // Small delay to avoid rate limits
+    if(i+BATCH < total && !bulkCancelado) await new Promise(r=>setTimeout(r,500));
+  }
+
+  progressBar.style.width='100%';
+  progressCount.textContent=`${total}/${total}`;
+  progressLbl.textContent = bulkCancelado ? 'Análisis detenido' : '✅ Análisis completo';
+  progressCur.textContent='';
+
+  setTimeout(()=>{ progressWrap.style.display='none'; }, 2000);
+  renderBulkResultados();
+}
+
+function renderBulkResultados(){
+  const summaryEl = document.getElementById('scan-bulk-summary');
+  const resultsEl = document.getElementById('scan-results');
+  summaryEl.style.display='block';
+
+  const relevantes   = bulkResultados.filter(r=>r.relevancia==='RELEVANTE');
+  const posibles     = bulkResultados.filter(r=>r.relevancia==='POSIBLE');
+  const irrelevantes = bulkResultados.filter(r=>r.relevancia==='IRRELEVANTE');
+
+  // Save to history
+  scanHistory.unshift({
+    titulo: `Análisis masivo · ${bulkResultados.length} licitaciones`,
+    relevancia: relevantes.length+' relevantes',
+    fecha: new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
+  });
+  renderScanHistory();
+
+  // Summary KPIs
+  summaryEl.innerHTML = `
+    <div class="scan-box" style="margin-bottom:0">
+      <h3 style="margin:0 0 12px">📊 Resultados del análisis · ${bulkResultados.length} licitaciones</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+        <div style="background:rgba(61,255,160,.08);border:1px solid rgba(61,255,160,.3);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.6rem;font-weight:800;color:var(--green)">${relevantes.length}</div>
+          <div style="font-size:.72rem;color:var(--green);font-family:var(--fm)">RELEVANTES</div>
+        </div>
+        <div style="background:rgba(255,170,61,.08);border:1px solid rgba(255,170,61,.3);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.6rem;font-weight:800;color:var(--orange)">${posibles.length}</div>
+          <div style="font-size:.72rem;color:var(--orange);font-family:var(--fm)">POSIBLES</div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.6rem;font-weight:800;color:var(--muted)">${irrelevantes.length}</div>
+          <div style="font-size:.72rem;color:var(--muted);font-family:var(--fm)">IRRELEVANTES</div>
+        </div>
+      </div>
+
+      <!-- Filtro de resultados -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:.72rem;color:var(--muted)">Mostrar:</span>
+        <button class="btn bts sm" style="font-size:.68rem" onclick="filtrarBulk('todos')">Todos</button>
+        <button class="btn bts sm" style="font-size:.68rem;border-color:rgba(61,255,160,.4);color:var(--green)" onclick="filtrarBulk('RELEVANTE')">Solo relevantes</button>
+        <button class="btn bts sm" style="font-size:.68rem;border-color:rgba(255,170,61,.4);color:var(--orange)" onclick="filtrarBulk('POSIBLE')">Solo posibles</button>
+        <button class="btn btp sm" style="font-size:.68rem;margin-left:auto" onclick="importarTodosRelevantes()">+ Agregar todos los relevantes (${relevantes.length})</button>
+      </div>
+
+      <!-- Tabla resultados -->
+      <div style="overflow-x:auto;max-height:480px;overflow-y:auto" id="bulk-table-wrap">
+        ${renderBulkTabla(bulkResultados)}
+      </div>
+    </div>`;
+
+  resultsEl.innerHTML='';
+}
+
+function renderBulkTabla(data){
+  if(!data.length) return '<p style="color:var(--muted);text-align:center;padding:20px">Sin resultados</p>';
+  return `<table class="tbl" style="font-size:.72rem">
+    <thead><tr>
+      <th>Relevancia</th><th>N° Proceso</th><th>Nombre</th>
+      <th>Organismo</th><th>Apertura</th><th>Keywords</th><th>Razón</th><th></th>
+    </tr></thead>
+    <tbody>${data.sort((a,b)=>b.puntaje-a.puntaje).map(r=>{
+      const cls=r.relevancia==='RELEVANTE'?'relevante':r.relevancia==='POSIBLE'?'posible':'irrelevante';
+      const col=r.relevancia==='RELEVANTE'?'var(--green)':r.relevancia==='POSIBLE'?'var(--orange)':'var(--muted)';
+      const kws=(r.palabras_encontradas||[]).map(k=>`<span class="kw-tag match" style="font-size:.6rem">${esc(k)}</span>`).join(' ');
+      return `<tr>
+        <td><span class="scan-result-badge ${cls}">${r.relevancia}</span><br><span style="font-family:var(--fm);font-size:.62rem;color:var(--muted)">${r.puntaje}/100</span></td>
+        <td class="tm" style="font-size:.68rem;white-space:nowrap">${esc(r.numero||'')}</td>
+        <td style="max-width:220px;font-size:.72rem">${esc(r.nombre||'')}</td>
+        <td style="max-width:150px;color:var(--muted);font-size:.68rem">${esc(r.unidad||'')}</td>
+        <td class="tm" style="white-space:nowrap;font-size:.68rem">${esc(r.fecha||'')}</td>
+        <td>${kws||'─'}</td>
+        <td style="max-width:180px;color:var(--muted);font-size:.7rem;line-height:1.4">${esc(r.razon||'')}</td>
+        <td>${r.relevancia!=='IRRELEVANTE'?`<button class="btn bts sm" style="font-size:.62rem;white-space:nowrap" onclick='importarBulkItem(${JSON.stringify(r).replace(/'/g,"&#39;")})'>+ Agregar</button>`:''}
+        </td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+function filtrarBulk(filtro){
+  const wrap = document.getElementById('bulk-table-wrap');
+  if(!wrap) return;
+  const data = filtro==='todos' ? bulkResultados : bulkResultados.filter(r=>r.relevancia===filtro);
+  wrap.innerHTML = renderBulkTabla(data);
+}
+
+function importarBulkItem(r){
+  om('modal-lic');
+  setTimeout(()=>{
+    const setVal=(id,val)=>{const e=document.getElementById(id);if(e&&val!==undefined&&val!=='')e.value=val;};
+    setVal('lic-numero',  r.numero||'');
+    setVal('lic-organismo',r.unidad||'');
+    setVal('lic-producto', r.nombre||'');
+    // Parse fecha
+    if(r.fecha){
+      const m=r.fecha.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if(m) setVal('lic-apertura',`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`);
+    }
+    setVal('lic-notas','🤖 Importado via Buscador IA (análisis masivo)\n\nRazón: '+r.razon+'\n\nAcción: '+r.accion);
+    // Map tipo
+    const tipoMap={'Licitación Pública':'licitacion-publica','Contratación  Menor':'contratacion-menor','Contratación Directa':'contratacion-directa'};
+    if(r.tipo) setVal('lic-tipo', tipoMap[r.tipo?.trim()]||'');
+    toast('✅ Datos cargados — revisá y guardá','success');
+    licTab('registradas', document.querySelector('.lic-tab'));
+  }, 300);
+}
+
+async function importarTodosRelevantes(){
+  const relevantes = bulkResultados.filter(r=>r.relevancia==='RELEVANTE');
+  if(!relevantes.length){ toast('Sin resultados relevantes para importar','warning'); return; }
+  if(!confirm(`¿Importar las ${relevantes.length} licitaciones relevantes a "Mis Licitaciones"?`)) return;
+
+  for(const r of relevantes){
+    const m = r.fecha?.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    const fechaFmt = m?`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`:'';
+    const row={
+      id:uid(), numero:r.numero||'', organismo:r.unidad||'', tipo:r.tipo||'',
+      apertura:fechaFmt, limite:'', estado:'en analisis',
+      ofertado:0, ganador:0, competidores:'', diferencia:0,
+      producto:r.nombre||'',
+      notas:'🤖 IA: '+r.razon+' | Acción: '+r.accion,
+      usuario:cu?.name||'', creado:new Date().toISOString()
+    };
+    S.l.unshift(row);
+  }
+  renderLic();updLicKPIs();
+  await writeTab(TABS.l,LH,S.l);
+  toast(`✅ ${relevantes.length} licitaciones importadas a Mis Licitaciones`,'success');
+  licTab('registradas', document.querySelector('.lic-tab'));
 }
 
 function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();destroyDashCharts();renderDashboard();renderKpiFcChart();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();initRentYear();}
