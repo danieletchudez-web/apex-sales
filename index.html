@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MediCross — Sales Intelligence</title>
+<title>Sales Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
@@ -1645,29 +1645,80 @@ async function readTab(tab){
 }
 
 // writeTab: limpia el tab y reescribe completo con headers + datos
+// Renovar token silenciosamente si está expirado
+async function ensureValidToken(){
+  if(!window.google||!tok)return;
+  // Check if token is about to expire (use stored timestamp)
+  const s=getSession();
+  if(s&&s.tokenSaved){
+    const age=Date.now()-s.tokenSaved;
+    if(age < TOKEN_MAX_AGE-30000) return; // still valid
+  }
+  // Renew silently
+  await new Promise(res=>{
+    try{
+      google.accounts.oauth2.initTokenClient({
+        client_id:CID,scope:SCOPES,prompt:'none',
+        callback:(r)=>{
+          if(r.access_token){
+            tok=r.access_token;
+            const s2=getSession();
+            if(s2){s2.tok=tok;s2.tokenSaved=Date.now();localStorage.setItem(SESSION_KEY,JSON.stringify(s2));}
+            scheduleTokenRenew(TOKEN_MAX_AGE);
+          }
+          res();
+        }
+      }).requestAccessToken();
+    }catch(e){res();}
+  });
+}
+
 async function writeTab(tab,headers,rows){
   try{
+    // Ensure token is valid before writing
+    await ensureValidToken();
+
     const vals=[
       headers,
       ...rows.map(r=>headers.map(h=>serVal(r[h])))
     ];
     console.log('[writeTab]',tab,'filas:',rows.length);
 
-    // Paso 1: limpiar la hoja ANTES de escribir (evita filas fantasma)
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}:clear`,{
+    // Limpiar la hoja ANTES de escribir (evita filas fantasma)
+    const clearRes=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}:clear`,{
       method:'POST',
       headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
       body:'{}'
     });
+    if(clearRes.status===401){
+      // Token expired mid-session — force renew and retry
+      await forceRenewToken();
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}:clear`,{
+        method:'POST',
+        headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
+        body:'{}'
+      });
+    }
 
-    // Paso 2: escribir datos frescos
+    // Escribir datos frescos
     const url=`https://sheets.googleapis.com/v4/spreadsheets/${sid2}/values/${encodeURIComponent(tab)}?valueInputOption=RAW`;
     const res=await fetch(url,{
       method:'PUT',
       headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
       body:JSON.stringify({range:tab,majorDimension:'ROWS',values:vals})
     });
-    if(!res.ok){
+    if(res.status===401){
+      toast('Sesión expirada — reconectando...','warning');
+      await forceRenewToken();
+      // Retry once
+      const res2=await fetch(url,{
+        method:'PUT',
+        headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},
+        body:JSON.stringify({range:tab,majorDimension:'ROWS',values:vals})
+      });
+      if(!res2.ok){toast('Error al guardar ('+res2.status+') — intentá sincronizar manualmente','error');}
+      else{console.log('[writeTab] OK (retry)',tab);}
+    } else if(!res.ok){
       const txt=await res.text();
       console.error('[writeTab] HTTP',res.status,txt);
       toast('Error al guardar ('+res.status+')','error');
@@ -1675,6 +1726,25 @@ async function writeTab(tab,headers,rows){
       console.log('[writeTab] OK',tab,'→',rows.length,'filas');
     }
   }catch(e){console.error('[writeTab] EX',e);toast('Error de red al guardar','error');}
+}
+
+async function forceRenewToken(){
+  await new Promise(res=>{
+    try{
+      google.accounts.oauth2.initTokenClient({
+        client_id:CID,scope:SCOPES,prompt:'none',
+        callback:(r)=>{
+          if(r.access_token){
+            tok=r.access_token;
+            const s=getSession();
+            if(s){s.tok=tok;s.tokenSaved=Date.now();localStorage.setItem(SESSION_KEY,JSON.stringify(s));}
+            scheduleTokenRenew(TOKEN_MAX_AGE);
+          }
+          res();
+        }
+      }).requestAccessToken();
+    }catch(e){res();}
+  });
 }
 
 // appendRow: lee tab actual y reescribe completo con la nueva fila
@@ -1889,10 +1959,8 @@ async function delV(id,src){
   S.v=S.v.filter(x=>x.id!==id);
   selectedVentas.delete(id);
   renderV();renderVentasKPIs();updKPI();renderDashboard();
-  setSI('go','Guardando...');
-  await writeTab(TABS.v,VH,S.v);
-  setSI('ok','Guardado ✓');
   toast('Eliminado','info');
+  writeTab(TABS.v,VH,S.v).catch(e=>console.error(e));
 }
 
 let vfil='';
@@ -2259,8 +2327,18 @@ async function saveT(){
   await appendRow(TABS.t,TH,row);toast('✅ Tarea creada y sincronizada','success');
 }
 
-async function togT(id){const t=S.t.find(x=>x.id===id);if(t){t.done=!t.done;renderT();renderDashTareas();await writeTab(TABS.t,TH,S.t);}}
-async function delT(id){if(!confirm('¿Eliminar?'))return;S.t=S.t.filter(x=>x.id!==id);renderT();await writeTab(TABS.t,TH,S.t);toast('Eliminada','info');}
+async function togT(id){
+  const t=S.t.find(x=>x.id===id);
+  if(!t)return;
+  t.done=!t.done;
+  // Update UI immediately — no spinner needed
+  renderT();
+  renderDashTareas();
+  renderCalAll();
+  // Save in background — don't block UI
+  writeTab(TABS.t,TH,S.t).catch(e=>console.error('[togT]',e));
+}
+async function delT(id){if(!confirm('¿Eliminar?'))return;S.t=S.t.filter(x=>x.id!==id);renderT();toast('Eliminada','info');writeTab(TABS.t,TH,S.t).catch(e=>console.error(e));}
 
 function setTF(f,el){tf2=f;document.querySelectorAll('.tfb').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderT();}
 
@@ -3854,9 +3932,8 @@ async function saveFc(){
   if(existing){
     existing.meta=meta;existing.notas=v('fc-notas').trim();
     cm('modal-fc');renderForecast();renderDashboard();
-    toast('Actualizando...','info');
-    await writeTab(TABS.fc,FCH,S.fc);
     toast('✅ Meta actualizada','success');
+    writeTab(TABS.fc,FCH,S.fc).catch(e=>toast('Error al guardar: '+e.message,'error'));
   } else {
     const row={id:uid(),anio,mes,meta,notas:v('fc-notas').trim(),usuario:cu.name||cu.email,creado:new Date().toISOString()};
     S.fc.push(row);cm('modal-fc');cv(['fc-meta','fc-notas']);
@@ -3887,7 +3964,7 @@ async function saveFcBulk(){
 async function delFc(id){
   if(!confirm('¿Eliminar esta meta?'))return;
   S.fc=S.fc.filter(x=>x.id!==id);renderForecast();renderDashboard();
-  await writeTab(TABS.fc,FCH,S.fc);toast('Meta eliminada','info');
+  toast('Meta eliminada','info');writeTab(TABS.fc,FCH,S.fc).catch(e=>console.error(e));
 }
 
 function editFc(id){
@@ -3905,7 +3982,8 @@ function editFc(id){
     cm('modal-fc');modal.querySelector('.mt').textContent='Meta del mes';btn.textContent='Guardar';btn.onclick=saveFc;
     renderForecast();renderDashboard();
     toast('Guardando...','info');
-    await writeTab(TABS.fc,FCH,S.fc);toast('✅ Meta actualizada','success');
+    toast('✅ Meta actualizada','success');
+    writeTab(TABS.fc,FCH,S.fc).catch(e=>console.error(e));
   };
   om('modal-fc');
 }
@@ -4835,40 +4913,59 @@ let bulkResultados   = [];   // IA results accumulator
 async function importarReporteXL(input){
   const file = input.files[0];
   if(!file) return;
-  input.value = ''; // reset so same file can be re-imported
+  input.value = '';
 
-  // Use SheetJS (already loaded via XLSX global)
-  const ab = await file.arrayBuffer();
-  const wb = XLSX.read(ab, {type:'array'});
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+  try{
+    if(typeof XLSX === 'undefined'){
+      toast('Error: librería XLSX no cargada. Recargá la página.','error');
+      return;
+    }
 
-  if(!rows.length){ toast('El archivo está vacío o no tiene datos','warning'); return; }
+    const ab = await file.arrayBuffer();
+    const wb = XLSX.read(ab, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    // Use header:1 to get raw arrays first, then json
+    const rows = XLSX.utils.sheet_to_json(ws, {defval:'', raw:false});
 
-  // Detect column names (flexible)
-  const sample = rows[0];
-  const keys   = Object.keys(sample);
-  const getCol = (aliases) => aliases.find(a => keys.some(k=>k.toLowerCase().includes(a))
-    ? keys.find(k=>k.toLowerCase().includes(a)) : null) || keys[0];
+    if(!rows.length){ toast('El archivo está vacío o sin datos','warning'); return; }
 
-  const colNum    = keys.find(k=>k.toLowerCase().includes('número')||k.toLowerCase().includes('numero')||k.toLowerCase().includes('proceso')) || keys[0];
-  const colNombre = keys.find(k=>k.toLowerCase().includes('nombre')) || keys[1];
-  const colTipo   = keys.find(k=>k.toLowerCase().includes('tipo'))   || keys[2];
-  const colFecha  = keys.find(k=>k.toLowerCase().includes('fecha'))  || keys[3];
-  const colEstado = keys.find(k=>k.toLowerCase().includes('estado')) || keys[4];
-  const colUnidad = keys.find(k=>k.toLowerCase().includes('unidad')||k.toLowerCase().includes('organismo')||k.toLowerCase().includes('ejecutora')) || keys[5];
+    // Flexible column detection — normalize keys
+    const sample = rows[0];
+    const keys = Object.keys(sample);
+    const findCol = (...terms) => keys.find(k=>{
+      const kn = k.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      return terms.some(t=>kn.includes(t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')));
+    }) || null;
 
-  bulkLicitaciones = rows.map(r=>({
-    numero : String(r[colNum]   ||'').trim(),
-    nombre : String(r[colNombre]||'').trim(),
-    tipo   : String(r[colTipo]  ||'').trim(),
-    fecha  : String(r[colFecha] ||'').trim(),
-    estado : String(r[colEstado]||'').trim(),
-    unidad : String(r[colUnidad]||'').trim(),
-  })).filter(r=>r.nombre&&r.numero);
+    const colNum    = findCol('número','numero','proceso','nro') || keys[0];
+    const colNombre = findCol('nombre','objeto','descripcion') || keys[1];
+    const colTipo   = findCol('tipo') || keys[2];
+    const colFecha  = findCol('fecha','apertura') || keys[3];
+    const colEstado = findCol('estado') || keys[4];
+    const colUnidad = findCol('unidad','ejecutora','organismo','reparticion') || keys[5];
 
-  toast(`✅ ${bulkLicitaciones.length} licitaciones cargadas del Excel`, 'success');
-  mostrarVistaPrevia();
+    console.log('[XL Import] columns detected:',{colNum,colNombre,colTipo,colFecha,colEstado,colUnidad});
+
+    bulkLicitaciones = rows.map(r=>({
+      numero : String(r[colNum]   ||'').trim(),
+      nombre : String(r[colNombre]||'').trim(),
+      tipo   : String(r[colTipo]  ||'').trim(),
+      fecha  : String(r[colFecha] ||'').trim().replace(' Hrs.','').replace(' hrs.',''),
+      estado : String(r[colEstado]||'').trim(),
+      unidad : String(r[colUnidad]||'').trim(),
+    })).filter(r=>r.nombre&&r.nombre.length>2);
+
+    if(!bulkLicitaciones.length){
+      toast('No se encontraron filas válidas. Verificá el formato del archivo.','warning');
+      return;
+    }
+
+    toast(`✅ ${bulkLicitaciones.length} licitaciones cargadas del Excel`, 'success');
+    mostrarVistaPrevia();
+  }catch(e){
+    console.error('[XL Import]',e);
+    toast('Error al leer el archivo: '+e.message,'error');
+  }
 }
 
 function mostrarVistaPrevia(){
