@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sales Intelligence</title>
+<title>MediCross — Sales Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
@@ -98,6 +98,27 @@ body.light .kw-tag.match{background:rgba(26,158,90,.1)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .kw-input-wrap{display:flex;gap:8px;margin-bottom:10px}
 .kw-tags-list{display:flex;flex-wrap:wrap;gap:6px}
+/* ── VENTAS MENSUALES ── */
+.vm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px}
+@media(max-width:900px){.vm-grid{grid-template-columns:repeat(2,1fr)}}
+.vm-month-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s;position:relative}
+.vm-month-card:hover{border-color:var(--accent);background:var(--surface2)}
+.vm-month-card.has-data{border-color:rgba(61,255,160,.3);background:rgba(61,255,160,.04)}
+.vm-month-card.editing{border-color:var(--accent);box-shadow:0 0 0 2px rgba(232,255,71,.2)}
+.vm-month-name{font-size:.72rem;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.vm-month-total{font-size:1.1rem;font-weight:700;font-family:var(--fd);color:var(--text)}
+.vm-month-total.filled{color:var(--green)}
+.vm-month-src{font-size:.62rem;color:var(--muted2);font-family:var(--fm);margin-top:2px}
+.vm-month-edit{position:absolute;top:8px;right:8px;opacity:0;transition:opacity .15s;font-size:.7rem}
+.vm-month-card:hover .vm-month-edit{opacity:1}
+.vm-inline-edit{display:flex;gap:6px;margin-top:6px;align-items:center}
+.vm-inline-edit input{flex:1;background:var(--surface2);border:1px solid var(--accent);border-radius:6px;color:var(--text);padding:4px 8px;font-size:.82rem;outline:none;font-family:var(--fm)}
+.vm-inline-edit button{padding:4px 10px;border-radius:6px;font-size:.72rem;cursor:pointer;border:none;font-weight:600}
+.vm-save-btn{background:var(--accent);color:#000}
+.vm-clear-btn{background:var(--surface2);color:var(--muted);border:1px solid var(--border)!important}
+.vm-tab-selector{display:flex;gap:8px;margin-bottom:14px}
+.vm-tab-btn{padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);font-size:.75rem;cursor:pointer;font-family:var(--fm);transition:all .15s}
+.vm-tab-btn.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
 /* ── BULK ACTIONS ── */
 .bulk-bar{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border:1px solid var(--accent);border-radius:10px;margin-bottom:10px;box-shadow:0 4px 16px rgba(232,255,71,.1)}
 body.light .bulk-bar{background:#fff;border-color:var(--accent);box-shadow:0 4px 16px rgba(26,158,90,.1)}
@@ -847,6 +868,35 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         </div>
       </div>
     </div>
+    </div><!-- end panel-operaciones -->
+
+    <!-- Panel resumen mensual -->
+    <div id="ventas-panel-mensual" style="display:none">
+      <div class="card" style="margin-bottom:16px">
+        <div class="ch">
+          <div>
+            <div class="ct">Ventas Totales por Mes</div>
+            <div class="cs">Cargá el total mensual — se refleja automáticamente en todos los gráficos y KPIs</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select class="fsel" id="vm-year-sel" onchange="renderVentasMensuales()" style="width:auto;padding:5px 24px 5px 10px;font-size:.75rem"></select>
+            <button class="btn btp sm" onclick="vmGuardarTodo()" id="vm-save-all-btn" style="display:none">💾 Guardar todo</button>
+          </div>
+        </div>
+        <div class="cb">
+          <div style="background:rgba(232,255,71,.06);border:1px solid rgba(232,255,71,.15);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.76rem;line-height:1.6;color:var(--muted)">
+            💡 <strong style="color:var(--text)">¿Cómo funciona?</strong> Hacé click en cualquier mes para ingresar el total vendido ese mes. Estos valores se suman a las operaciones individuales que ya cargaste y se reflejan en el Dashboard, gráfico "Ventas por mes" y "Real vs Forecast".
+          </div>
+          <div class="vm-grid" id="vm-months-grid"></div>
+        </div>
+      </div>
+
+      <!-- Mini resumen anual -->
+      <div class="card">
+        <div class="ch"><div class="ct">Resumen anual</div><div class="cs">Total cargado vs operaciones individuales</div></div>
+        <div class="cb" id="vm-anual-summary"></div>
+      </div>
+    </div>
   </div>
 
   <!-- LICITACIONES -->
@@ -1347,7 +1397,7 @@ Rubros: Material descartable, Filtros de diálisis..."></textarea>
 // ═══ CONSTANTS ═══
 const CID='184623131866-jvbjpqmife1pvsdbkumitvgf7fomislc.apps.googleusercontent.com';
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive';
-const TABS={v:'Ventas',h:'Historicas',d:'Pipeline',t:'Tareas',m:'Members',l:'Licitaciones',p:'Proyectos',r:'Relacionamiento',pr:'Proveedores',fc:'Forecast'};
+const TABS={v:'Ventas',h:'Historicas',d:'Pipeline',t:'Tareas',m:'Members',l:'Licitaciones',p:'Proyectos',r:'Relacionamiento',pr:'Proveedores',fc:'Forecast',vm:'VentasMensuales'};
 const STAGES=[{id:'lead',lbl:'Lead',col:'var(--muted)'},{id:'propuesta',lbl:'Propuesta',col:'var(--blue)'},{id:'negociacion',lbl:'Negociación',col:'var(--orange)'},{id:'cierre',lbl:'Cierre',col:'var(--green)'}];
 const TICOS={llamada:'📞',visita:'🚗',reunion:'📅',propuesta:'📄',seguimiento:'🔄',otro:'📌'};
 const VH=['id','fecha','cliente','producto','categoria','monto','moneda','estado','vendedor','cantidad','costo_unit','markup','gross_margin','iva','total_con_iva','notas','usuario','creado'];
@@ -1359,6 +1409,7 @@ const PH=['id','cliente','tipo','estado','inversion','equipamiento','medico','in
 const RH=['id','nombre','tipo_contacto','institucion','influencia','relacion','ultimo_contacto','proxima_accion','interacciones','notas','usuario','creado'];
 const PRH=['id','nombre','linea','estado','margen','exclusividad','potencial','contacto','notas','usuario','creado'];
 const FCH=['id','anio','mes','meta','notas','usuario','creado'];
+const VMH=['id','anio','mes','total','moneda','notas','usuario','creado'];
 
 // ═══ STATE ═══
 let tok=null,sid2=null,cu=null;
@@ -1430,7 +1481,7 @@ function scheduleTokenRenew(msUntilExpiry){
 ['mousemove','keydown','click','touchstart','scroll'].forEach(ev=>{
   document.addEventListener(ev,()=>{if(tok)resetInactivityTimer();},{passive:true});
 });
-let S={v:[],h:[],d:[],t:[],l:[],p:[],r:[],pr:[],fc:[]};
+let S={v:[],h:[],d:[],t:[],l:[],p:[],r:[],pr:[],fc:[],vm:[]};
 let cfg={emp:'Mi Empresa',rol:'Sales Manager',cats:'Software,Servicios,Hardware,Consultoría,Soporte',a24:1,a48:1,aut:30};
 let stimer=null,atimer=null,hch=null,hpi=null,tf2='todas',pi={v:[],h:[]},dragId=null;
 
@@ -1537,7 +1588,7 @@ async function ensureTabs(){
       });
     }
     // Sincronizar headers: agregar columnas faltantes sin borrar datos existentes
-    const hmap={[TABS.v]:VH,[TABS.h]:HH,[TABS.d]:DH,[TABS.t]:TH,[TABS.m]:['email','name','lastLogin'],[TABS.l]:LH,[TABS.p]:PH,[TABS.r]:RH,[TABS.pr]:PRH,[TABS.fc]:FCH};
+    const hmap={[TABS.v]:VH,[TABS.h]:HH,[TABS.d]:DH,[TABS.t]:TH,[TABS.m]:['email','name','lastLogin'],[TABS.l]:LH,[TABS.p]:PH,[TABS.r]:RH,[TABS.pr]:PRH,[TABS.fc]:FCH,[TABS.vm]:VMH};
     for(const [tab,headers] of Object.entries(hmap)){
       try{
         const r=await sReq(`/${sid2}/values/${encodeURIComponent(tab)}!1:1`);
@@ -1764,10 +1815,10 @@ async function loadAll(){
   setSI('go','Cargando...');
   try{
     // Cargar TODOS los tabs en paralelo
-    const[vr,hr,dr,tr,lr,pr2,rr,prr,fcr]=await Promise.all([
+    const[vr,hr,dr,tr,lr,pr2,rr,prr,fcr,vmr]=await Promise.all([
       readTab(TABS.v),readTab(TABS.h),readTab(TABS.d),readTab(TABS.t),
       readTab(TABS.l),readTab(TABS.p),readTab(TABS.r),readTab(TABS.pr),
-      readTab(TABS.fc)
+      readTab(TABS.fc),readTab(TABS.vm)
     ]);
 
     // safeUpdate: solo conservar datos en memoria si Sheet da error (null)
@@ -1778,6 +1829,7 @@ async function loadAll(){
     }
 
     console.log('[loadAll] raw S.v[0]:', vr&&vr[0]?JSON.stringify(vr[0]):'empty/null');
+    S.vm=safeUpdate(vmr,S.vm).filter(r=>r.id).map(r=>({...r,total:parseMonto(r.total)||0,anio:parseInt(r.anio)||0,mes:parseInt(r.mes)||0}));
     S.v=safeUpdate(vr,S.v).filter(r=>r.id).map(r=>({
       ...r,
       monto:parseMonto(r.monto),
@@ -2054,7 +2106,9 @@ function verMas(){
 function updKPI(){
   const now=new Date();const m=now.getMonth();const y=now.getFullYear();
   const mv=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return !isNaN(d)&&d.getMonth()===m&&d.getFullYear()===y;});
-  const ventasMes=mv.reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
+  const ventasMesV=mv.reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
+  const ventasMesVm=S.vm.filter(x=>x.anio===y&&x.mes===m+1).reduce((s,x)=>s+x.total,0);
+  const ventasMes=ventasMesV+ventasMesVm;
   document.getElementById('kmes').textContent='$'+fn(ventasMes);
   document.getElementById('kmesd').textContent=mv.length+' operaciones';
 
@@ -2774,10 +2828,14 @@ function renderDashboard(){
     return !isNaN(d)&&d.getFullYear()===yr;
   });
   const byMonth=Array(12).fill(0);
+  // Fuente 1: operaciones individuales
   ventasYr.forEach(v=>{
     const d=new Date(v.fecha+'T12:00');
-    // Revenue = precio unitario × cantidad (o solo precio si cant=0)
     if(!isNaN(d)) byMonth[d.getMonth()] += v.monto * (v.cantidad||1);
+  });
+  // Fuente 2: resúmenes mensuales cargados manualmente
+  S.vm.filter(m=>m.anio===yr&&m.total>0).forEach(m=>{
+    if(m.mes>=1&&m.mes<=12) byMonth[m.mes-1]+=m.total;
   });
   renderDashTareas();
   console.log('[Dashboard] yr='+yr+' S.v='+S.v.length+' ventasYr='+ventasYr.length+' byMonth sum='+byMonth.reduce((a,b)=>a+b,0)+' byMonth='+JSON.stringify(byMonth.map(v=>Math.round(v))));
@@ -5256,6 +5314,175 @@ async function importarTodosRelevantes(){
   toast(`✅ ${relevantes.length} licitaciones importadas a Mis Licitaciones`,'success');
   licTab('registradas', document.querySelector('.lic-tab'));
 }
+
+// ═══ VENTAS MENSUALES (RESUMEN RÁPIDO) ═══
+const MESES_FULL=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+let vmEditingMonth = null; // {anio, mes} currently being edited
+let vmPendingChanges = {}; // {anio_mes: total} pending save
+
+function ventasTab(tab, el){
+  document.querySelectorAll('.vm-tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('ventas-panel-operaciones').style.display = tab==='operaciones' ? 'block' : 'none';
+  document.getElementById('ventas-panel-mensual').style.display     = tab==='mensual'     ? 'block' : 'none';
+  if(tab==='mensual') initVentasMensuales();
+}
+
+function initVentasMensuales(){
+  // Populate year selector
+  const sel = document.getElementById('vm-year-sel');
+  if(!sel) return;
+  const curYear = new Date().getFullYear();
+  const years = [];
+  for(let y=curYear-2; y<=curYear+1; y++) years.push(y);
+  const cur = parseInt(sel.value) || curYear;
+  sel.innerHTML = years.map(y=>`<option value="${y}"${y===cur?' selected':''}>${y}</option>`).join('');
+  renderVentasMensuales();
+}
+
+function renderVentasMensuales(){
+  const yr  = parseInt(document.getElementById('vm-year-sel')?.value) || new Date().getFullYear();
+  const grid= document.getElementById('vm-months-grid');
+  const sum = document.getElementById('vm-anual-summary');
+  if(!grid) return;
+
+  let totalVm=0, totalV=0;
+
+  grid.innerHTML = MESES_FULL.map((nombre,i)=>{
+    const mes = i+1;
+    const vm  = S.vm.find(m=>m.anio===yr&&m.mes===mes);
+    const vmTotal = vm?.total || 0;
+    // Individual sales this month
+    const vTotal = S.v.filter(x=>{
+      if(!x.fecha||x.estado==='cancelada')return false;
+      const d=new Date(x.fecha+'T12:00');
+      return !isNaN(d)&&d.getFullYear()===yr&&d.getMonth()===i;
+    }).reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
+
+    const hasVm = vmTotal > 0;
+    const hasV  = vTotal  > 0;
+    const combined = vmTotal + vTotal;
+    totalVm += vmTotal;
+    totalV  += vTotal;
+
+    const key = `${yr}_${mes}`;
+    const isPending = vmPendingChanges[key] !== undefined;
+
+    return `<div class="vm-month-card${hasVm||isPending?' has-data':''}" id="vm-card-${yr}-${mes}">
+      <div class="vm-month-edit">✏️</div>
+      <div class="vm-month-name">${nombre}</div>
+      <div class="vm-month-total${hasVm||isPending?' filled':''}" id="vm-total-${yr}-${mes}">
+        ${combined>0 ? '$'+fn(Math.round(combined)) : 'Sin datos'}
+      </div>
+      <div class="vm-month-src" id="vm-src-${yr}-${mes}">
+        ${hasVm?'📅 Resumen: $'+fn(Math.round(vmTotal)):''}
+        ${hasV&&hasVm?' + ':''}
+        ${hasV?'📋 Ops: $'+fn(Math.round(vTotal)):''}
+        ${!hasVm&&!hasV?'Click para ingresar total':''}
+        ${isPending?'<span style="color:var(--accent)">• pendiente guardar</span>':''}
+      </div>
+      <div class="vm-inline-edit" id="vm-edit-${yr}-${mes}" style="display:none">
+        <input type="number" id="vm-input-${yr}-${mes}" placeholder="Total del mes"
+          value="${vmTotal||''}"
+          onkeydown="if(event.key==='Enter')vmGuardarMes(${yr},${mes});if(event.key==='Escape')vmCancelar(${yr},${mes})">
+        <button class="vm-save-btn" onclick="vmGuardarMes(${yr},${mes})">✓</button>
+        <button class="vm-clear-btn" style="border:1px solid var(--border);background:var(--surface2);color:var(--muted);border-radius:6px;cursor:pointer;padding:4px 8px;font-size:.7rem" onclick="vmBorrarMes(${yr},${mes})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Click to edit
+  MESES_FULL.forEach((_,i)=>{
+    const mes=i+1;
+    const card=document.getElementById(`vm-card-${yr}-${mes}`);
+    if(card) card.onclick=(e)=>{
+      if(e.target.closest('.vm-inline-edit')) return;
+      vmAbrirEditor(yr,mes);
+    };
+  });
+
+  // Annual summary
+  const meta = Array.from({length:12},(_,i)=>getMeta(yr,i+1)).reduce((a,b)=>a+b,0);
+  const totalCombined = totalVm+totalV;
+  const pctMeta = meta>0 ? (totalCombined/meta*100).toFixed(1) : null;
+  if(sum) sum.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div style="text-align:center;padding:12px">
+        <div style="font-size:.7rem;color:var(--muted);font-family:var(--fm);margin-bottom:4px">TOTAL RESÚMENES MENSUALES</div>
+        <div style="font-size:1.2rem;font-weight:700;color:var(--green)">$${fn(Math.round(totalVm))}</div>
+      </div>
+      <div style="text-align:center;padding:12px">
+        <div style="font-size:.7rem;color:var(--muted);font-family:var(--fm);margin-bottom:4px">TOTAL OPERACIONES INDIVIDUALES</div>
+        <div style="font-size:1.2rem;font-weight:700;color:var(--blue)">$${fn(Math.round(totalV))}</div>
+      </div>
+      <div style="text-align:center;padding:12px">
+        <div style="font-size:.7rem;color:var(--muted);font-family:var(--fm);margin-bottom:4px">TOTAL COMBINADO ${pctMeta?'· '+pctMeta+'% de meta':''}</div>
+        <div style="font-size:1.2rem;font-weight:700;color:var(--accent)">$${fn(Math.round(totalCombined))}</div>
+      </div>
+    </div>`;
+}
+
+function vmAbrirEditor(yr, mes){
+  // Close any open editor
+  document.querySelectorAll('.vm-inline-edit').forEach(e=>e.style.display='none');
+  document.querySelectorAll('.vm-month-card').forEach(c=>c.classList.remove('editing'));
+
+  const editEl = document.getElementById(`vm-edit-${yr}-${mes}`);
+  const card   = document.getElementById(`vm-card-${yr}-${mes}`);
+  const inp    = document.getElementById(`vm-input-${yr}-${mes}`);
+  if(!editEl) return;
+  editEl.style.display='flex';
+  card?.classList.add('editing');
+  setTimeout(()=>inp?.focus(),50);
+}
+
+function vmCancelar(yr, mes){
+  const editEl = document.getElementById(`vm-edit-${yr}-${mes}`);
+  const card   = document.getElementById(`vm-card-${yr}-${mes}`);
+  if(editEl) editEl.style.display='none';
+  card?.classList.remove('editing');
+}
+
+async function vmGuardarMes(yr, mes){
+  const inp = document.getElementById(`vm-input-${yr}-${mes}`);
+  const total = parseMonto(inp?.value||'0');
+  vmCancelar(yr, mes);
+
+  // Update S.vm in memory
+  const existing = S.vm.find(m=>m.anio===yr&&m.mes===mes);
+  if(existing){
+    existing.total = total;
+  } else if(total > 0){
+    S.vm.push({id:uid(),anio:yr,mes,total,moneda:'ARS',notas:'',usuario:cu?.name||'',creado:new Date().toISOString()});
+  }
+
+  // Remove if total is 0
+  if(total === 0) S.vm = S.vm.filter(m=>!(m.anio===yr&&m.mes===mes));
+
+  // Refresh UI immediately
+  renderVentasMensuales();
+  updKPI();
+  renderDashboard();
+  renderKpiFcChart();
+
+  // Save to Sheets
+  toast('Guardando...','info');
+  await writeTab(TABS.vm, VMH, S.vm);
+  toast(`✅ ${MESES_FULL[mes-1]} ${yr} guardado`,'success');
+}
+
+async function vmBorrarMes(yr, mes){
+  if(!confirm(`¿Eliminar el resumen de ${MESES_FULL[mes-1]} ${yr}?`)) return;
+  vmCancelar(yr, mes);
+  S.vm = S.vm.filter(m=>!(m.anio===yr&&m.mes===mes));
+  renderVentasMensuales();
+  updKPI();
+  renderDashboard();
+  renderKpiFcChart();
+  await writeTab(TABS.vm, VMH, S.vm);
+  toast('Resumen eliminado','info');
+}
+
 
 function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();destroyDashCharts();renderDashboard();renderKpiFcChart();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();initRentYear();}
 
