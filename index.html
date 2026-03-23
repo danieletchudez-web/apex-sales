@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MediCross — Sales Intelligence</title>
+<title>Sales Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
@@ -62,6 +62,42 @@ body.light .co-item.active{background:rgba(26,158,90,.07)}
 .co-logo-preview{width:52px;height:52px;border-radius:8px;background:var(--surf2);border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:1.4rem;overflow:hidden;flex-shrink:0}
 .co-logo-preview img{width:48px;height:48px;object-fit:contain}
 
+/* ── LICITACIONES IA SCANNER ── */
+.lic-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:18px}
+.lic-tab{padding:8px 18px;font-size:.78rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);transition:all .15s;font-family:var(--fb)}
+.lic-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+body.light .lic-tab.active{color:var(--accent)}
+.lic-tab:hover:not(.active){color:var(--text)}
+.lic-panel{display:none}.lic-panel.active{display:block}
+.scan-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.scan-box h3{margin:0 0 4px;font-size:.88rem;font-weight:700;font-family:var(--fd)}
+.scan-box p{margin:0 0 14px;font-size:.76rem;color:var(--muted);line-height:1.5}
+.scan-textarea{width:100%;min-height:160px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--fm);font-size:.75rem;line-height:1.6;padding:12px;resize:vertical;outline:none;transition:border .15s;box-sizing:border-box}
+.scan-textarea:focus{border-color:var(--accent)}
+.scan-textarea::placeholder{color:var(--muted2)}
+.kw-tag{display:inline-flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:.72rem;font-family:var(--fm);cursor:pointer;transition:all .15s}
+.kw-tag:hover{border-color:var(--red);color:var(--red)}
+.kw-tag.match{background:rgba(232,255,71,.1);border-color:var(--accent);color:var(--accent)}
+body.light .kw-tag.match{background:rgba(26,158,90,.1)}
+.scan-result{border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:var(--surface);transition:border .2s}
+.scan-result.relevante{border-color:var(--green);background:rgba(61,255,160,.04)}
+.scan-result.posible{border-color:var(--orange);background:rgba(255,170,61,.04)}
+.scan-result.irrelevante{opacity:.5}
+.scan-result-hdr{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.scan-result-badge{flex-shrink:0;padding:2px 8px;border-radius:5px;font-size:.62rem;font-weight:700;font-family:var(--fm);text-transform:uppercase}
+.scan-result-badge.relevante{background:rgba(61,255,160,.2);color:var(--green)}
+.scan-result-badge.posible{background:rgba(255,170,61,.2);color:var(--orange)}
+.scan-result-badge.irrelevante{background:var(--surface2);color:var(--muted)}
+.scan-result-title{font-weight:700;font-size:.85rem;flex:1;line-height:1.3}
+.scan-result-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:.7rem;font-family:var(--fm);color:var(--muted);margin-bottom:8px}
+.scan-result-meta span{display:flex;align-items:center;gap:3px}
+.scan-result-razon{font-size:.75rem;color:var(--muted);line-height:1.5;border-top:1px solid var(--border);padding-top:8px;margin-top:6px}
+.scan-result-razon strong{color:var(--text)}
+.scan-loading{display:flex;align-items:center;gap:10px;padding:20px;color:var(--muted);font-size:.8rem;font-family:var(--fm)}
+.scan-loading::before{content:'';width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.kw-input-wrap{display:flex;gap:8px;margin-bottom:10px}
+.kw-tags-list{display:flex;flex-wrap:wrap;gap:6px}
 /* ── BULK ACTIONS ── */
 .bulk-bar{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border:1px solid var(--accent);border-radius:10px;margin-bottom:10px;box-shadow:0 4px 16px rgba(232,255,71,.1)}
 body.light .bulk-bar{background:#fff;border-color:var(--accent);box-shadow:0 4px 16px rgba(26,158,90,.1)}
@@ -831,19 +867,101 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <button class="btn btp sm" onclick="om('modal-lic')">+ Nueva Licitación</button>
       </div>
     </div>
-    <!-- KPIs licitaciones -->
-    <div class="krow" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
-      <div class="kpi"><div class="klbl">Total licitaciones</div><div class="kval" id="lic-k1">0</div><div class="kdelta">registradas</div></div>
-      <div class="kpi"><div class="klbl">Adjudicadas</div><div class="kval" id="lic-k2" style="color:var(--green)">0</div><div class="kdelta" id="lic-k2p">─</div></div>
-      <div class="kpi"><div class="klbl">Valor ofertado total</div><div class="kval" id="lic-k3">$0</div><div class="kdelta">estimado</div></div>
-      <div class="kpi"><div class="klbl">Próximas a vencer</div><div class="kval" id="lic-k4" style="color:var(--orange)">0</div><div class="kdelta">en 7 días</div></div>
+
+    <!-- TABS -->
+    <div class="lic-tabs">
+      <div class="lic-tab active" onclick="licTab('registradas',this)">📋 Mis Licitaciones</div>
+      <div class="lic-tab" onclick="licTab('scanner',this)">🤖 Buscador IA</div>
     </div>
-    <div class="card"><div class="cb" style="padding:0"><div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>N° Proceso</th><th>Organismo</th><th>Tipo</th><th>Apertura</th><th>Límite</th><th>Estado</th><th>Ofertado</th><th>Ganador</th><th>Dif %</th><th>IA</th><th></th></tr></thead>
-        <tbody id="lic-tbody"></tbody>
-      </table>
-    </div></div></div>
+
+    <!-- PANEL: Mis Licitaciones (existente) -->
+    <div class="lic-panel active" id="lic-panel-registradas">
+      <div class="krow" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+        <div class="kpi"><div class="klbl">Total licitaciones</div><div class="kval" id="lic-k1">0</div><div class="kdelta">registradas</div></div>
+        <div class="kpi"><div class="klbl">Adjudicadas</div><div class="kval" id="lic-k2" style="color:var(--green)">0</div><div class="kdelta" id="lic-k2p">─</div></div>
+        <div class="kpi"><div class="klbl">Valor ofertado total</div><div class="kval" id="lic-k3">$0</div><div class="kdelta">estimado</div></div>
+        <div class="kpi"><div class="klbl">Próximas a vencer</div><div class="kval" id="lic-k4" style="color:var(--orange)">0</div><div class="kdelta">en 7 días</div></div>
+      </div>
+      <div class="card"><div class="cb" style="padding:0"><div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th>N° Proceso</th><th>Organismo</th><th>Tipo</th><th>Apertura</th><th>Límite</th><th>Estado</th><th>Ofertado</th><th>Ganador</th><th>Dif %</th><th>IA</th><th></th></tr></thead>
+          <tbody id="lic-tbody"></tbody>
+        </table>
+      </div></div></div>
+    </div>
+
+    <!-- PANEL: Buscador IA -->
+    <div class="lic-panel" id="lic-panel-scanner">
+
+      <div style="display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start">
+
+        <!-- Columna izquierda: configuración -->
+        <div style="display:flex;flex-direction:column;gap:12px">
+
+          <!-- Palabras clave -->
+          <div class="scan-box">
+            <h3>🔍 Palabras clave</h3>
+            <p>Términos que definen tus productos o servicios. La IA buscará coincidencias en el texto de la licitación.</p>
+            <div class="kw-input-wrap">
+              <input class="fi" id="kw-input" placeholder="Ej: diálisis, filtros..." style="flex:1;font-size:.78rem" onkeydown="if(event.key==='Enter')addKeyword()">
+              <button class="btn btp sm" onclick="addKeyword()">+</button>
+            </div>
+            <div class="kw-tags-list" id="kw-list"></div>
+          </div>
+
+          <!-- Filtros adicionales -->
+          <div class="scan-box">
+            <h3>⚙️ Filtros</h3>
+            <p>Parámetros adicionales para afinar el análisis.</p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="fgrp" style="margin:0">
+                <label class="flbl">Monto mínimo estimado</label>
+                <input class="fi" id="scan-monto-min" type="number" placeholder="0 (sin límite)" style="font-size:.8rem">
+              </div>
+              <div class="fgrp" style="margin:0">
+                <label class="flbl">Organismo (opcional)</label>
+                <input class="fi" id="scan-organismo" placeholder="Ej: Hospital, Ministerio..." style="font-size:.8rem">
+              </div>
+              <div class="fgrp" style="margin:0">
+                <label class="flbl">Instrucciones adicionales para la IA</label>
+                <textarea class="fi" id="scan-instrucciones" rows="2" placeholder="Ej: solo hospitales públicos, excluir insumos de oficina..." style="font-size:.78rem;resize:vertical"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Historial de análisis -->
+          <div class="scan-box">
+            <h3>📅 Análisis recientes</h3>
+            <div id="scan-history" style="font-size:.72rem;color:var(--muted);font-family:var(--fm)">Sin análisis previos</div>
+          </div>
+        </div>
+
+        <!-- Columna derecha: input + resultados -->
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="scan-box">
+            <h3>📄 Pegá el texto de la licitación</h3>
+            <p>Copiá y pegá el contenido de la publicación desde BAC, PBAC, Boletín Oficial o cualquier portal. Puede ser texto plano, HTML o una descripción completa. La IA extrae los datos relevantes y evalúa la oportunidad.</p>
+            <textarea class="scan-textarea" id="scan-input" placeholder="Pegá aquí el texto completo de la licitación o convocatoria...
+
+Ejemplo:
+LICITACIÓN PÚBLICA N° 123/2026
+Organismo: Hospital Municipal Ramos Mejia
+Objeto: Provisión de insumos descartables para hemodiálisis
+Monto estimado: $45.000.000
+Fecha de apertura: 15/04/2026
+Rubros: Material descartable, Filtros de diálisis..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+              <button class="btn btp sm" onclick="analizarLicitacion()" id="scan-btn" style="min-width:140px">🤖 Analizar con IA</button>
+              <button class="btn bts sm" onclick="limpiarScanner()">Limpiar</button>
+              <span style="font-size:.7rem;color:var(--muted);font-family:var(--fm);margin-left:4px">Ctrl+Enter para analizar</span>
+            </div>
+          </div>
+
+          <!-- Resultados -->
+          <div id="scan-results"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- PROYECTOS -->
@@ -4420,6 +4538,269 @@ async function bulkDelVentas(){
   toast('✅ Cambios guardados en Google Sheets', 'success');
 }
 
+
+// ═══ BUSCADOR IA DE LICITACIONES ═══
+const KW_KEY = 'apx_lic_keywords';
+let scanKeywords = [];
+let scanHistory  = [];
+
+function licTab(tab, el){
+  document.querySelectorAll('.lic-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.lic-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('lic-panel-'+tab).classList.add('active');
+  if(tab==='scanner') initScanner();
+}
+
+function initScanner(){
+  // Load saved keywords
+  try{ scanKeywords=JSON.parse(localStorage.getItem(KW_KEY)||'[]'); }catch{ scanKeywords=[]; }
+  // Default keywords from cfg.cats if empty
+  if(!scanKeywords.length && cfg.cats){
+    scanKeywords = cfg.cats.split(',').map(s=>s.trim()).filter(Boolean).slice(0,6);
+    saveKeywords();
+  }
+  renderKeywords();
+  renderScanHistory();
+  // Ctrl+Enter shortcut
+  const ta = document.getElementById('scan-input');
+  if(ta) ta.addEventListener('keydown', e=>{
+    if(e.ctrlKey && e.key==='Enter'){ e.preventDefault(); analizarLicitacion(); }
+  });
+}
+
+function saveKeywords(){
+  localStorage.setItem(KW_KEY, JSON.stringify(scanKeywords));
+}
+
+function addKeyword(){
+  const inp = document.getElementById('kw-input');
+  const val = inp?.value.trim().toLowerCase();
+  if(!val) return;
+  if(scanKeywords.includes(val)){ toast('Palabra ya agregada','warning'); return; }
+  scanKeywords.push(val);
+  saveKeywords();
+  inp.value='';
+  renderKeywords();
+}
+
+function removeKeyword(kw){
+  scanKeywords = scanKeywords.filter(k=>k!==kw);
+  saveKeywords();
+  renderKeywords();
+}
+
+function renderKeywords(){
+  const el = document.getElementById('kw-list');
+  if(!el) return;
+  if(!scanKeywords.length){
+    el.innerHTML='<span style="font-size:.72rem;color:var(--muted)">Sin palabras clave — agregá términos de tus productos</span>';
+    return;
+  }
+  el.innerHTML = scanKeywords.map(kw=>
+    `<span class="kw-tag" onclick="removeKeyword('${esc(kw)}')" title="Click para eliminar">${esc(kw)} ✕</span>`
+  ).join('');
+}
+
+function limpiarScanner(){
+  const ta = document.getElementById('scan-input');
+  if(ta) ta.value='';
+  document.getElementById('scan-results').innerHTML='';
+}
+
+function renderScanHistory(){
+  const el = document.getElementById('scan-history');
+  if(!el) return;
+  if(!scanHistory.length){ el.innerHTML='Sin análisis previos'; return; }
+  el.innerHTML = scanHistory.slice(0,5).map(h=>
+    `<div style="padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="font-weight:600;color:var(--text)">${esc(h.titulo)}</div>
+      <div style="color:var(--muted);margin-top:2px">${h.fecha} · <span style="color:${h.relevancia==='RELEVANTE'?'var(--green)':h.relevancia==='POSIBLE'?'var(--orange)':'var(--muted)'}">${h.relevancia}</span></div>
+    </div>`
+  ).join('');
+}
+
+async function analizarLicitacion(){
+  const texto = document.getElementById('scan-input')?.value.trim();
+  if(!texto){ toast('Pegá el texto de la licitación primero','warning'); return; }
+  if(!scanKeywords.length){ toast('Agregá al menos una palabra clave','warning'); return; }
+
+  const btn = document.getElementById('scan-btn');
+  const results = document.getElementById('scan-results');
+  btn.disabled = true; btn.textContent='Analizando...';
+  results.innerHTML='<div class="scan-loading">La IA está analizando la licitación...</div>';
+
+  const montoMin = parseFloat(document.getElementById('scan-monto-min')?.value)||0;
+  const organismo = document.getElementById('scan-organismo')?.value.trim()||'';
+  const instrExtra = document.getElementById('scan-instrucciones')?.value.trim()||'';
+
+  // Context from existing licitaciones
+  const licExist = S.l.slice(0,5).map(l=>l.organismo+' '+l.producto).join('; ');
+
+  const prompt = `Sos un experto en licitaciones públicas argentinas del sector médico/salud. 
+Tu tarea es analizar el texto de una licitación y evaluar si es relevante para una empresa que vende los siguientes productos/servicios.
+
+PALABRAS CLAVE DE LA EMPRESA: ${scanKeywords.join(', ')}
+${organismo?'ORGANISMOS DE INTERÉS: '+organismo:''}
+${montoMin>0?'MONTO MÍNIMO: $'+montoMin.toLocaleString('es-AR'):''}
+${instrExtra?'INSTRUCCIONES ADICIONALES: '+instrExtra:''}
+${licExist?'LICITACIONES ANTERIORES GANADAS (contexto): '+licExist:''}
+
+TEXTO DE LA LICITACIÓN:
+${texto.slice(0, 4000)}
+
+Respondé ÚNICAMENTE con un JSON con esta estructura exacta (sin texto extra, sin markdown):
+{
+  "relevancia": "RELEVANTE" | "POSIBLE" | "IRRELEVANTE",
+  "puntaje": 0-100,
+  "titulo": "título o número de la licitación",
+  "organismo": "nombre del organismo",
+  "objeto": "descripción del objeto de la licitación",
+  "monto_estimado": "monto si aparece, o null",
+  "fecha_apertura": "fecha de apertura si aparece, o null",
+  "fecha_limite": "fecha límite presentación si aparece, o null",
+  "tipo": "Licitación Pública|Concurso de Precios|Contratación Directa|Otro",
+  "palabras_encontradas": ["lista de palabras clave que coinciden"],
+  "razon": "explicación de 2-3 oraciones de por qué es relevante o no",
+  "alertas": ["lista de puntos importantes o riesgos, puede estar vacía"],
+  "accion_sugerida": "qué debería hacer la empresa con esta licitación"
+}`;
+
+  try{
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data = await resp.json();
+    const raw = (data.content||[]).map(b=>b.text||'').join('');
+    // Parse JSON — strip markdown fences if present
+    const clean = raw.replace(/```json?\n?/g,'').replace(/```/g,'').trim();
+    const result = JSON.parse(clean);
+
+    // Save to history
+    scanHistory.unshift({
+      titulo: result.titulo||'Sin título',
+      relevancia: result.relevancia,
+      fecha: new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
+    });
+    renderScanHistory();
+
+    // Render result card
+    renderScanResult(result, texto);
+
+  }catch(e){
+    console.error('[Scanner IA]',e);
+    results.innerHTML=`<div class="scan-box" style="border-color:var(--red)">
+      <h3 style="color:var(--red)">⚠️ Error al analizar</h3>
+      <p>${e.message||'Error desconocido. Verificá tu conexión.'}</p>
+    </div>`;
+  }
+
+  btn.disabled=false; btn.textContent='🤖 Analizar con IA';
+}
+
+function renderScanResult(r, textoOriginal){
+  const results = document.getElementById('scan-results');
+  const clsRel = r.relevancia==='RELEVANTE'?'relevante':r.relevancia==='POSIBLE'?'posible':'irrelevante';
+  const pColor = r.puntaje>=70?'var(--green)':r.puntaje>=40?'var(--orange)':'var(--red)';
+
+  // Highlight matching keywords in texto
+  const kwFound = (r.palabras_encontradas||[]).map(k=>`<span class="kw-tag match">${esc(k)}</span>`).join(' ');
+
+  const alertasHtml = (r.alertas||[]).length
+    ? `<div style="margin-top:8px;padding:8px 10px;background:rgba(255,170,61,.08);border-radius:6px;border-left:3px solid var(--orange)">
+        <div style="font-size:.7rem;font-weight:700;color:var(--orange);margin-bottom:4px">⚠️ PUNTOS IMPORTANTES</div>
+        ${r.alertas.map(a=>`<div style="font-size:.73rem;color:var(--muted);margin-bottom:2px">• ${esc(a)}</div>`).join('')}
+      </div>` : '';
+
+  results.innerHTML = `
+    <div class="scan-result ${clsRel}">
+      <div class="scan-result-hdr">
+        <span class="scan-result-badge ${clsRel}">${r.relevancia}</span>
+        <div class="scan-result-title">${esc(r.titulo||'Sin título')}</div>
+        <div style="flex-shrink:0;font-family:var(--fm);font-weight:800;font-size:1.1rem;color:${pColor}">${r.puntaje}/100</div>
+      </div>
+
+      <div class="scan-result-meta">
+        ${r.organismo?`<span>🏛 ${esc(r.organismo)}</span>`:''}
+        ${r.tipo?`<span>📋 ${esc(r.tipo)}</span>`:''}
+        ${r.fecha_apertura?`<span>📅 Apertura: ${esc(r.fecha_apertura)}</span>`:''}
+        ${r.fecha_limite?`<span>⏰ Límite: ${esc(r.fecha_limite)}</span>`:''}
+        ${r.monto_estimado?`<span style="color:var(--accent);font-weight:700">💰 ${esc(r.monto_estimado)}</span>`:''}
+      </div>
+
+      ${r.objeto?`<div style="font-size:.8rem;margin-bottom:8px;line-height:1.5">${esc(r.objeto)}</div>`:''}
+
+      ${kwFound?`<div style="margin-bottom:8px"><span style="font-size:.68rem;color:var(--muted);font-family:var(--fm);margin-right:4px">KEYWORDS:</span>${kwFound}</div>`:''}
+
+      ${alertasHtml}
+
+      <div class="scan-result-razon">
+        <strong>Análisis:</strong> ${esc(r.razon||'')}
+        ${r.accion_sugerida?`<br><strong style="color:var(--accent)">Acción sugerida:</strong> ${esc(r.accion_sugerida)}`:''}
+      </div>
+
+      ${r.relevancia!=='IRRELEVANTE'?`
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn btp sm" onclick="importarLicitacionIA(${JSON.stringify(r).replace(/"/g,'&quot;')})">
+          + Agregar a Mis Licitaciones
+        </button>
+        <button class="btn bts sm" onclick="copiarAnalisis(${JSON.stringify(r).replace(/"/g,'&quot;')})">
+          📋 Copiar resumen
+        </button>
+      </div>`:''}
+    </div>`;
+}
+
+function importarLicitacionIA(r){
+  // Pre-fill the existing licitacion modal with data from IA analysis
+  om('modal-lic');
+  setTimeout(()=>{
+    const setVal = (id,val)=>{ const e=document.getElementById(id); if(e&&val) e.value=val; };
+    setVal('lic-numero', r.titulo||'');
+    setVal('lic-organismo', r.organismo||'');
+    setVal('lic-producto', r.objeto||'');
+    setVal('lic-notas', '🤖 Importado via Buscador IA\n\nAnálisis: '+r.razon+'\n\nAcción: '+r.accion_sugerida);
+    // Parse monto if possible
+    if(r.monto_estimado){
+      const m=parseMonto(r.monto_estimado.replace(/[^\d.,]/g,''));
+      if(m>0) setVal('lic-ofertado', m);
+    }
+    // Parse fecha apertura
+    if(r.fecha_apertura){
+      const parts=r.fecha_apertura.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
+      if(parts){
+        const y=parts[3].length===2?'20'+parts[3]:parts[3];
+        setVal('lic-apertura',`${y}-${parts[2].padStart(2,'0')}-${parts[1].padStart(2,'0')}`);
+      }
+    }
+    toast('✅ Datos cargados en el formulario — revisá y guardá','success');
+  }, 300);
+}
+
+function copiarAnalisis(r){
+  const txt = [
+    r.titulo,
+    '─────────────────',
+    r.organismo ? '🏛 '+r.organismo : '',
+    r.tipo ? '📋 '+r.tipo : '',
+    r.fecha_apertura ? '📅 Apertura: '+r.fecha_apertura : '',
+    r.monto_estimado ? '💰 Monto: '+r.monto_estimado : '',
+    '',
+    r.objeto,
+    '',
+    'Relevancia: '+r.relevancia+' ('+r.puntaje+'/100)',
+    r.razon,
+    '',
+    'Acción: '+r.accion_sugerida
+  ].filter(Boolean).join('\n');
+  navigator.clipboard.writeText(txt).then(()=>toast('📋 Resumen copiado','success'));
+}
 
 function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();destroyDashCharts();renderDashboard();renderKpiFcChart();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();initRentYear();}
 
