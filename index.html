@@ -1866,7 +1866,7 @@ async function syncNow(){
   if(!tok||!sid2){toast('No hay sesión activa','warning');return;}
   setSI('go','Sincronizando...');
   await loadAll();
-  renderAll();
+  renderAllSilent();
   const hm=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('stxt').textContent=`Sync ${hm}`;
   toast('✅ Datos actualizados desde Sheets','success');
@@ -1898,7 +1898,7 @@ function setupAS(){
   if(s>0){
     stimer=setInterval(async()=>{
       await loadAll();
-      renderAll();
+      renderAllSilent(); // silent sync — no chart flicker
       const hm=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
       document.getElementById('stxt').textContent=`Sync ${hm}`;
     },s*1000);
@@ -2719,6 +2719,33 @@ function chartColors(){
 function mkChart(id,config){
   const el=document.getElementById(id);
   if(!el)return;
+  // If chart exists and type matches — update data silently (no flicker)
+  if(dCharts[id]&&dCharts[id].config?.type===config.type){
+    const ch=dCharts[id];
+    try{
+      // Update labels
+      ch.data.labels=config.data.labels;
+      // Update each dataset
+      (config.data.datasets||[]).forEach((ds,i)=>{
+        if(ch.data.datasets[i]){
+          ch.data.datasets[i].data=ds.data;
+          if(ds.backgroundColor!==undefined)ch.data.datasets[i].backgroundColor=ds.backgroundColor;
+          if(ds.borderColor!==undefined)ch.data.datasets[i].borderColor=ds.borderColor;
+        }
+      });
+      // Update options if provided
+      if(config.options?.scales){
+        if(ch.options.scales?.y&&config.options.scales?.y?.suggestedMax!==undefined)
+          ch.options.scales.y.suggestedMax=config.options.scales.y.suggestedMax;
+        if(ch.options.scales?.x&&config.options.scales?.x?.suggestedMax!==undefined)
+          ch.options.scales.x.suggestedMax=config.options.scales.x.suggestedMax;
+      }
+      // Re-apply label state if active
+      if(labelStates[id]) _applyLabels(id,ch,config);
+      ch.update('none'); // 'none' = no animation
+      return;
+    }catch(e){/* fall through to recreate */}
+  }
   if(dCharts[id]){try{dCharts[id].destroy();}catch(e){}}
 
   // Inject datalabels BEFORE creating chart if state is active
@@ -2766,6 +2793,39 @@ function mkChart(id,config){
   // Sync button visual state
   const btn=document.getElementById('lbl-'+id);
   if(btn) btn.classList.toggle('on', !!labelStates[id]);
+}
+
+function _applyLabels(id,inst,config){
+  const isLight=document.body.classList.contains('light');
+  const lblColor=isLight?'#1a1a2e':'#e8ffe8';
+  const isDoughnut=inst.config.type==='doughnut'||inst.config.type==='pie';
+  const fmtLbl=(v)=>{
+    if(v===null||v===undefined||v===0)return null;
+    if(typeof v==='number'){
+      if(v>=1e9)return '$'+fn(Math.round(v/1e6))+'M';
+      if(v>=1e6)return '$'+fn(Math.round(v/1e3))+'k';
+      if(v>=1000)return '$'+fn(v);
+      return v%1===0?String(v):'$'+fn(v);
+    }
+    return null;
+  };
+  inst.data.datasets.forEach(ds=>{
+    const isLine=ds.type==='line'||inst.config.type==='line';
+    ds.datalabels={
+      display:true,color:isDoughnut?'#fff':lblColor,
+      font:{family:'IBM Plex Mono',size:isDoughnut?11:9,weight:'600'},
+      anchor:isDoughnut?'center':isLine?'top':'end',
+      align:isDoughnut?'center':isLine?'top':'end',
+      offset:isDoughnut?0:3,
+      formatter:isDoughnut?(v,ctx)=>{
+        const tot=ctx.dataset.data.reduce((a,b)=>a+(b||0),0);
+        if(!tot||!v)return null;const p=Math.round(v/tot*100);return p>4?p+'%':null;
+      }:fmtLbl,
+      backgroundColor:isDoughnut?'rgba(0,0,0,.5)':null,
+      borderRadius:isDoughnut?4:0,
+      padding:isDoughnut?{top:2,bottom:2,left:4,right:4}:0,
+    };
+  });
 }
 
 
@@ -5504,6 +5564,17 @@ async function vmBorrarMes(yr, mes){
 
 
 function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();destroyDashCharts();renderDashboard();renderKpiFcChart();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();initRentYear();}
+
+// renderAllSilent: actualiza datos sin destruir/recrear charts (sin parpadeo)
+function renderAllSilent(){
+  renderV();renderVentasKPIs();updKPI();renderK();renderT();
+  // NO destroyDashCharts — mkChart actualizará datos silenciosamente
+  renderDashboard();renderKpiFcChart();
+  renderLic();renderProy();renderRel();renderProv();
+  updLicKPIs();checkLicAlerts();renderForecast();
+  // Refresh panel activo si corresponde
+  if(document.getElementById('ventas-panel-mensual')?.style.display!=='none') renderVentasMensuales();
+}
 
 // ═══ UTILS ═══
 function toggleTheme(){
