@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Intelligence</title>
+<title>MediCross — Sales Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
@@ -568,7 +568,8 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
       <div class="ni" data-view="proyectos" onclick="go('proyectos',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="8" width="4" height="7" rx="1"/><rect x="6" y="5" width="4" height="10" rx="1"/><rect x="11" y="2" width="4" height="13" rx="1"/></svg>Proyectos</div>
       <div class="ni" data-view="relacionamiento" onclick="go('relacionamiento',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3"/><circle cx="11" cy="5" r="3"/><path d="M2 14c0-3 6-3 6-3s6 0 6 3"/></svg>Relacionamiento</div>
       <div class="ni" data-view="proveedores" onclick="go('proveedores',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4l2-2h10l2 2v8l-2 2H3l-2-2V4z"/><path d="M5 4v2a3 3 0 0 0 6 0V4"/></svg>Proveedores</div>
-      <div class="ni" data-view="forecast" onclick="go('forecast',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l3-4 3 2 3-5 3 3"/><path d="M14 2v12H2"/></svg>Forecast</div>
+      <div class="ni" data-view="vendedores" onclick="go('vendedores',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2.5"/><circle cx="11" cy="5" r="2.5"/><path d="M1 14c0-2.5 1.8-4 4-4s4 1.5 4 4"/><path d="M9 14c0-2.5 1.8-4 4-4"/></svg>Vendedores</div>
+            <div class="ni" data-view="forecast" onclick="go('forecast',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l3-4 3 2 3-5 3 3"/><path d="M14 2v12H2"/></svg>Forecast</div>
       <div class="ni" data-view="rentabilidad" onclick="go('rentabilidad',this)"><span class="nav-drag-handle">⠿</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/><path d="M5 2.5C6.1 2 7 1.8 8 1.8"/></svg>Rentabilidad</div>
     </div>
     <div style="border-top:1px solid var(--border);margin:6px 12px"></div>
@@ -1253,6 +1254,100 @@ Rubros: Material descartable, Filtros de diálisis..."></textarea>
     <div id="tlist"></div>
   </div>
 
+  <!-- VENDEDORES -->
+  <div class="view" id="view-vendedores">
+    <div class="sh">
+      <div>
+        <div class="st">Equipo de Vendedores</div>
+        <div style="font-family:var(--fm);font-size:.63rem;color:var(--muted);margin-top:3px" id="vnd-resumen">─</div>
+      </div>
+      <div class="sa" style="gap:8px">
+        <!-- Tabs -->
+        <div style="display:flex;gap:6px">
+          <button class="vm-tab-btn active" id="vnd-tab-equipo" onclick="vndTab('equipo',this)">👥 Equipo</button>
+          <button class="vm-tab-btn" id="vnd-tab-dashboard" onclick="vndTab('dashboard',this)">📊 Mi Dashboard</button>
+          <button class="vm-tab-btn" id="vnd-tab-general" onclick="vndTab('general',this)">🌐 Dashboard General</button>
+        </div>
+        <button class="btn btp sm" onclick="vndNuevo()">+ Nuevo Vendedor</button>
+      </div>
+    </div>
+
+    <!-- PANEL: Equipo (lista + configuración) -->
+    <div id="vnd-panel-equipo">
+      <div class="vm-grid" style="grid-template-columns:repeat(3,1fr);gap:14px" id="vnd-cards-grid"></div>
+    </div>
+
+    <!-- PANEL: Mi Dashboard (filtrado por vendedor logueado) -->
+    <div id="vnd-panel-dashboard" style="display:none">
+      <div style="background:rgba(232,255,71,.06);border:1px solid rgba(232,255,71,.15);border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:.76rem;color:var(--muted)">
+        📊 Mostrando datos de: <strong id="vnd-dash-name" style="color:var(--accent)">─</strong>
+        <span style="margin-left:8px;font-size:.68rem">· Seleccioná tu nombre en el equipo para ver tu dashboard personal</span>
+      </div>
+      <!-- KPIs vendedor -->
+      <div class="krow" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+        <div class="kpi"><div class="klbl">Ventas del mes</div><div class="kval" id="vnd-k1" style="font-size:1.3rem">─</div><div class="kdelta" id="vnd-k1d">─</div></div>
+        <div class="kpi"><div class="klbl">vs Meta mensual</div><div class="kval" id="vnd-k2" style="font-size:1.3rem">─</div><div class="kdelta" id="vnd-k2d">─</div></div>
+        <div class="kpi"><div class="klbl">Pipeline activo</div><div class="kval" id="vnd-k3" style="font-size:1.3rem">─</div><div class="kdelta" id="vnd-k3d">─</div></div>
+        <div class="kpi"><div class="klbl">Gross Margin prom.</div><div class="kval" id="vnd-k4" style="font-size:1.3rem">─</div><div class="kdelta" id="vnd-k4d">─</div></div>
+      </div>
+      <!-- Charts vendedor -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div class="card"><div class="ch"><div class="ct">Ventas por mes</div></div><div class="cb"><div style="height:200px;position:relative"><canvas id="vnd-chart-mes"></canvas></div></div></div>
+        <div class="card"><div class="ch"><div class="ct">Pipeline por etapa</div></div><div class="cb"><div style="height:200px;position:relative"><canvas id="vnd-chart-pipe"></canvas></div></div></div>
+      </div>
+      <!-- Ventas recientes del vendedor -->
+      <div class="card">
+        <div class="ch"><div class="ct">Últimas ventas</div></div>
+        <div class="cb" style="padding:0"><div style="overflow-x:auto"><table class="tbl" id="vnd-ventas-table">
+          <thead><tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Total</th><th>Estado</th><th>GM%</th></tr></thead>
+          <tbody id="vnd-ventas-tbody"></tbody>
+        </table></div></div>
+      </div>
+    </div>
+
+    <!-- PANEL: Dashboard General (todos los vendedores) -->
+    <div id="vnd-panel-general" style="display:none">
+      <div class="krow" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px" id="vnd-general-kpis"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div class="card"><div class="ch"><div class="ct">Ranking de ventas</div><div class="cs">Revenue total por vendedor</div></div><div class="cb"><div style="height:240px;position:relative"><canvas id="vnd-chart-ranking"></canvas></div></div></div>
+        <div class="card"><div class="ch"><div class="ct">Cumplimiento de metas</div><div class="cs">Real vs Meta mensual</div></div><div class="cb" id="vnd-metas-bars"></div></div>
+      </div>
+      <div class="card">
+        <div class="cb" style="padding:0"><div style="overflow-x:auto">
+          <table class="tbl" id="vnd-general-table">
+            <thead><tr><th>#</th><th>Vendedor</th><th>Zona</th><th>Ventas Mes</th><th>Meta</th><th>Cumpl.</th><th>Pipeline</th><th>GM%</th><th>Ops</th></tr></thead>
+            <tbody id="vnd-general-tbody"></tbody>
+          </table>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal nuevo/editar vendedor -->
+  <div class="modal" id="modal-vnd">
+    <div class="mbox" style="max-width:520px">
+      <div class="mhdr"><span id="vnd-modal-title">Nuevo Vendedor</span><button class="mcls" onclick="cm('modal-vnd')">✕</button></div>
+      <div class="mb">
+        <input type="hidden" id="vnd-id">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fgrp" style="grid-column:1/-1"><label class="flbl">Nombre completo *</label><input class="fi" id="vnd-nombre" placeholder="Ej: María García"></div>
+          <div class="fgrp"><label class="flbl">Email</label><input class="fi" id="vnd-email" type="email" placeholder="vendedor@empresa.com"></div>
+          <div class="fgrp"><label class="flbl">Teléfono</label><input class="fi" id="vnd-telefono" placeholder="+54 11 1234-5678"></div>
+          <div class="fgrp"><label class="flbl">Cargo</label><input class="fi" id="vnd-cargo" placeholder="Ej: Sales Manager"></div>
+          <div class="fgrp"><label class="flbl">Zona / Región</label><input class="fi" id="vnd-zona" placeholder="Ej: CABA, GBA Norte..."></div>
+          <div class="fgrp" style="grid-column:1/-1"><label class="flbl">Meta mensual (ARS)</label><input class="fi" id="vnd-meta" type="number" placeholder="0"></div>
+          <div class="fgrp"><label class="flbl">Color identificador</label><input type="color" id="vnd-color" value="#5ca8ff" style="width:100%;height:38px;border-radius:6px;border:1px solid var(--border);background:none;cursor:pointer;padding:2px"></div>
+          <div class="fgrp"><label class="flbl">Estado</label><select class="fsel" id="vnd-activo"><option value="true">Activo</option><option value="false">Inactivo</option></select></div>
+          <div class="fgrp" style="grid-column:1/-1"><label class="flbl">Notas</label><textarea class="fi" id="vnd-notas" rows="2" placeholder="Especialidad, clientes asignados, etc."></textarea></div>
+        </div>
+      </div>
+      <div class="mf">
+        <button class="btn bts" onclick="cm('modal-vnd')">Cancelar</button>
+        <button class="btn btp" onclick="vndGuardar()">Guardar vendedor</button>
+      </div>
+    </div>
+  </div>
+
   <!-- RENTABILIDAD -->
   <div class="view" id="view-rentabilidad">
     <div class="sh">
@@ -1447,7 +1542,7 @@ Rubros: Material descartable, Filtros de diálisis..."></textarea>
 // ═══ CONSTANTS ═══
 const CID='184623131866-jvbjpqmife1pvsdbkumitvgf7fomislc.apps.googleusercontent.com';
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive';
-const TABS={v:'Ventas',h:'Historicas',d:'Pipeline',t:'Tareas',m:'Members',l:'Licitaciones',p:'Proyectos',r:'Relacionamiento',pr:'Proveedores',fc:'Forecast',vm:'VentasMensuales'};
+const TABS={v:'Ventas',h:'Historicas',d:'Pipeline',t:'Tareas',m:'Members',l:'Licitaciones',p:'Proyectos',r:'Relacionamiento',pr:'Proveedores',fc:'Forecast',vm:'VentasMensuales',vnd:'Vendedores'};
 const STAGES=[{id:'lead',lbl:'Lead',col:'var(--muted)'},{id:'propuesta',lbl:'Propuesta',col:'var(--blue)'},{id:'negociacion',lbl:'Negociación',col:'var(--orange)'},{id:'cierre',lbl:'Cierre',col:'var(--green)'}];
 const TICOS={llamada:'📞',visita:'🚗',reunion:'📅',propuesta:'📄',seguimiento:'🔄',otro:'📌'};
 const VH=['id','fecha','cliente','producto','categoria','monto','moneda','estado','vendedor','cantidad','costo_unit','markup','gross_margin','iva','total_con_iva','notas','usuario','creado'];
@@ -1460,6 +1555,7 @@ const RH=['id','nombre','tipo_contacto','institucion','influencia','relacion','u
 const PRH=['id','nombre','linea','estado','margen','exclusividad','potencial','contacto','notas','usuario','creado'];
 const FCH=['id','anio','mes','meta','notas','usuario','creado'];
 const VMH=['id','anio','mes','total','moneda','notas','usuario','creado'];
+const VNH=['id','nombre','email','telefono','cargo','zona','meta_mensual','activo','color','notas','creado'];
 
 // ═══ STATE ═══
 let tok=null,sid2=null,cu=null;
@@ -1531,7 +1627,7 @@ function scheduleTokenRenew(msUntilExpiry){
 ['mousemove','keydown','click','touchstart','scroll'].forEach(ev=>{
   document.addEventListener(ev,()=>{if(tok)resetInactivityTimer();},{passive:true});
 });
-let S={v:[],h:[],d:[],t:[],l:[],p:[],r:[],pr:[],fc:[],vm:[]};
+let S={v:[],h:[],d:[],t:[],l:[],p:[],r:[],pr:[],fc:[],vm:[],vnd:[]};
 let cfg={emp:'Mi Empresa',rol:'Sales Manager',cats:'Software,Servicios,Hardware,Consultoría,Soporte',a24:1,a48:1,aut:30};
 let stimer=null,atimer=null,hch=null,hpi=null,tf2='todas',pi={v:[],h:[]},dragId=null;
 
@@ -1638,7 +1734,7 @@ async function ensureTabs(){
       });
     }
     // Sincronizar headers: agregar columnas faltantes sin borrar datos existentes
-    const hmap={[TABS.v]:VH,[TABS.h]:HH,[TABS.d]:DH,[TABS.t]:TH,[TABS.m]:['email','name','lastLogin'],[TABS.l]:LH,[TABS.p]:PH,[TABS.r]:RH,[TABS.pr]:PRH,[TABS.fc]:FCH,[TABS.vm]:VMH};
+    const hmap={[TABS.v]:VH,[TABS.h]:HH,[TABS.d]:DH,[TABS.t]:TH,[TABS.m]:['email','name','lastLogin'],[TABS.l]:LH,[TABS.p]:PH,[TABS.r]:RH,[TABS.pr]:PRH,[TABS.fc]:FCH,[TABS.vm]:VMH,[TABS.vnd]:VNH};
     for(const [tab,headers] of Object.entries(hmap)){
       try{
         const r=await sReq(`/${sid2}/values/${encodeURIComponent(tab)}!1:1`);
@@ -1865,10 +1961,10 @@ async function loadAll(){
   setSI('go','Cargando...');
   try{
     // Cargar TODOS los tabs en paralelo
-    const[vr,hr,dr,tr,lr,pr2,rr,prr,fcr,vmr]=await Promise.all([
+    const[vr,hr,dr,tr,lr,pr2,rr,prr,fcr,vmr,vndr]=await Promise.all([
       readTab(TABS.v),readTab(TABS.h),readTab(TABS.d),readTab(TABS.t),
       readTab(TABS.l),readTab(TABS.p),readTab(TABS.r),readTab(TABS.pr),
-      readTab(TABS.fc),readTab(TABS.vm)
+      readTab(TABS.fc),readTab(TABS.vm),readTab(TABS.vnd)
     ]);
 
     // safeUpdate: solo conservar datos en memoria si Sheet da error (null)
@@ -1880,6 +1976,7 @@ async function loadAll(){
 
     console.log('[loadAll] raw S.v[0]:', vr&&vr[0]?JSON.stringify(vr[0]):'empty/null');
     S.vm=safeUpdate(vmr,S.vm).filter(r=>r.id).map(r=>({...r,total:parseMonto(r.total)||0,anio:parseInt(r.anio)||0,mes:parseInt(r.mes)||0}));
+    S.vnd=safeUpdate(vndr,S.vnd).filter(r=>r.id).map(r=>({...r,meta_mensual:parseMonto(r.meta_mensual)||0,activo:r.activo!=='false'&&r.activo!==false}));
     S.v=safeUpdate(vr,S.v).filter(r=>r.id).map(r=>({
       ...r,
       monto:parseMonto(r.monto),
@@ -4546,7 +4643,7 @@ function go(vw,el){
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
   document.getElementById('view-'+vw).classList.add('active');
   if(el)el.classList.add('active');
-  const t={gestion:'Dashboard',ventas:'Gestión de Ventas',pipeline:'Pipeline de Ventas',tareas:'Tareas Diarias',config:'Configuración',licitaciones:'Licitaciones',proyectos:'Proyectos Estratégicos',relacionamiento:'Relacionamiento Estratégico',proveedores:'Gestión de Proveedores',forecast:'Forecast de Ventas',rentabilidad:'Análisis de Rentabilidad'};
+  const t={gestion:'Dashboard',ventas:'Gestión de Ventas',pipeline:'Pipeline de Ventas',tareas:'Tareas Diarias',config:'Configuración',licitaciones:'Licitaciones',proyectos:'Proyectos Estratégicos',relacionamiento:'Relacionamiento Estratégico',proveedores:'Gestión de Proveedores',forecast:'Forecast de Ventas',rentabilidad:'Análisis de Rentabilidad',vendedores:'Equipo de Vendedores'};
   document.getElementById('ptitle').textContent=t[vw]||vw;
   if(vw==='gestion'){
     destroyDashCharts();
@@ -4567,6 +4664,7 @@ function go(vw,el){
   if(vw==='proveedores'){renderProv();}
   if(vw==='forecast'){renderForecast();}
   if(vw==='rentabilidad'){initRentYear();renderRent();}
+  if(vw==='vendedores'){renderVnd();}
   if(vw==='config'){loadCfg();document.getElementById('cfg-sid').textContent=sid2||'─';document.getElementById('ccats').value=cfg.cats;document.getElementById('cemp').value=cfg.emp;document.getElementById('crol').value=cfg.rol;document.getElementById('caut').value=cfg.aut;regMember();}
   if(window.innerWidth<=768)document.getElementById('sidebar').classList.remove('open');
 }
@@ -5791,6 +5889,311 @@ async function crearTareaAuto(toastId, dealId, etapa){
 }
 
 // ═══ INICIALIZAR FILTRO AL CARGAR ═══
+
+// ═══ MÓDULO VENDEDORES ═══
+const VND_COLORS = ['#5ca8ff','#3dffa0','#e8ff47','#ff5c5c','#c084fc','#ffaa3d','#ff6b9d','#00d4ff','#ff9f43','#54a0ff'];
+let vndActivePanel = 'equipo';
+let vndSelectedName = ''; // vendedor seleccionado para "Mi Dashboard"
+
+function vndTab(tab, el){
+  document.querySelectorAll('#vnd-tab-equipo,#vnd-tab-dashboard,#vnd-tab-general').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  ['equipo','dashboard','general'].forEach(p=>{
+    const el2=document.getElementById('vnd-panel-'+p);
+    if(el2) el2.style.display = p===tab?'block':'none';
+  });
+  vndActivePanel = tab;
+  if(tab==='equipo') renderVndEquipo();
+  if(tab==='dashboard') renderVndDashboard();
+  if(tab==='general') renderVndGeneral();
+}
+
+function renderVnd(){
+  // Update vendor filter dropdown with actual vendedor list
+  initVendorFilter();
+  const resumen = document.getElementById('vnd-resumen');
+  if(resumen){
+    const activos = S.vnd.filter(v=>v.activo!==false&&v.activo!=='false');
+    resumen.textContent = `${activos.length} vendedores activos · ${S.vnd.length} total`;
+  }
+  if(vndActivePanel==='equipo') renderVndEquipo();
+  if(vndActivePanel==='dashboard') renderVndDashboard();
+  if(vndActivePanel==='general') renderVndGeneral();
+}
+
+function renderVndEquipo(){
+  const grid = document.getElementById('vnd-cards-grid');
+  if(!grid) return;
+  const vendedores = S.vnd.length ? S.vnd :
+    // Default vendedores if none configured yet
+    [{id:'default-1',nombre:'Vendedor 1',cargo:'Sales',activo:true,color:'#5ca8ff',meta_mensual:0},
+     {id:'default-2',nombre:'Vendedor 2',cargo:'Sales',activo:true,color:'#3dffa0',meta_mensual:0},
+     {id:'default-3',nombre:'Vendedor 3',cargo:'Sales',activo:true,color:'#e8ff47',meta_mensual:0}];
+
+  grid.innerHTML = vendedores.map((vnd,i)=>{
+    const color = vnd.color || VND_COLORS[i%VND_COLORS.length];
+    const activo = vnd.activo !== false && vnd.activo !== 'false';
+    // Sales stats
+    const now = new Date();
+    const m = now.getMonth(), y = now.getFullYear();
+    const ventasMes = S.v.filter(x=>{
+      if(!x.fecha||x.estado==='cancelada')return false;
+      const d=new Date(x.fecha+'T12:00');
+      return d.getMonth()===m && d.getFullYear()===y &&
+             (x.vendedor===vnd.nombre||x.usuario===vnd.nombre);
+    }).reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
+    const pipeline = S.d.filter(d=>(d.responsable||d.usuario)===vnd.nombre).reduce((s,d)=>s+d.valor,0);
+    const meta = vnd.meta_mensual || 0;
+    const pct = meta>0 ? Math.min(Math.round(ventasMes/meta*100),100) : 0;
+    const cumplColor = pct>=100?'var(--green)':pct>=60?'var(--orange)':'var(--red)';
+
+    return `<div class="scan-box" style="padding:16px;border-color:${activo?color:'var(--border)'};position:relative;cursor:pointer" onclick="vndSelectar('${esc(vnd.nombre)}')">
+      <div style="position:absolute;top:12px;right:12px;display:flex;gap:6px">
+        <button class="btn bts sm" style="font-size:.65rem;padding:3px 8px" onclick="event.stopPropagation();vndEditar('${vnd.id}')">✏️</button>
+        ${vnd.id&&!vnd.id.startsWith('default')?`<button class="btn btd sm" style="font-size:.65rem;padding:3px 8px" onclick="event.stopPropagation();vndEliminar('${vnd.id}')">✕</button>`:''}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:40px;height:40px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;color:#000;flex-shrink:0">
+          ${(vnd.nombre||'?').charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:.9rem">${esc(vnd.nombre)}</div>
+          <div style="font-size:.7rem;color:var(--muted)">${esc(vnd.cargo||'Vendedor')}${vnd.zona?' · '+esc(vnd.zona):''}</div>
+        </div>
+        <span style="margin-left:auto;font-size:.6rem;padding:2px 7px;border-radius:5px;background:${activo?'rgba(61,255,160,.15)':'var(--surface2)'};color:${activo?'var(--green)':'var(--muted)'}">
+          ${activo?'Activo':'Inactivo'}
+        </span>
+      </div>
+      ${vnd.email?`<div style="font-size:.7rem;color:var(--muted);margin-bottom:3px">✉️ ${esc(vnd.email)}</div>`:''}
+      ${vnd.telefono?`<div style="font-size:.7rem;color:var(--muted);margin-bottom:8px">📱 ${esc(vnd.telefono)}</div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+        <div style="background:var(--surface2);border-radius:6px;padding:7px 10px">
+          <div style="font-size:.62rem;color:var(--muted);font-family:var(--fm)">VENTAS MES</div>
+          <div style="font-size:.88rem;font-weight:700;color:${color}">$${fn(Math.round(ventasMes))}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:6px;padding:7px 10px">
+          <div style="font-size:.62rem;color:var(--muted);font-family:var(--fm)">PIPELINE</div>
+          <div style="font-size:.88rem;font-weight:700;color:var(--blue)">$${fn(Math.round(pipeline))}</div>
+        </div>
+      </div>
+      ${meta>0?`
+      <div style="margin-bottom:3px;display:flex;justify-content:space-between">
+        <span style="font-size:.68rem;color:var(--muted)">Meta mensual: $${fn(Math.round(meta))}</span>
+        <span style="font-size:.68rem;font-weight:700;color:${cumplColor}">${pct}%</span>
+      </div>
+      <div style="background:var(--surface2);border-radius:4px;height:6px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${cumplColor};border-radius:4px;transition:width .4s"></div>
+      </div>`:''}
+      <div style="margin-top:10px;text-align:center">
+        <span style="font-size:.68rem;color:var(--muted2);font-family:var(--fm)">Click para ver dashboard personal</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function vndSelectar(nombre){
+  vndSelectedName = nombre;
+  vndTab('dashboard', document.getElementById('vnd-tab-dashboard'));
+}
+
+function renderVndDashboard(){
+  const nameEl = document.getElementById('vnd-dash-name');
+  if(!vndSelectedName){
+    if(nameEl) nameEl.textContent = '(ninguno seleccionado — clickeá una tarjeta del equipo)';
+    return;
+  }
+  if(nameEl) nameEl.textContent = vndSelectedName;
+  const now = new Date();
+  const m = now.getMonth(), y = now.getFullYear();
+  const vnd = S.vnd.find(v=>v.nombre===vndSelectedName);
+
+  // KPIs
+  const ventasMesArr = S.v.filter(x=>{
+    if(!x.fecha||x.estado==='cancelada')return false;
+    const d=new Date(x.fecha+'T12:00');
+    return d.getMonth()===m&&d.getFullYear()===y&&(x.vendedor===vndSelectedName||x.usuario===vndSelectedName);
+  });
+  const ventasMes = ventasMesArr.reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
+  const meta = vnd?.meta_mensual||0;
+  const pct = meta>0?(ventasMes/meta*100).toFixed(1):'─';
+  const pipelineTotal = S.d.filter(d=>d.etapa!=='cierre'&&(d.responsable||d.usuario)===vndSelectedName).reduce((s,d)=>s+d.valor,0);
+  const withGm = ventasMesArr.filter(x=>x.costo_unit>0&&x.monto>0);
+  const avgGm = withGm.length ? withGm.reduce((s,x)=>(x.monto-x.costo_unit)/x.monto*100+s,0)/withGm.length : 0;
+
+  const setK=(id,val,delta='')=>{const e=document.getElementById(id);if(e)e.textContent=val;const d=document.getElementById(id+'d');if(d&&delta)d.textContent=delta;};
+  setK('vnd-k1','$'+fn(Math.round(ventasMes)), ventasMesArr.length+' operaciones');
+  setK('vnd-k2', meta>0?pct+'%':'Sin meta', meta>0?'Meta: $'+fn(Math.round(meta)):'Configurar en ficha');
+  setK('vnd-k3','$'+fn(Math.round(pipelineTotal)), S.d.filter(d=>(d.responsable||d.usuario)===vndSelectedName).length+' deals activos');
+  setK('vnd-k4', avgGm>0?avgGm.toFixed(1)+'%':'─', avgGm>0?'Promedio ponderado':'Sin datos de costo');
+
+  const k2el=document.getElementById('vnd-k2');
+  if(k2el&&meta>0) k2el.style.color=parseFloat(pct)>=100?'var(--green)':parseFloat(pct)>=60?'var(--orange)':'var(--red)';
+
+  // Chart: ventas por mes
+  const MONTHS=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const byMonth=Array(12).fill(0);
+  S.v.filter(x=>{
+    if(!x.fecha||x.estado==='cancelada')return false;
+    const d=new Date(x.fecha+'T12:00');
+    return d.getFullYear()===y&&(x.vendedor===vndSelectedName||x.usuario===vndSelectedName);
+  }).forEach(x=>{const d=new Date(x.fecha+'T12:00');byMonth[d.getMonth()]+=x.monto*(x.cantidad||1);});
+  const C=chartColors();
+  const vndColor=vnd?.color||'#5ca8ff';
+  mkChart('vnd-chart-mes',{type:'bar',data:{labels:MONTHS,datasets:[{label:'Ventas',data:byMonth,backgroundColor:vndColor+'55',borderColor:vndColor,borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:C.tooltip.bg,titleColor:C.tooltip.color,bodyColor:C.tooltip.color}},scales:{x:{grid:{color:C.grid},ticks:{color:C.tick,font:{size:9}}},y:{grid:{color:C.grid},ticks:{color:C.tick,callback:v=>'$'+fn(v)}}}}});
+
+  // Chart: pipeline por etapa
+  const stageData=STAGES.map(st=>S.d.filter(d=>d.etapa===st.id&&(d.responsable||d.usuario)===vndSelectedName).reduce((s,d)=>s+d.valor,0));
+  mkChart('vnd-chart-pipe',{type:'doughnut',data:{labels:STAGES.map(s=>s.lbl),datasets:[{data:stageData,backgroundColor:STAGES.map(s=>s.col.replace('var(--muted)','#4a4a55').replace('var(--blue)','#5ca8ff').replace('var(--orange)','#ffaa3d').replace('var(--green)','#3dffa0')),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:C.tick,boxWidth:10,font:{size:10}}},tooltip:{backgroundColor:C.tooltip.bg,titleColor:C.tooltip.color,bodyColor:C.tooltip.color}}}});
+
+  // Table: últimas ventas
+  const tbody=document.getElementById('vnd-ventas-tbody');
+  if(tbody){
+    const ventas=S.v.filter(x=>(x.vendedor===vndSelectedName||x.usuario===vndSelectedName)).slice(0,15);
+    tbody.innerHTML=ventas.length?ventas.map(x=>{
+      const gm=x.monto>0&&x.costo_unit>0?((x.monto-x.costo_unit)/x.monto*100).toFixed(1)+'%':'─';
+      const total=x.monto*(x.cantidad||1);
+      return `<tr><td class="tm">${fmtD(x.fecha)}</td><td>${esc(x.cliente)}</td><td style="color:var(--muted)">${esc(x.producto)}</td><td class="tm" style="color:var(--accent)">$${fn(Math.round(total))}</td><td><span class="pill ${x.estado==='cobrada'?'pg':x.estado==='pendiente'?'po':'pr'}">${x.estado}</span></td><td class="tm">${gm}</td></tr>`;
+    }).join(''):`<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">Sin ventas registradas para este vendedor</td></tr>`;
+  }
+}
+
+function renderVndGeneral(){
+  const kpisEl=document.getElementById('vnd-general-kpis');
+  const tbodyEl=document.getElementById('vnd-general-tbody');
+  const metasEl=document.getElementById('vnd-metas-bars');
+  if(!kpisEl) return;
+
+  const now=new Date();const m=now.getMonth();const y=now.getFullYear();
+
+  // Get all unique vendedores (from S.vnd + from S.v data)
+  const nombresData=[...new Set(S.v.map(x=>x.vendedor||x.usuario).filter(Boolean))];
+  const allVnd=S.vnd.length>0?S.vnd:nombresData.map((n,i)=>({id:'v'+i,nombre:n,color:VND_COLORS[i%VND_COLORS.length],meta_mensual:0,activo:true}));
+
+  const stats=allVnd.filter(v=>v.activo!==false&&v.activo!=='false').map(vnd=>{
+    const ventasMes=S.v.filter(x=>{
+      if(!x.fecha||x.estado==='cancelada')return false;
+      const d=new Date(x.fecha+'T12:00');
+      return d.getMonth()===m&&d.getFullYear()===y&&(x.vendedor===vnd.nombre||x.usuario===vnd.nombre);
+    }).reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
+    const ops=S.v.filter(x=>(x.vendedor===vnd.nombre||x.usuario===vnd.nombre)).length;
+    const pipeline=S.d.filter(d=>(d.responsable||d.usuario)===vnd.nombre).reduce((s,d)=>s+d.valor,0);
+    const withGm=S.v.filter(x=>(x.vendedor===vnd.nombre||x.usuario===vnd.nombre)&&x.costo_unit>0&&x.monto>0);
+    const gm=withGm.length?withGm.reduce((s,x)=>(x.monto-x.costo_unit)/x.monto*100+s,0)/withGm.length:0;
+    return {...vnd,ventasMes,ops,pipeline,gm};
+  }).sort((a,b)=>b.ventasMes-a.ventasMes);
+
+  const totalMes=stats.reduce((s,v)=>s+v.ventasMes,0);
+  const totalPipe=stats.reduce((s,v)=>s+v.pipeline,0);
+
+  // Global KPIs
+  kpisEl.innerHTML=`
+    <div class="kpi"><div class="klbl">Total ventas del mes</div><div class="kval" style="font-size:1.2rem">$${fn(Math.round(totalMes))}</div><div class="kdelta">${stats.length} vendedores activos</div></div>
+    <div class="kpi"><div class="klbl">Pipeline total</div><div class="kval" style="font-size:1.2rem;color:var(--blue)">$${fn(Math.round(totalPipe))}</div><div class="kdelta">activo en todos los vendedores</div></div>
+    <div class="kpi"><div class="klbl">Mejor vendedor</div><div class="kval" style="font-size:1rem;padding-top:6px">${stats[0]?.nombre||'─'}</div><div class="kdelta">$${fn(Math.round(stats[0]?.ventasMes||0))} este mes</div></div>`;
+
+  // Ranking chart
+  const C=chartColors();
+  mkChart('vnd-chart-ranking',{type:'bar',data:{labels:stats.map(v=>v.nombre),datasets:[{label:'Ventas mes',data:stats.map(v=>Math.round(v.ventasMes)),backgroundColor:stats.map(v=>v.color+'99')||'rgba(92,168,255,.6)',borderColor:stats.map(v=>v.color)||'rgba(92,168,255,.9)',borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:C.tooltip.bg,titleColor:C.tooltip.color,bodyColor:C.tooltip.color,callbacks:{label:c=>' $'+fn(c.parsed.x)}}},scales:{x:{grid:{color:C.grid},ticks:{color:C.tick,callback:v=>'$'+fn(v)}},y:{grid:{display:false},ticks:{color:C.tick}}}}});
+
+  // Metas progress bars
+  if(metasEl) metasEl.innerHTML=stats.map(vnd=>{
+    const pct=vnd.meta_mensual>0?Math.min(Math.round(vnd.ventasMes/vnd.meta_mensual*100),150):0;
+    const col=pct>=100?'var(--green)':pct>=60?'var(--orange)':'var(--red)';
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="width:28px;height:28px;border-radius:50%;background:${vnd.color};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;color:#000;flex-shrink:0">${vnd.nombre.charAt(0)}</div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span style="font-size:.75rem;font-weight:600">${esc(vnd.nombre)}</span>
+          <span style="font-size:.72rem;font-family:var(--fm);color:${col};font-weight:700">${vnd.meta_mensual>0?pct+'%':'sin meta'}</span>
+        </div>
+        <div style="background:var(--surface2);border-radius:4px;height:7px;overflow:hidden">
+          <div style="height:100%;width:${Math.min(pct,100)}%;background:${col};border-radius:4px;transition:width .4s"></div>
+        </div>
+        <div style="font-size:.62rem;color:var(--muted);font-family:var(--fm);margin-top:2px">$${fn(Math.round(vnd.ventasMes))}${vnd.meta_mensual>0?' / $'+fn(Math.round(vnd.meta_mensual)):''}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Table
+  if(tbodyEl) tbodyEl.innerHTML=stats.map((vnd,i)=>{
+    const pct=vnd.meta_mensual>0?(vnd.ventasMes/vnd.meta_mensual*100).toFixed(1):'─';
+    const cumplColor=vnd.meta_mensual>0?(parseFloat(pct)>=100?'var(--green)':parseFloat(pct)>=60?'var(--orange)':'var(--red)'):'var(--muted)';
+    return `<tr>
+      <td style="font-family:var(--fm);color:var(--muted);font-size:.72rem">${i+1}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div style="width:22px;height:22px;border-radius:50%;background:${vnd.color};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.62rem;color:#000">${vnd.nombre.charAt(0)}</div><span style="font-weight:600">${esc(vnd.nombre)}</span></div></td>
+      <td style="color:var(--muted);font-size:.75rem">${esc(vnd.zona||'─')}</td>
+      <td class="tm" style="color:var(--accent);font-weight:600">$${fn(Math.round(vnd.ventasMes))}</td>
+      <td class="tm" style="color:var(--muted)">${vnd.meta_mensual>0?'$'+fn(Math.round(vnd.meta_mensual)):'─'}</td>
+      <td class="tm" style="color:${cumplColor};font-weight:700">${pct!=='─'?pct+'%':'─'}</td>
+      <td class="tm" style="color:var(--blue)">$${fn(Math.round(vnd.pipeline))}</td>
+      <td class="tm">${vnd.gm>0?vnd.gm.toFixed(1)+'%':'─'}</td>
+      <td class="tm" style="color:var(--muted)">${vnd.ops}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══ CRUD VENDEDORES ═══
+function vndNuevo(){
+  document.getElementById('vnd-modal-title').textContent='Nuevo Vendedor';
+  ['vnd-id','vnd-nombre','vnd-email','vnd-telefono','vnd-cargo','vnd-zona','vnd-meta','vnd-notas'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.value='';
+  });
+  document.getElementById('vnd-color').value=VND_COLORS[S.vnd.length%VND_COLORS.length]||'#5ca8ff';
+  document.getElementById('vnd-activo').value='true';
+  om('modal-vnd');
+}
+
+function vndEditar(id){
+  const vnd=S.vnd.find(v=>v.id===id);
+  if(!vnd)return;
+  document.getElementById('vnd-modal-title').textContent='Editar Vendedor';
+  document.getElementById('vnd-id').value=vnd.id;
+  document.getElementById('vnd-nombre').value=vnd.nombre||'';
+  document.getElementById('vnd-email').value=vnd.email||'';
+  document.getElementById('vnd-telefono').value=vnd.telefono||'';
+  document.getElementById('vnd-cargo').value=vnd.cargo||'';
+  document.getElementById('vnd-zona').value=vnd.zona||'';
+  document.getElementById('vnd-meta').value=vnd.meta_mensual||'';
+  document.getElementById('vnd-color').value=vnd.color||'#5ca8ff';
+  document.getElementById('vnd-activo').value=String(vnd.activo!==false&&vnd.activo!=='false');
+  document.getElementById('vnd-notas').value=vnd.notas||'';
+  om('modal-vnd');
+}
+
+async function vndGuardar(){
+  const nombre=document.getElementById('vnd-nombre').value.trim();
+  if(!nombre){toast('El nombre es obligatorio','warning');return;}
+  const id=document.getElementById('vnd-id').value||uid();
+  const existing=S.vnd.find(v=>v.id===id);
+  const row={
+    id,nombre,
+    email:document.getElementById('vnd-email').value.trim(),
+    telefono:document.getElementById('vnd-telefono').value.trim(),
+    cargo:document.getElementById('vnd-cargo').value.trim(),
+    zona:document.getElementById('vnd-zona').value.trim(),
+    meta_mensual:parseMonto(document.getElementById('vnd-meta').value)||0,
+    activo:document.getElementById('vnd-activo').value!=='false',
+    color:document.getElementById('vnd-color').value,
+    notas:document.getElementById('vnd-notas').value.trim(),
+    creado:existing?.creado||new Date().toISOString()
+  };
+  if(existing){Object.assign(existing,row);}else{S.vnd.push(row);}
+  cm('modal-vnd');
+  renderVnd();
+  initVendorFilter();
+  toast(`✅ Vendedor ${nombre} guardado`,'success');
+  writeTab(TABS.vnd,VNH,S.vnd).catch(e=>console.error(e));
+}
+
+async function vndEliminar(id){
+  const vnd=S.vnd.find(v=>v.id===id);
+  if(!confirm(`¿Eliminar a ${vnd?.nombre}? Sus ventas y pipeline no se eliminan.`))return;
+  S.vnd=S.vnd.filter(v=>v.id!==id);
+  renderVnd();
+  initVendorFilter();
+  writeTab(TABS.vnd,VNH,S.vnd).catch(e=>console.error(e));
+  toast('Vendedor eliminado','info');
+}
 
 function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();destroyDashCharts();renderDashboard();renderKpiFcChart();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();initRentYear();initVendorFilter();}
 
