@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MediCross — Sales Intelligence</title>
+<title>MediCross</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
@@ -2362,13 +2362,14 @@ function renderKpiFcChart(){
   const C=chartColors();
   const MONTHS_S=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const reales=MONTHS_S.map((_,i)=>{
-    return S.v.filter(x=>{
+    const fromV=S.v.filter(x=>{
       if(!x.fecha||x.estado==='cancelada')return false;
       const d=new Date(x.fecha+'T12:00');
       return !isNaN(d)&&d.getFullYear()===yr&&d.getMonth()===i;
-    }).reduce((s,x)=>s+x.monto,0);
+    }).reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
+    const fromVm=S.vm.filter(m=>m.anio===yr&&m.mes===i+1).reduce((s,m)=>s+m.total,0);
+    return fromV+fromVm;
   });
-  console.log('[KpiFcChart] yr='+yr+' reales='+JSON.stringify(reales));
   const metas=MONTHS_S.map((_,i)=>getMeta(yr,i+1));
   const ctx=document.getElementById('kpiFcChart');if(!ctx)return;
   if(kpiFcChartInst){kpiFcChartInst.destroy();kpiFcChartInst=null;}
@@ -2985,11 +2986,15 @@ function getMeta(anio,mes){
 }
 
 function getReal(anio,mes){
-  return S.v.filter(x=>{
+  // Ventas individuales: precio × cantidad
+  const fromV=S.v.filter(x=>{
     if(!x.fecha||x.estado==='cancelada')return false;
     const d=new Date(x.fecha+'T12:00');
     return d.getFullYear()===anio&&(d.getMonth()+1)===mes;
-  }).reduce((s,x)=>s+x.monto,0);
+  }).reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
+  // Resúmenes mensuales (cargados manualmente)
+  const fromVm=S.vm.filter(m=>m.anio===anio&&m.mes===mes).reduce((s,m)=>s+m.total,0);
+  return fromV+fromVm;
 }
 
 // ── Dashboard: Próximas tareas (7 días) ──
@@ -3871,7 +3876,7 @@ function showIADashboard(){
   const now=new Date();
   const mesActual=now.getMonth(),anioActual=now.getFullYear();
   const ventasMes=S.v.filter(x=>{const d=new Date(x.fecha+'T12:00');return d.getMonth()===mesActual&&d.getFullYear()===anioActual&&x.estado!=='cancelada';});
-  const montoMes=ventasMes.reduce((s,x)=>s+x.monto,0);
+  const montoMes=ventasMes.reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
   const pipeline=S.d.filter(x=>x.etapa!=='cierre');
   const pipelineVal=pipeline.reduce((s,x)=>s+x.valor*(x.prob/100),0);
   const licProx=S.l.filter(x=>{if(!x.limite||x.estado==='adjudicada'||x.estado==='perdida')return false;return (new Date(x.limite+'T12:00')-now)/86400000<=7;}).length;
@@ -4426,8 +4431,8 @@ function renderVentasKPIs(){
   const now=new Date();
   const mes=now.getMonth(),anio=now.getFullYear();
   const mesData=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getMonth()===mes&&d.getFullYear()===anio;});
-  const totalMes=mesData.reduce((s,x)=>s+x.monto,0);
-  const tick=S.v.length?S.v.reduce((s,x)=>s+x.monto,0)/S.v.length:0;
+  const totalMes=mesData.reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
+  const tick=S.v.length?S.v.reduce((s,x)=>s+x.monto*(x.cantidad||1),0)/S.v.length:0;
   const topCli=Object.entries(S.v.reduce((m,x)=>{m[x.cliente]=(m[x.cliente]||0)+x.monto;return m;},{})).sort((a,b)=>b[1]-a[1])[0];
   const k1=document.getElementById('v-k1');if(k1)k1.textContent='$'+fn(totalMes);
   const k1d=document.getElementById('v-k1d');if(k1d)k1d.textContent=mesData.length+' operaciones';
@@ -4471,7 +4476,7 @@ function renderVentasKPIs(){
 function iaChartVentas(){
   const now=new Date();const yr=parseInt(document.getElementById('db-year')?.value||now.getFullYear());
   const MONTHS_N=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const byMonth=MONTHS_N.map((_,i)=>S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getFullYear()===yr&&d.getMonth()===i;}).reduce((s,x)=>s+x.monto,0));
+  const byMonth=MONTHS_N.map((_,i)=>S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getFullYear()===yr&&d.getMonth()===i;}).reduce((s,x)=>s+x.monto*(x.cantidad||1),0));
   const total=byMonth.reduce((a,b)=>a+b,0);
   const maxM=byMonth.indexOf(Math.max(...byMonth));
   const minM=byMonth.filter(v=>v>0).length?byMonth.indexOf(byMonth.filter(v=>v>0).reduce((a,b)=>a<b?a:b)):0;
@@ -4490,10 +4495,14 @@ function iaChartVentas(){
 
 function iaChartForecast(){
   const yr=new Date().getFullYear();const m=new Date().getMonth();
-  const real=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getFullYear()===yr;}).reduce((s,x)=>s+x.monto,0);
+  const realAnualRaw=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getFullYear()===yr;}).reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
+  const realAnualVm=S.vm.filter(x=>x.anio===yr).reduce((s,x)=>s+x.total,0);
+  const real=realAnualRaw+realAnualVm;
   const metaAnual=Array.from({length:12},(_,i)=>getMeta(yr,i+1)).reduce((a,b)=>a+b,0);
   const metaMes=getMeta(yr,m+1);
-  const realMes=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getFullYear()===yr&&d.getMonth()===m;}).reduce((s,x)=>s+x.monto,0);
+  const realMesV=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getFullYear()===yr&&d.getMonth()===m;}).reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
+  const realMesVm=S.vm.filter(x=>x.anio===yr&&x.mes===m+1).reduce((s,x)=>s+x.total,0);
+  const realMes=realMesV+realMesVm;
   const cumpl=metaAnual>0?(real/metaAnual*100).toFixed(1):null;
   const cumplMes=metaMes>0?(realMes/metaMes*100).toFixed(1):null;
   renderIAPanel(`
@@ -4523,7 +4532,7 @@ function iaChartEstados(){
   S.v.forEach(v=>{if(estados[v.estado]!==undefined)estados[v.estado]++;});
   const total=S.v.length;
   const pctPend=total?(estados.pendiente/total*100).toFixed(0):0;
-  const montoPend=S.v.filter(x=>x.estado==='pendiente').reduce((s,x)=>s+x.monto,0);
+  const montoPend=S.v.filter(x=>x.estado==='pendiente').reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
   renderIAPanel(`
     <div style="font-family:var(--fd);font-size:.95rem;font-weight:700;margin-bottom:4px">Análisis: Estados de ventas</div>
     ${iaSection('Resumen','📊',`Cobradas: <strong style="color:var(--green)">${estados.cobrada}</strong> · Pendientes: <strong style="color:var(--orange)">${estados.pendiente}</strong> · Canceladas: <strong style="color:var(--red)">${estados.cancelada}</strong>`,'var(--blue)')}
