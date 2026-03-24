@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MediCross — Sales Intelligence</title>
+<title>MediCross</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
@@ -827,7 +827,7 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
   <div class="view" id="view-ventas">
     <div class="sh">
       <div>
-        <div class="st">Dashboard</div>
+        <div class="st">Gestión de Ventas</div>
         <div style="font-family:var(--fm);font-size:.63rem;color:var(--muted);margin-top:3px" id="ventas-resumen">─</div>
       </div>
       <div class="sa">
@@ -842,63 +842,67 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
         <button class="btn btp sm" onclick="om('mnv')">+ Nueva Venta</button>
       </div>
     </div>
-    <!-- KPIs ventas -->
-    <div class="krow" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
-      <div class="kpi"><div class="klbl">Ventas del mes</div><div class="kval" id="v-k1">$0</div><div class="kdelta" id="v-k1d">─</div></div>
-      <div class="kpi"><div class="klbl">Total registros</div><div class="kval" id="v-k2">0</div><div class="kdelta">en la base</div></div>
-      <div class="kpi"><div class="klbl">Ticket promedio</div><div class="kval" id="v-k3">$0</div><div class="kdelta">─</div></div>
-      <div class="kpi"><div class="klbl">Gross Margin prom.</div><div class="kval" id="v-k5" style="font-size:1.5rem">─</div><div class="kdelta" id="v-k5d">─</div></div>
-      <div class="kpi"><div class="klbl">Mejor cliente</div><div class="kval" style="font-size:1rem;padding-top:4px" id="v-k4">─</div><div class="kdelta" id="v-k4d">─</div></div>
+
+    <!-- Tabs -->
+    <div class="vm-tab-selector">
+      <button class="vm-tab-btn active" onclick="ventasTab('operaciones',this)">📋 Operaciones</button>
+      <button class="vm-tab-btn" onclick="ventasTab('mensual',this)">📅 Resumen Mensual</button>
     </div>
-    <div id="bulk-bar-ventas" class="bulk-bar" style="display:none">
-      <span class="bulk-bar-count"><span id="bulk-count">0</span> ventas seleccionadas</span>
-      <button class="btn bts sm" onclick="deselAllVentas()">Cancelar</button>
-      <button class="btn btd sm" onclick="bulkDelVentas()" style="background:rgba(255,92,92,.15);color:var(--red);border-color:rgba(255,92,92,.3)">🗑 Eliminar seleccionadas</button>
-    </div>
-    <div class="card">
-      <div class="cb" style="padding:0">
-        <div style="overflow-x:auto">
-          <table class="tbl">
-            <thead><tr><th><input type="checkbox" class="vchk" id="vchk-all" onclick="toggleAllVentas(this)" title="Seleccionar todo"></th><th>Fecha</th><th>Cliente</th><th>Producto/Servicio</th><th>Categoría</th><th>P. Venta Unit.</th><th>Cant.</th><th>Total</th><th>Costo Unit.</th><th>Markup %</th><th>G. Margin %</th><th>IVA</th><th>Total c/IVA</th><th>Estado</th><th>Vendedor</th><th></th></tr></thead>
-            <tbody id="vtbody"></tbody>
-          </table>
-        </div>
-        <div id="ver-mas-wrap" style="display:none;padding:12px 16px;border-top:1px solid var(--border);justify-content:center">
-          <button id="ver-mas-btn" class="btn bts sm" onclick="verMas()" style="width:100%;justify-content:center">Ver más</button>
+
+    <!-- PANEL: Operaciones (existente) -->
+    <div id="ventas-panel-operaciones">
+      <div class="krow" style="grid-template-columns:repeat(5,1fr);margin-bottom:18px">
+        <div class="kpi"><div class="klbl">Ventas del mes</div><div class="kval" id="v-k1">$0</div><div class="kdelta" id="v-k1d">─</div></div>
+        <div class="kpi"><div class="klbl">Total registros</div><div class="kval" id="v-k2">0</div><div class="kdelta">en la base</div></div>
+        <div class="kpi"><div class="klbl">Ticket promedio</div><div class="kval" id="v-k3">$0</div><div class="kdelta">─</div></div>
+        <div class="kpi"><div class="klbl">Gross Margin prom.</div><div class="kval" id="v-k5" style="font-size:1.5rem">─</div><div class="kdelta" id="v-k5d">─</div></div>
+        <div class="kpi"><div class="klbl">Mejor cliente</div><div class="kval" style="font-size:1rem;padding-top:4px" id="v-k4">─</div><div class="kdelta" id="v-k4d">─</div></div>
+      </div>
+      <div id="bulk-bar-ventas" class="bulk-bar" style="display:none">
+        <span class="bulk-bar-count"><span id="bulk-count">0</span> ventas seleccionadas</span>
+        <button class="btn bts sm" onclick="deselAllVentas()">Cancelar</button>
+        <button class="btn btd sm" onclick="bulkDelVentas()" style="background:rgba(255,92,92,.15);color:var(--red);border-color:rgba(255,92,92,.3)">🗑 Eliminar seleccionadas</button>
+      </div>
+      <div class="card">
+        <div class="cb" style="padding:0">
+          <div style="overflow-x:auto">
+            <table class="tbl">
+              <thead><tr><th><input type="checkbox" class="vchk" id="vchk-all" onclick="toggleAllVentas(this)" title="Seleccionar todo"></th><th>Fecha</th><th>Cliente</th><th>Producto/Servicio</th><th>Categoría</th><th>P. Venta Unit.</th><th>Cant.</th><th>Total</th><th>Costo Unit.</th><th>Markup %</th><th>G. Margin %</th><th>IVA</th><th>Total c/IVA</th><th>Estado</th><th>Vendedor</th><th></th></tr></thead>
+              <tbody id="vtbody"></tbody>
+            </table>
+          </div>
+          <div id="ver-mas-wrap" style="display:none;padding:12px 16px;border-top:1px solid var(--border);justify-content:center">
+            <button id="ver-mas-btn" class="btn bts sm" onclick="verMas()" style="width:100%;justify-content:center">Ver más</button>
+          </div>
         </div>
       </div>
     </div>
-    </div><!-- end panel-operaciones -->
 
-    <!-- Panel resumen mensual -->
+    <!-- PANEL: Resumen Mensual (nuevo) -->
     <div id="ventas-panel-mensual" style="display:none">
       <div class="card" style="margin-bottom:16px">
         <div class="ch">
           <div>
             <div class="ct">Ventas Totales por Mes</div>
-            <div class="cs">Cargá el total mensual — se refleja automáticamente en todos los gráficos y KPIs</div>
+            <div class="cs">Ingresá el total mensual — se refleja en Dashboard, gráficos y Forecast</div>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <select class="fsel" id="vm-year-sel" onchange="renderVentasMensuales()" style="width:auto;padding:5px 24px 5px 10px;font-size:.75rem"></select>
-            <button class="btn btp sm" onclick="vmGuardarTodo()" id="vm-save-all-btn" style="display:none">💾 Guardar todo</button>
           </div>
         </div>
         <div class="cb">
           <div style="background:rgba(232,255,71,.06);border:1px solid rgba(232,255,71,.15);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.76rem;line-height:1.6;color:var(--muted)">
-            💡 <strong style="color:var(--text)">¿Cómo funciona?</strong> Hacé click en cualquier mes para ingresar el total vendido ese mes. Estos valores se suman a las operaciones individuales que ya cargaste y se reflejan en el Dashboard, gráfico "Ventas por mes" y "Real vs Forecast".
+            💡 <strong style="color:var(--text)">¿Cómo usar?</strong> Hacé click en cualquier mes para ingresar el total vendido. Se suma a las operaciones individuales y se refleja en todos los gráficos del Dashboard y en el comparativo Real vs Forecast.
           </div>
           <div class="vm-grid" id="vm-months-grid"></div>
         </div>
       </div>
-
-      <!-- Mini resumen anual -->
       <div class="card">
-        <div class="ch"><div class="ct">Resumen anual</div><div class="cs">Total cargado vs operaciones individuales</div></div>
+        <div class="ch"><div class="ct">Resumen anual</div><div class="cs">Total mensual vs operaciones individuales</div></div>
         <div class="cb" id="vm-anual-summary"></div>
       </div>
     </div>
   </div>
-
   <!-- LICITACIONES -->
   <div class="view" id="view-licitaciones">
     <div class="sh">
