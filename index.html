@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MediCross</title>
+<title>MediCross — Sales Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
@@ -2117,16 +2117,32 @@ function updKPI(){
   document.getElementById('kmesd').textContent=mv.length+' operaciones';
 
   // Ventas mes anterior
-  const mesAnt=m===0?11:m-1;
-  const anioAnt=m===0?y-1:y;
-  const mvAnt=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return d.getMonth()===mesAnt&&d.getFullYear()===anioAnt;});
-  const totalAnt=mvAnt.reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
+  const mesAnt   = m===0 ? 11 : m-1;           // 0-indexed month
+  const anioAnt  = m===0 ? y-1 : y;
+  const mvAnt = S.v.filter(x=>{
+    if(!x.fecha||x.estado==='cancelada') return false;
+    const d=new Date(x.fecha+'T12:00');
+    return !isNaN(d) && d.getMonth()===mesAnt && d.getFullYear()===anioAnt;
+  });
+  const totalAntV  = mvAnt.reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
+  // S.vm.mes is 1-indexed, so mesAnt(0-indexed)+1
+  const totalAntVm = S.vm.filter(x=>x.anio===anioAnt && x.mes===(mesAnt+1)).reduce((s,x)=>s+x.total,0);
+  const totalAnt   = totalAntV + totalAntVm;
   const MESES_N=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  document.getElementById('ktot').textContent='$'+fn(totalAnt);
-  document.getElementById('ktot').style.color='';
+  const ktotEl=document.getElementById('ktot');
+  const ktotdEl=document.getElementById('ktotd');
+  if(ktotEl){
+    ktotEl.textContent='$'+fn(Math.round(totalAnt));
+    ktotEl.style.color = totalAnt>0?'':'var(--muted)';
+  }
   const diff=ventasMes-totalAnt;
   const pct=totalAnt>0?((diff/totalAnt)*100).toFixed(1):null;
-  document.getElementById('ktotd').textContent=MESES_N[mesAnt]+(pct!==null?' · '+(diff>=0?'↑':'↓')+Math.abs(pct)+'% vs hoy':'');
+  if(ktotdEl){
+    const arrow = diff>=0?'↑':'↓';
+    const color = diff>=0?'var(--green)':'var(--red)';
+    ktotdEl.innerHTML = MESES_N[mesAnt]
+      +(pct!==null?` · <span style="color:${color};font-weight:700">${arrow}${Math.abs(pct)}%</span>`:' · sin datos');
+  }
 
   // Velocímetro: ventas mes vs meta del forecast
   const metaMes=getMeta(y,m+1);
@@ -2847,10 +2863,9 @@ function renderDashboard(){
   // ── Chart 1: Barras mensuales ──
   if(document.getElementById('wgt-ventas-mes')&&!document.getElementById('wgt-ventas-mes').classList.contains('hidden')){
     const curM=new Date().getFullYear()===yr?new Date().getMonth():11;
-    // Show all months up to current, minimum 3
-    const showM=Math.max(curM+1,3);
-    const labels=MONTHS.slice(0,showM);
-    const vals=byMonth.slice(0,showM);
+    // Siempre mostrar los 12 meses
+    const labels=MONTHS;
+    const vals=byMonth;
     const isDark=!document.body.classList.contains('light');
     mkChart('chartVentasMes',{
       type:'bar',
