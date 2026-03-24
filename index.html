@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MediCross — Sales Intelligence</title>
+<title>Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
@@ -139,6 +139,32 @@ body.light .tbl tr.selected td{background:rgba(26,158,90,.05)}
 .rent-badge.lo{background:rgba(255,92,92,.15);color:var(--red)}
 .rent-row-top{background:rgba(232,255,71,.04)}
 body.light .rent-row-top{background:rgba(26,158,90,.05)}
+/* ── ACCIÓN RÁPIDA KANBAN ── */
+.dc{position:relative}
+.dc-actions{position:absolute;top:7px;right:7px;display:flex;gap:4px;opacity:0;transition:opacity .15s;z-index:10}
+.dc:hover .dc-actions{opacity:1}
+.dc-action-btn{width:22px;height:22px;border-radius:5px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.7rem;transition:all .15s;background:var(--surface2)}
+.dc-action-btn:hover{transform:scale(1.1)}
+.dc-action-btn.wa{background:rgba(37,211,102,.15);color:#25d366}
+.dc-action-btn.wa:hover{background:rgba(37,211,102,.3)}
+.dc-action-btn.quick{background:rgba(232,255,71,.12);color:var(--accent)}
+.dc-action-btn.quick:hover{background:rgba(232,255,71,.25)}
+.quick-menu{position:fixed;z-index:999;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:0 8px 32px rgba(0,0,0,.4);min-width:160px;display:none}
+.quick-menu.visible{display:block}
+.quick-menu-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:.75rem;transition:background .1s}
+.quick-menu-item:hover{background:var(--surface2)}
+.quick-menu-sep{height:1px;background:var(--border);margin:4px 0}
+/* ── FILTRO GLOBAL VENDEDOR ── */
+.vendor-filter{display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:.72rem;cursor:pointer;transition:border .15s}
+.vendor-filter:hover,.vendor-filter.active{border-color:var(--accent)}
+.vendor-filter select{background:none;border:none;color:var(--text);font-size:.72rem;cursor:pointer;outline:none;font-family:var(--fm);padding-right:4px}
+.vendor-filter select option{background:var(--surface);color:var(--text)}
+/* ── TAREA SUGERIDA AUTO ── */
+.auto-task-toast{position:fixed;bottom:80px;right:20px;z-index:900;background:var(--surface);border:1px solid var(--blue);border-radius:10px;padding:12px 16px;max-width:300px;box-shadow:0 8px 24px rgba(0,0,0,.3);animation:slideInRight .3s ease}
+.auto-task-toast h4{margin:0 0 4px;font-size:.8rem;color:var(--blue)}
+.auto-task-toast p{margin:0 0 8px;font-size:.72rem;color:var(--muted);line-height:1.4}
+.auto-task-toast-btns{display:flex;gap:6px}
+@keyframes slideInRight{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
 /* ── TASK CALENDAR ── */
 .tcal-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 @media(max-width:900px){.tcal-wrap{grid-template-columns:1fr}}
@@ -477,6 +503,19 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
 </style>
 </head>
 <body>
+<!-- Quick Menu flotante -->
+<div id="quick-menu" class="quick-menu">
+  <div class="quick-menu-item" onclick="quickAction('llamada')">📞 Registrar Llamada</div>
+  <div class="quick-menu-item" onclick="quickAction('email')">✉️ Registrar Email</div>
+  <div class="quick-menu-item" onclick="quickAction('reunion')">📅 Registrar Reunión</div>
+  <div class="quick-menu-item" onclick="quickAction('visita')">🚗 Registrar Visita</div>
+  <div class="quick-menu-sep"></div>
+  <div class="quick-menu-item" onclick="quickAction('tarea')">✅ Crear Tarea Rápida</div>
+</div>
+
+<!-- Auto-task toast container -->
+<div id="auto-task-container"></div>
+
 <div id="splash" style="position:fixed;inset:0;background:#0c0c0e;z-index:600;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px">
   <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;letter-spacing:-.03em;color:#e8e8ec;display:flex;align-items:center;gap:10px">
     <div style="width:10px;height:10px;background:#e8ff47;border-radius:50%;box-shadow:0 0 12px #e8ff47"></div>
@@ -557,6 +596,13 @@ body.drag-mode #drag-btn{background:var(--ad2);border-color:var(--accent);color:
     </button>
     <span class="ptitle" id="ptitle">Dashboard</span>
     <div class="tbar-r">
+      <!-- Filtro global por vendedor -->
+      <div class="vendor-filter" id="vendor-filter-wrap">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+        <select id="global-vendedor" onchange="applyVendorFilter()" title="Filtrar por vendedor">
+          <option value="">Todos los vendedores</option>
+        </select>
+      </div>
       <div class="syncbtn" id="syncind" onclick="syncNow()"><div class="sdot" id="sdot"></div><span id="stxt">Sheets</span></div>
       <div class="ibtn" title="Sincronizar" onclick="syncNow()"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 8A6 6 0 1 1 8 2M14 2v4h-4"/></svg></div>
       <div class="ibtn" title="Ver en Drive" onclick="openSheet()"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/><path d="M1 5h14M5 5v9"/></svg></div>
@@ -2109,7 +2155,7 @@ function verMas(){
 
 function updKPI(){
   const now=new Date();const m=now.getMonth();const y=now.getFullYear();
-  const mv=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;const d=new Date(x.fecha+'T12:00');return !isNaN(d)&&d.getMonth()===m&&d.getFullYear()===y;});
+  const mv=S.v.filter(x=>{if(!x.fecha||x.estado==='cancelada')return false;if(activeVendorFilter&&x.vendedor!==activeVendorFilter)return false;const d=new Date(x.fecha+'T12:00');return !isNaN(d)&&d.getMonth()===m&&d.getFullYear()===y;});
   const ventasMesV=mv.reduce((s,x)=>s+x.monto*(x.cantidad||1),0);
   const ventasMesVm=S.vm.filter(x=>x.anio===y&&x.mes===m+1).reduce((s,x)=>s+x.total,0);
   const ventasMes=ventasMesV+ventasMesVm;
@@ -2327,19 +2373,32 @@ async function saveD(){
 function renderK(){
   const bd=document.getElementById('kb');
   bd.innerHTML=STAGES.map(st=>{
-    const deals=S.d.filter(d=>d.etapa===st.id);
+    const deals=S.d.filter(d=>d.etapa===st.id&&(!activeVendorFilter||(d.responsable||d.usuario)===activeVendorFilter));
     const tot=deals.reduce((s,d)=>s+d.valor,0);
     return `<div class="kc" id="kc-${st.id}" ondragover="kdov(event,'${st.id}')" ondragleave="kdol('${st.id}')" ondrop="kdop(event,'${st.id}')">
       <div class="kch"><span class="kct" style="color:${st.col}">${st.lbl}</span><div style="display:flex;gap:8px"><span class="kcnt">${deals.length}</span><span class="kctot">$${fn(tot)}</span></div></div>
-      <div class="kcs">${deals.map(d=>`<div class="dc" draggable="true" id="dc-${d.id}" ondragstart="kds(event,'${d.id}')" onclick="openDD('${d.id}')">
-        <div style="font-size:.82rem;font-weight:500;margin-bottom:3px">${esc(d.nombre)}</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-bottom:9px">${esc(d.cliente)}</div>
-        <div style="display:flex;justify-content:space-between">
-          <span style="font-family:var(--fm);font-size:.72rem;color:var(--accent)">${d.moneda} ${fn(d.valor)}</span>
-          <span style="font-family:var(--fm);font-size:.6rem;color:var(--muted2)">${d.prob}%</span>
-        </div>
-        <div style="font-family:var(--fm);font-size:.58rem;color:var(--muted2);margin-top:5px">${esc(d.usuario||'')}</div>
-      </div>`).join('')}${!deals.length?'<div style="text-align:center;padding:20px 0;font-family:var(--fm);font-size:.62rem;color:var(--muted2)">Arrastrá aquí</div>':''}</div>
+      <div class="kcs">${deals.map(d=>{
+        const tel=d.desc?.match(/tel[eé]?fono?:?\s*([\d\s+\-()]+)/i)?.[1]?.replace(/\D/g,'')||'';
+        const waMsg=encodeURIComponent('Hola '+d.nombre+', te contacto desde MediCross respecto a '+d.cliente+'.');
+        const waUrl=tel?'https://api.whatsapp.com/send?phone=549'+tel+'&text='+waMsg:'';
+        const lastAct=d.ultimaAccion?`<span style="font-size:.58rem;color:var(--blue);font-family:var(--fm)">${d.ultimaAccion}</span>`:'';
+        return `<div class="dc" draggable="true" id="dc-${d.id}" ondragstart="kds(event,'${d.id}')" onclick="openDD('${d.id}')">
+          <div class="dc-actions" onclick="event.stopPropagation()">
+            ${waUrl?`<button class="dc-action-btn wa" onclick="window.open('${waUrl}','_blank')" title="WhatsApp">💬</button>`:''}
+            <button class="dc-action-btn quick" onclick="showQuickMenu(event,'${d.id}')" title="Acción rápida">⚡</button>
+          </div>
+          <div style="font-size:.82rem;font-weight:500;margin-bottom:3px;padding-right:52px">${esc(d.nombre)}</div>
+          <div style="font-size:.72rem;color:var(--muted);margin-bottom:9px">${esc(d.cliente)}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:var(--fm);font-size:.72rem;color:var(--accent)">${d.moneda} ${fn(d.valor)}</span>
+            <span style="font-family:var(--fm);font-size:.6rem;color:var(--muted2)">${d.prob}%</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px">
+            <span style="font-family:var(--fm);font-size:.58rem;color:var(--muted2)">${esc(d.responsable||d.usuario||'')}</span>
+            ${lastAct}
+          </div>
+        </div>`;
+      }).join('')}${!deals.length?'<div style="text-align:center;padding:20px 0;font-family:var(--fm);font-size:.62rem;color:var(--muted2)">Arrastrá aquí</div>':''}</div>
       <div class="kca"><button class="kcab" onclick="openDIS('${st.id}')">+ Agregar</button></div>
     </div>`;
   }).join('');
@@ -2356,7 +2415,15 @@ async function kdop(e,c){
   e.preventDefault();document.getElementById('kc-'+c)?.classList.remove('dov');
   if(!dragId)return;
   const d=S.d.find(x=>x.id===dragId);
-  if(d&&d.etapa!==c){d.etapa=c;renderK();await writeTab(TABS.d,DH,S.d);toast(`Movido a ${STAGES.find(s=>s.id===c)?.lbl}`,'info');}
+  if(d&&d.etapa!==c){
+    const prevEtapa=d.etapa;
+    d.etapa=c;
+    renderK();
+    writeTab(TABS.d,DH,S.d).catch(e=>console.error(e));
+    toast(`Movido a ${STAGES.find(s=>s.id===c)?.lbl}`,'info');
+    // Tarea sugerida automática al cambiar etapa
+    suggerirTareaAutoKanban(d, prevEtapa, c);
+  }
   document.getElementById('dc-'+dragId)?.classList.remove('dragging');dragId=null;
 }
 
@@ -5563,7 +5630,169 @@ async function vmBorrarMes(yr, mes){
 }
 
 
-function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();destroyDashCharts();renderDashboard();renderKpiFcChart();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();initRentYear();}
+// ═══ FILTRO GLOBAL POR VENDEDOR ═══
+let activeVendorFilter = '';
+
+function initVendorFilter(){
+  const sel = document.getElementById('global-vendedor');
+  if(!sel) return;
+  // Get vendors from existing data + defaults
+  const fromData = [...new Set([
+    ...S.v.map(x=>x.vendedor).filter(Boolean),
+    ...S.d.map(x=>x.responsable||x.usuario).filter(Boolean),
+    ...S.t.map(x=>x.asignado||x.usuario).filter(Boolean)
+  ])];
+  const defaults = ['Vendedor 1','Vendedor 2','Vendedor 3','Vendedor 4','Vendedor 5','Vendedor 6'];
+  const all = [...new Set([...fromData,...defaults])].sort();
+  const cur = sel.value || activeVendorFilter;
+  sel.innerHTML = '<option value="">Todos los vendedores</option>' +
+    all.map(v=>`<option value="${esc(v)}"${v===cur?' selected':''}>${esc(v)}</option>`).join('');
+  document.getElementById('vendor-filter-wrap')?.classList.toggle('active', !!cur);
+}
+
+function applyVendorFilter(){
+  activeVendorFilter = document.getElementById('global-vendedor')?.value || '';
+  document.getElementById('vendor-filter-wrap')?.classList.toggle('active', !!activeVendorFilter);
+  // Re-render affected modules
+  renderK();
+  renderV();
+  renderVentasKPIs();
+  updKPI();
+  renderT();
+  renderDashboard();
+}
+
+
+// ═══ ACCIÓN RÁPIDA KANBAN ═══
+let quickMenuDealId = null;
+
+function showQuickMenu(e, dealId){
+  e.stopPropagation();
+  quickMenuDealId = dealId;
+  const menu = document.getElementById('quick-menu');
+  if(!menu) return;
+  // Close if already open for same
+  if(menu.classList.contains('visible') && menu.dataset.deal === dealId){
+    closeQuickMenu(); return;
+  }
+  menu.dataset.deal = dealId;
+  // Position near click
+  const rect = e.target.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  menu.style.left = Math.min(rect.left, window.innerWidth - 180) + 'px';
+  menu.classList.add('visible');
+  // Close on outside click
+  setTimeout(()=>document.addEventListener('click', closeQuickMenu, {once:true}), 10);
+}
+
+function closeQuickMenu(){
+  document.getElementById('quick-menu')?.classList.remove('visible');
+  quickMenuDealId = null;
+}
+
+async function quickAction(tipo){
+  closeQuickMenu();
+  const id = quickMenuDealId || document.getElementById('quick-menu')?.dataset.deal;
+  if(!id) return;
+  const d = S.d.find(x=>x.id===id);
+  if(!d) return;
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  const dateStr = now.toLocaleDateString('es-AR',{day:'2-digit',month:'short'});
+
+  if(tipo === 'tarea'){
+    // Create a quick task linked to this deal
+    const row = {
+      id:uid(), titulo:`Seguimiento — ${d.nombre}`,
+      tipo:'seguimiento', prioridad:'media',
+      fecha: new Date(Date.now()+86400000).toISOString().slice(0,10),
+      hora:'09:00', asignado: d.responsable||cu?.name||'',
+      cliente: d.cliente, etapa: d.etapa,
+      notas:`Creada desde Pipeline: ${d.nombre}`,
+      done:false, usuario:cu?.name||'', creado:now.toISOString()
+    };
+    S.t.unshift(row);
+    renderT();
+    writeTab(TABS.t,TH,S.t).catch(e=>console.error(e));
+    toast(`✅ Tarea creada para ${d.nombre}`,'success');
+    return;
+  }
+
+  // Register interaction
+  const labels = {llamada:'Llamada',email:'Email',reunion:'Reunión',visita:'Visita'};
+  const emojis = {llamada:'📞',email:'✉️',reunion:'📅',visita:'🚗'};
+  const label = labels[tipo]||tipo;
+  const emoji = emojis[tipo]||'📌';
+  d.ultimaAccion = `${emoji} ${label} · ${dateStr} ${timeStr}`;
+
+  renderK();
+  writeTab(TABS.d,DH,S.d).catch(e=>console.error(e));
+  toast(`${emoji} ${label} registrada para ${d.nombre}`,'success');
+}
+
+// ═══ TAREA SUGERIDA AUTOMÁTICA AL MOVER ETAPA ═══
+const STAGE_TASKS = {
+  propuesta:   { titulo:'Seguimiento de Propuesta',    tipo:'seguimiento', dias:2, prioridad:'alta' },
+  negociacion: { titulo:'Llamar para avanzar negociación', tipo:'llamada', dias:1, prioridad:'alta' },
+  cierre:      { titulo:'Confirmar cierre y orden de compra', tipo:'seguimiento', dias:1, prioridad:'alta' },
+  lead:        { titulo:'Primer contacto con lead',    tipo:'llamada',     dias:1, prioridad:'media'},
+};
+
+function suggerirTareaAutoKanban(deal, prevEtapa, newEtapa){
+  const suggestion = STAGE_TASKS[newEtapa];
+  if(!suggestion) return;
+
+  const container = document.getElementById('auto-task-container');
+  if(!container) return;
+
+  const toastId = 'at-' + Date.now();
+  const fechaSug = new Date(Date.now() + suggestion.dias*86400000).toLocaleDateString('es-AR',{day:'2-digit',month:'short'});
+
+  container.innerHTML = `
+    <div class="auto-task-toast" id="${toastId}">
+      <h4>💡 Tarea sugerida</h4>
+      <p><strong>${suggestion.titulo}</strong><br>
+         Para: ${deal.nombre} · ${deal.cliente}<br>
+         Fecha sugerida: ${fechaSug}</p>
+      <div class="auto-task-toast-btns">
+        <button class="btn btp sm" style="font-size:.68rem;padding:4px 10px"
+          onclick="crearTareaAuto('${toastId}','${deal.id}','${newEtapa}')">✅ Crear tarea</button>
+        <button class="btn bts sm" style="font-size:.68rem;padding:4px 10px"
+          onclick="document.getElementById('${toastId}')?.remove()">Ignorar</button>
+      </div>
+    </div>`;
+
+  // Auto-dismiss after 12s
+  setTimeout(()=>document.getElementById(toastId)?.remove(), 12000);
+}
+
+async function crearTareaAuto(toastId, dealId, etapa){
+  document.getElementById(toastId)?.remove();
+  const d = S.d.find(x=>x.id===dealId);
+  if(!d) return;
+  const suggestion = STAGE_TASKS[etapa];
+  if(!suggestion) return;
+
+  const fechaTarea = new Date(Date.now()+suggestion.dias*86400000).toISOString().slice(0,10);
+  const row = {
+    id:uid(), titulo:suggestion.titulo+' — '+d.nombre,
+    tipo:suggestion.tipo, prioridad:suggestion.prioridad,
+    fecha:fechaTarea, hora:'09:00',
+    asignado:d.responsable||cu?.name||'',
+    cliente:d.cliente, etapa:d.etapa,
+    notas:'Creada automáticamente al mover a '+STAGES.find(s=>s.id===etapa)?.lbl,
+    done:false, usuario:cu?.name||'', creado:new Date().toISOString()
+  };
+  S.t.unshift(row);
+  renderT();
+  writeTab(TABS.t,TH,S.t).catch(e=>console.error(e));
+  toast(`✅ Tarea creada: ${suggestion.titulo}`,'success');
+}
+
+// ═══ INICIALIZAR FILTRO AL CARGAR ═══
+
+function renderAll(){renderV();renderVentasKPIs();updKPI();renderK();renderT();destroyDashCharts();renderDashboard();renderKpiFcChart();renderLic();renderProy();renderRel();renderProv();updLicKPIs();checkLicAlerts();renderForecast();initRentYear();initVendorFilter();}
 
 // renderAllSilent: actualiza datos sin destruir/recrear charts (sin parpadeo)
 function renderAllSilent(){
