@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MediCross Cotizaciones">
+<title>MediCross — Cotizaciones</title>
+<script>const LB='data:image/jpeg;base64,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';const LW=400;const LH=114;</script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+/* ══ VARIABLES ══════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#fff;--bg2:#f7f7f6;--bg3:#eef2f7;
+  --text:#1a1a1a;--text2:#6b6b6b;--text3:#9a9a9a;
+  --bd:rgba(0,0,0,.11);--bd2:rgba(0,0,0,.20);
+  --blue:#0e5fa8;--bbg:#e8f2fb;--btxt:#0a4278;
+  --okbg:#eaf3de;--oktxt:#3b6d11;
+  --r:8px;--rl:12px;--sb:268px;
+  --danger:#dc2626;--dangerbg:#fee2e2;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1a1e24;--bg2:#222830;--bg3:#1a2535;
+  --text:#eef2f7;--text2:#8a9bb0;--text3:#5a6b80;
+  --bd:rgba(255,255,255,.10);--bd2:rgba(255,255,255,.18);
+  --blue:#378add;--bbg:#042c53;--btxt:#b5d4f4;
+  --okbg:#173404;--oktxt:#c0dd97;
+  --dangerbg:#3d0a0a;
+}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;min-height:100vh}
+
+/* ══ LOGIN SCREEN ════════════════════════════════════════════════════════════ */
+#loginScreen{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:24px;
+  background:var(--bg3);
+}
+.login-card{
+  background:var(--bg);border:.5px solid var(--bd);border-radius:20px;
+  padding:40px 36px;width:100%;max-width:400px;
+}
+.login-logo{height:48px;object-fit:contain;display:block;margin:0 auto 28px}
+.login-title{font-size:20px;font-weight:700;color:var(--blue);text-align:center;margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--text3);text-align:center;margin-bottom:28px}
+.lf{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.lf label{font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.02em}
+.lf input{height:44px;padding:0 14px;border-radius:var(--r);border:.5px solid var(--bd2);background:var(--bg);color:var(--text);font-size:15px;font-family:inherit;outline:none;transition:border-color .15s}
+.lf input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(14,95,168,.12)}
+.btn-login{width:100%;height:48px;margin-top:8px;border-radius:var(--rl);background:var(--blue);color:#fff;border:none;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .15s,transform .1s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-login:hover{opacity:.88}.btn-login:active{transform:scale(.98)}
+.btn-login:disabled{opacity:.5;cursor:not-allowed}
+.login-err{background:var(--dangerbg);color:var(--danger);border:.5px solid rgba(220,38,38,.25);border-radius:var(--r);padding:10px 14px;font-size:13px;margin-top:12px;display:none;text-align:center}
+.login-err.show{display:block}
+.login-footer{text-align:center;font-size:11px;color:var(--text3);margin-top:20px}
+
+/* ══ APP (oculta hasta login) ═════════════════════════════════════════════ */
+#app{display:none}
+
+/* ══ TOPBAR ═════════════════════════════════════════════════════════════════ */
+.topbar{position:sticky;top:0;z-index:200;background:var(--bg);border-bottom:.5px solid var(--bd);padding:0 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;height:56px}
+.tlogo{height:32px;object-fit:contain}
+.topbar-center{display:flex;flex-direction:column;align-items:center;gap:0}
+.ttitle{font-size:12px;font-weight:700;color:var(--blue);letter-spacing:.02em}
+.tdate{font-size:10px;color:var(--text3)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.user-pill{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bbg);border:.5px solid rgba(14,95,168,.22);border-radius:99px;cursor:default}
+.user-pill-name{font-size:12px;font-weight:600;color:var(--btxt)}
+.user-pill-role{font-size:10px;color:var(--btxt);opacity:.65}
+.btn-logout{height:32px;padding:0 12px;border-radius:var(--r);background:transparent;border:.5px solid var(--bd2);color:var(--text2);font-size:12px;font-family:inherit;cursor:pointer;transition:background .12s,color .12s}
+.btn-logout:hover{background:var(--dangerbg);color:var(--danger);border-color:rgba(220,38,38,.3)}
+
+/* ══ LAYOUT ═════════════════════════════════════════════════════════════════ */
+.layout{display:block}
+.sidebar{display:none}
+.main-area{padding:16px 16px 60px}
+
+@media(min-width:1024px){
+  #app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+  .layout{display:flex;flex:1;overflow:hidden}
+  .sidebar{display:flex;flex-direction:column;width:var(--sb);flex-shrink:0;background:var(--bg2);border-right:.5px solid var(--bd);overflow-y:auto;padding:16px 14px 0}
+  .main-area{flex:1;overflow-y:auto;padding:20px 28px 60px}
+}
+
+/* ══ SECCIONES ══════════════════════════════════════════════════════════════ */
+.sl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin:20px 0 9px;display:flex;align-items:center;gap:8px}
+.sl::after{content:'';flex:1;height:.5px;background:var(--bd)}
+.sl:first-child{margin-top:0}
+@media(min-width:1024px){.sidebar .sl{font-size:9px;margin:13px 0 6px}.sidebar .sl:first-child{margin-top:0}}
+
+/* ══ BADGE NÚMERO DE COTIZACIÓN ══════════════════════════════════════════════ */
+.quote-num-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--blue);color:#fff;
+  border-radius:var(--r);padding:5px 12px;
+  font-size:12px;font-weight:700;letter-spacing:.04em;
+  margin-bottom:12px;
+}
+.quote-num-badge.saved{background:var(--okbg);color:var(--oktxt);border:.5px solid rgba(59,109,17,.3)}
+.quote-num-badge.new{background:var(--bbg);color:var(--btxt);border:.5px solid rgba(14,95,168,.3)}
+
+/* ══ CARDS ══════════════════════════════════════════════════════════════════ */
+.card{background:var(--bg2);border-radius:var(--rl);border:.5px solid var(--bd);padding:16px}
+@media(min-width:1024px){.sidebar .card{background:var(--bg);padding:11px}.main-area .card{background:var(--bg2)}}
+
+/* ══ TIPO DE CAMBIO ══════════════════════════════════════════════════════════ */
+.tcw{background:var(--bbg);border:.5px solid rgba(14,95,168,.22);border-radius:var(--rl);padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+@media(min-width:1024px){.tcw{padding:10px 12px;gap:8px}.tcsub{display:none}}
+.tcico{width:38px;height:38px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;flex-shrink:0}
+@media(min-width:1024px){.tcico{width:30px;height:30px;font-size:14px}}
+.tcinfo{flex:1;min-width:80px}.tclbl{font-size:11px;color:var(--btxt);opacity:.75;font-weight:600}
+.tcsub{font-size:10px;color:var(--btxt);margin-top:2px;opacity:.6}
+.tcrow{display:flex;align-items:center;gap:7px}
+.tcpfx{font-size:16px;font-weight:700;color:var(--btxt)}.tcsfx{font-size:11px;color:var(--btxt);opacity:.65}
+.tcinp{width:130px;height:46px;padding:0 12px;border-radius:var(--r);border:1.5px solid var(--blue);background:var(--bg);color:var(--text);font-size:21px;font-weight:700;font-family:inherit;text-align:right;outline:none;-webkit-appearance:none}
+@media(min-width:1024px){.tcinp{width:100%;height:36px;font-size:16px}}
+
+/* ══ GRIDS ══════════════════════════════════════════════════════════════════ */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:520px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:380px){.g2,.g3{grid-template-columns:1fr}}
+@media(min-width:1024px){.sidebar .g2{grid-template-columns:1fr}.sidebar .g3{grid-template-columns:1fr}}
+
+/* ══ FIELDS ═════════════════════════════════════════════════════════════════ */
+.f{display:flex;flex-direction:column;gap:5px}.f+.f{margin-top:10px}
+.f label{font-size:12px;color:var(--text2);font-weight:500}
+.f input,.f select{height:40px;padding:0 12px;border-radius:var(--r);border:.5px solid var(--bd2);background:var(--bg);color:var(--text);font-size:15px;font-family:inherit;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none;width:100%}
+.f select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23999' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.f input:focus,.f select:focus,.tcinp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(14,95,168,.12)}
+.f input[readonly]{background:var(--bg3);color:var(--text2);border-color:var(--bd);cursor:default}
+@media(min-width:1024px){.sidebar .f+.f{margin-top:7px}.sidebar .f label{font-size:11px}.sidebar .f input,.sidebar .f select{height:34px;font-size:13px}}
+.comp{background:var(--bg3)!important;color:var(--text)!important;font-weight:600!important;border-color:var(--bd)!important;cursor:default!important}
+.compacc{background:var(--bbg)!important;color:var(--btxt)!important;font-weight:700!important;border-color:rgba(14,95,168,.25)!important;cursor:default!important}
+.carsbox{background:var(--bg3);border:.5px solid rgba(14,95,168,.2);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.carslbl{font-size:11px;color:var(--btxt);opacity:.75;font-weight:500}.carsval{font-size:18px;font-weight:700;color:var(--btxt)}
+.hint{font-size:11px;color:var(--text3);margin-top:5px;font-style:italic;padding-left:2px}
+.mrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.mc{flex:1;min-width:130px;background:var(--bg2);border:.5px solid var(--bd);border-radius:var(--r);padding:12px 14px}
+.mc.ok{background:var(--okbg);border-color:rgba(59,109,17,.2)}
+.mc .ml{font-size:11px;color:var(--text2);font-weight:500;margin-bottom:4px}
+.mc.ok .ml{color:var(--oktxt);opacity:.8}
+.mc .mv{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.4px}
+.mc.ok .mv{color:var(--oktxt)}
+.rg2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:380px){.rg2{grid-template-columns:1fr}}
+.rc{background:var(--bg2);border:.5px solid var(--bd);border-radius:var(--rl);padding:14px 16px}
+.rc.acc{background:var(--bbg);border-color:rgba(14,95,168,.22)}
+.rc .rl{font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:500}
+.rc.acc .rl{color:var(--btxt);opacity:.8}
+.rc .rv{font-size:19px;font-weight:700;color:var(--text);letter-spacing:-.4px}
+.rc.acc .rv{color:var(--btxt)}
+.subcard{background:var(--blue);border-radius:var(--rl);padding:18px 20px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.subcard .sll{font-size:12px;color:rgba(255,255,255,.8);font-weight:500}
+.subcard .slv{font-size:26px;font-weight:700;color:#fff;letter-spacing:-.5px}
+.qrow{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+.qrow label{font-size:13px;color:var(--text2);font-weight:500}
+.qinp{width:110px!important;height:40px!important;padding:0 12px!important;border-radius:var(--r)!important;border:.5px solid var(--bd2)!important;background:var(--bg)!important;color:var(--text)!important;font-size:17px!important;font-weight:600!important;font-family:inherit!important;text-align:center!important;outline:none!important}
+
+/* ══ RENGLONES ══════════════════════════════════════════════════════════════ */
+.rblock{background:var(--bg2);border:.5px solid var(--bd);border-radius:var(--rl);padding:16px;margin-bottom:10px}
+@media(min-width:1024px){
+  .rblock{background:var(--bg);border-color:var(--bd2)}
+  .rblock-inner{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+  .rblock-col-left{border-right:.5px solid var(--bd);padding-right:24px}
+}
+.rblock-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:.5px solid var(--bd)}
+.rblock-num{font-size:11px;font-weight:700;color:var(--blue);letter-spacing:.06em;text-transform:uppercase}
+.rbtn-del{width:28px;height:28px;border-radius:50%;background:transparent;border:.5px solid var(--bd2);color:var(--text2);font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s}
+.rbtn-del:hover{background:var(--dangerbg);color:var(--danger);border-color:rgba(220,38,38,.3)}
+.btn-add{width:100%;height:44px;border-radius:var(--rl);background:transparent;border:1.5px dashed rgba(14,95,168,.35);color:var(--blue);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s,border-color .15s;margin-top:4px}
+.btn-add:hover{background:var(--bbg);border-color:var(--blue)}
+.sec-mini{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--blue);margin-bottom:8px}
+.hr{height:.5px;background:var(--bd);margin:14px 0}
+
+/* ══ BOTONES ════════════════════════════════════════════════════════════════ */
+.btnpdf{width:100%;height:52px;border-radius:var(--rl);background:var(--blue);color:#fff;border:none;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:opacity .15s,transform .1s}
+.btnpdf:hover{opacity:.88}.btnpdf:active{transform:scale(.98)}
+.btnpdf:disabled{opacity:.45;cursor:not-allowed}
+.btnsave{width:100%;height:44px;margin-top:8px;border-radius:var(--rl);background:var(--okbg);color:var(--oktxt);border:.5px solid rgba(59,109,17,.3);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.btnsave:hover{opacity:.82}
+.btnsave:disabled{opacity:.45;cursor:not-allowed}
+.btnrst{width:100%;margin-top:8px;height:40px;border-radius:var(--rl);background:transparent;color:var(--text2);border:.5px solid var(--bd2);font-size:13px;font-family:inherit;cursor:pointer;transition:background .15s}
+.btnrst:hover{background:var(--bg2)}
+@media(min-width:1024px){
+  .btn-actions{position:sticky;bottom:0;background:var(--bg2);padding:12px 0 14px;margin-top:auto;border-top:.5px solid var(--bd)}
+  .btnpdf{height:42px;font-size:13px}
+  .btnsave{height:36px;font-size:13px}
+  .btnrst{height:34px;font-size:12px}
+}
+
+/* ══ PREVISUALIZACIÓN ══════════════════════════════════════════════════════ */
+.prev-wrap{overflow-x:auto;border-radius:var(--rl);border:.5px solid var(--bd)}
+.prev-table{width:100%;border-collapse:collapse;font-size:12px;min-width:580px}
+.prev-table th{background:var(--blue);color:#fff;padding:8px 10px;text-align:left;font-weight:600;font-size:11px;white-space:nowrap}
+.prev-table td{padding:7px 10px;border-bottom:.5px solid var(--bd);color:var(--text);white-space:nowrap}
+.prev-table tr:last-child td{border-bottom:none}
+.prev-table tr:nth-child(even) td{background:var(--bg3)}
+.prev-table .nr{text-align:right}.prev-table .nb{text-align:right;font-weight:700;color:var(--btxt)}
+.prev-foot{background:var(--blue);color:#fff;border-radius:0 0 var(--rl) var(--rl);padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.prev-foot .pfl{font-size:12px;opacity:.85}.prev-foot .pfv{font-size:20px;font-weight:700}
+
+/* ══ HISTORIAL / BUSCADOR ═══════════════════════════════════════════════════ */
+#historialPanel{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.45);align-items:flex-start;justify-content:center;padding:20px}
+#historialPanel.open{display:flex}
+.hist-modal{background:var(--bg);border-radius:20px;width:100%;max-width:800px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;border:.5px solid var(--bd)}
+.hist-header{padding:18px 20px;border-bottom:.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hist-title{font-size:16px;font-weight:700;color:var(--text)}
+.hist-close{width:32px;height:32px;border-radius:50%;background:var(--bg2);border:.5px solid var(--bd);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text2)}
+.hist-close:hover{background:var(--dangerbg);color:var(--danger)}
+.hist-search{padding:14px 16px;border-bottom:.5px solid var(--bd);flex-shrink:0}
+.hist-search input{width:100%;height:42px;padding:0 14px;border-radius:var(--rl);border:.5px solid var(--bd2);background:var(--bg2);color:var(--text);font-size:14px;font-family:inherit;outline:none}
+.hist-search input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(14,95,168,.10)}
+.hist-list{flex:1;overflow-y:auto;padding:10px}
+.hist-empty{text-align:center;color:var(--text3);font-size:13px;padding:32px}
+.hist-item{background:var(--bg2);border:.5px solid var(--bd);border-radius:var(--rl);padding:13px 15px;margin-bottom:8px;cursor:pointer;transition:border-color .12s,background .12s}
+.hist-item:hover{border-color:var(--blue);background:var(--bbg)}
+.hist-item-top{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.hist-num{font-size:13px;font-weight:700;color:var(--blue);font-family:monospace}
+.hist-date{font-size:11px;color:var(--text3);margin-left:auto}
+.hist-vendedor{font-size:11px;background:var(--bbg);color:var(--btxt);padding:2px 8px;border-radius:99px;font-weight:600}
+.hist-descr{font-size:12px;color:var(--text2)}
+.hist-total{font-size:12px;font-weight:700;color:var(--btxt);margin-top:2px}
+.hist-actions{display:flex;gap:6px;margin-top:8px}
+.hist-btn{height:30px;padding:0 12px;border-radius:var(--r);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;border:.5px solid var(--bd2);background:var(--bg);color:var(--text2);transition:background .12s}
+.hist-btn.primary{background:var(--blue);color:#fff;border-color:transparent}
+.hist-btn.primary:hover{opacity:.88}
+.hist-btn:hover{background:var(--bg3)}
+.hist-loading{text-align:center;color:var(--text3);font-size:13px;padding:24px}
+
+/* ══ TOAST ══════════════════════════════════════════════════════════════════ */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:500;z-index:1000;transition:transform .25s ease;pointer-events:none;white-space:nowrap}
+.toast.ok{background:#166534}
+.toast.err{background:#991b1b}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ══ SPINNER ════════════════════════════════════════════════════════════════ */
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ══ DESKTOP BADGE ══════════════════════════════════════════════════════════ */
+.desk-badge{display:none}
+@media(min-width:1024px){.desk-badge{display:inline-flex;align-items:center;gap:5px;background:var(--bbg);color:var(--btxt);border-radius:99px;padding:3px 10px;font-size:10px;font-weight:600;margin-bottom:10px}}
+</style>
+</head>
+<body>
+
+<!-- ══ PANTALLA DE LOGIN ════════════════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <img id="loginLogo" class="login-logo" alt="MediCross">
+    <div class="login-title">MediCross Cotizaciones</div>
+    <div class="login-sub">Iniciá sesión para continuar</div>
+    <div class="lf">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="tu@email.com" autocomplete="email" inputmode="email">
+    </div>
+    <div class="lf">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-login" id="btnLogin" onclick="doLogin()">
+      <span id="loginBtnText">Ingresar</span>
+    </button>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-footer">MediCross — Droguería Medi-Cross S.R.L.</div>
+  </div>
+</div>
+
+<!-- ══ APP PRINCIPAL ════════════════════════════════════════════════════════ -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <img id="appLogo" class="tlogo" alt="MediCross">
+    <div class="topbar-center">
+      <div class="ttitle">Análisis de Precios</div>
+      <div class="tdate" id="fechaHdr"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-pill" id="userPill">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="4" r="2.5"/><path d="M1 11c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>
+        <span class="user-pill-name" id="userPillName">—</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- ══ SIDEBAR DESKTOP ══════════════════════════════════════════════════ -->
+    <aside class="sidebar">
+      <div class="desk-badge">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x=".5" y="1.5" width="11" height="7" rx="1"/><path d="M3 10.5h6M6 8.5v2"/></svg>
+        Modo escritorio
+      </div>
+
+      <div class="sl">Vendedor</div>
+      <div class="card">
+        <div class="f"><label>Cotización realizada por</label>
+          <select id="vendedor" onchange="recalcAll()">
+            <option value="">— Seleccionar —</option>
+            <option value="Monica Somosa">Monica Somosa</option>
+            <option value="Daniel Etchudez">Daniel Etchudez</option>
+            <option value="Soledad Cantero">Soledad Cantero</option>
+            <option value="Otros">Otros</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sl">Cotización del dólar</div>
+      <div class="tcw">
+        <div class="tcico">$</div>
+        <div class="tcinfo"><div class="tclbl">USD → ARS</div><div class="tcsub">Actualizá cada día</div></div>
+        <div class="tcrow"><span class="tcpfx">$</span><input class="tcinp" type="number" id="tc" value="1425" step="1" inputmode="numeric" oninput="recalcAll()"><span class="tcsfx">ARS/USD</span></div>
+      </div>
+
+      <div class="sl">Costo del producto</div>
+      <div class="card">
+        <div class="f"><label>Moneda de costo</label>
+          <select id="moneda" onchange="recalcAll()"><option value="USD">USD — Dólar</option><option value="ARS">ARS — Pesos</option></select>
+        </div>
+        <div class="f"><label>% IVA</label>
+          <select id="iva" onchange="recalcAll()"><option value="10.5">10,5 %</option><option value="21">21 %</option></select>
+        </div>
+        <div class="f"><label>Multiplicador (×)</label>
+          <input type="text" id="markup" value="2" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" oninput="normDec(this);recalcAll()">
+        </div>
+        <div class="hint" id="mkHint"></div>
+      </div>
+
+      <div class="sl">Datos de la licitación</div>
+      <div class="card">
+        <div class="f"><label>Fecha apertura</label><input type="date" id="fechaApert" oninput="recalcAll()"></div>
+        <div class="f"><label>N° licitación</label><input type="text" id="nroLicit" placeholder="Ej: 001/2026" oninput="recalcAll()"></div>
+        <div class="f"><label>Institución / Hospital</label><input type="text" id="institucion" placeholder="Nombre" oninput="recalcAll()"></div>
+        <div class="f"><label>Plazo de venta</label><input type="text" id="plazoVenta" placeholder="Ej: 30 días" oninput="recalcAll()"></div>
+        <div class="f"><label>Mantenimiento oferta</label><input type="text" id="mantOferta" placeholder="Ej: 60 días" oninput="recalcAll()"></div>
+        <div class="f"><label>Forma de cobro</label><input type="text" id="formaCobro" placeholder="Ej: Cheque" oninput="recalcAll()"></div>
+      </div>
+
+      <div class="btn-actions">
+        <button class="btnsave" id="btnSaveDesk" onclick="saveCotizacion()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 7l3.5 3.5L12 3"/></svg>
+          Guardar cotización
+        </button>
+        <button class="btnpdf" id="btnPdfDesk" onclick="exportPDF()">
+          <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v10M5 8l4 4 4-4M3 14h12"/></svg>
+          Exportar PDF
+        </button>
+        <button class="btnrst" onclick="newCotizacion()">Nueva cotización</button>
+        <button class="btnrst" style="margin-top:4px" onclick="openHistorial()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline;vertical-align:middle;margin-right:4px"><circle cx="6" cy="6" r="5"/><path d="M6 3v3l2 2"/></svg>
+          Ver historial
+        </button>
+      </div>
+    </aside>
+
+    <!-- ══ ÁREA PRINCIPAL ════════════════════════════════════════════════════ -->
+    <main class="main-area">
+
+      <!-- Badge número de cotización -->
+      <div id="quoteNumBadge" class="quote-num-badge new" style="display:none">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x=".5" y=".5" width="11" height="11" rx="2"/><path d="M4 6h4M6 4v4"/></svg>
+        <span id="quoteNumText">—</span>
+      </div>
+
+      <!-- MOBILE ONLY: parámetros globales -->
+      <div id="mobileParams">
+        <div class="sl">Vendedor</div>
+        <div class="card">
+          <div class="f"><label>Cotización realizada por</label>
+            <select id="vendedor_m" onchange="syncMobile('vendedor','vendedor_m');recalcAll()">
+              <option value="">— Seleccionar —</option>
+              <option value="Monica Somosa">Monica Somosa</option>
+              <option value="Daniel Etchudez">Daniel Etchudez</option>
+              <option value="Soledad Cantero">Soledad Cantero</option>
+              <option value="Otros">Otros</option>
+            </select>
+          </div>
+        </div>
+        <div class="sl">Cotización del dólar</div>
+        <div class="tcw">
+          <div class="tcico">$</div>
+          <div class="tcinfo"><div class="tclbl">Valor del dólar hoy (USD → ARS)</div><div class="tcsub">Actualizá antes de cotizar</div></div>
+          <div class="tcrow"><span class="tcpfx">$</span><input class="tcinp" type="number" id="tc_m" value="1425" step="1" inputmode="numeric" oninput="syncMobile('tc','tc_m');recalcAll()"><span class="tcsfx">ARS/USD</span></div>
+        </div>
+        <div class="sl">Costo del producto</div>
+        <div class="card">
+          <div class="g3">
+            <div class="f"><label>Moneda</label>
+              <select id="moneda_m" onchange="syncMobile('moneda','moneda_m');recalcAll()"><option value="USD">USD</option><option value="ARS">ARS</option></select>
+            </div>
+            <div class="f"><label>% IVA</label>
+              <select id="iva_m" onchange="syncMobile('iva','iva_m');recalcAll()"><option value="10.5">10,5 %</option><option value="21">21 %</option></select>
+            </div>
+            <div class="f"><label>Multiplicador (×)</label>
+              <input type="text" id="markup_m" value="2" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" oninput="normDec(this);syncMobile('markup','markup_m');recalcAll()">
+            </div>
+          </div>
+          <div class="hint" id="mkHint_m"></div>
+        </div>
+        <div class="sl">Datos de la licitación</div>
+        <div class="card">
+          <div class="g2">
+            <div class="f"><label>Fecha apertura</label><input type="date" id="fechaApert_m" oninput="syncMobile('fechaApert','fechaApert_m');recalcAll()"></div>
+            <div class="f"><label>N° licitación</label><input type="text" id="nroLicit_m" placeholder="Ej: 001/2026" oninput="syncMobile('nroLicit','nroLicit_m');recalcAll()"></div>
+          </div>
+          <div class="f" style="margin-top:10px"><label>Institución / Hospital</label><input type="text" id="institucion_m" placeholder="Nombre" oninput="syncMobile('institucion','institucion_m');recalcAll()"></div>
+          <div class="g3" style="margin-top:10px">
+            <div class="f"><label>Plazo venta</label><input type="text" id="plazoVenta_m" placeholder="Ej: 30 días" oninput="syncMobile('plazoVenta','plazoVenta_m');recalcAll()"></div>
+            <div class="f"><label>Mant. oferta</label><input type="text" id="mantOferta_m" placeholder="Ej: 60 días" oninput="syncMobile('mantOferta','mantOferta_m');recalcAll()"></div>
+            <div class="f"><label>Forma cobro</label><input type="text" id="formaCobro_m" placeholder="Ej: Cheque" oninput="syncMobile('formaCobro','formaCobro_m');recalcAll()"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RENGLONES -->
+      <div class="sl">Identificación del producto — Renglones</div>
+      <div id="renglonesWrap"></div>
+      <button class="btn-add" onclick="addRenglon()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+        Agregar renglón
+      </button>
+
+      <!-- PREVISUALIZACIÓN -->
+      <div class="sl" style="margin-top:28px">Previsualización</div>
+      <div id="prevWrap"></div>
+
+      <!-- BOTONES MOBILE -->
+      <div id="mobileBtns">
+        <button class="btnsave" style="margin-top:20px;width:100%" id="btnSaveMob" onclick="saveCotizacion()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 7l3.5 3.5L12 3"/></svg>
+          Guardar cotización
+        </button>
+        <button class="btnpdf" id="btnPdfMob" onclick="exportPDF()">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v10M5 8l4 4 4-4M3 14h12"/></svg>
+          Exportar PDF
+        </button>
+        <button class="btnrst" onclick="openHistorial()">Ver historial de cotizaciones</button>
+        <button class="btnrst" style="margin-top:4px" onclick="newCotizacion()">Nueva cotización</button>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══ PANEL HISTORIAL ══════════════════════════════════════════════════════ -->
+<div id="historialPanel">
+  <div class="hist-modal">
+    <div class="hist-header">
+      <span class="hist-title">Historial de cotizaciones</span>
+      <button class="hist-close" onclick="closeHistorial()">×</button>
+    </div>
+    <div class="hist-search">
+      <input type="text" id="histSearch" placeholder="Buscar por N° cotización, renglón, institución, empresa..." oninput="filterHistorial(this.value)">
+    </div>
+    <div class="hist-list" id="histList">
+      <div class="hist-empty">Cargando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// === CONFIGURACIÓN FIREBASE ===
+const firebaseConfig = {
+  apiKey: "AIzaSyCnvA5mnKFRmsRdisdXfUaQ2511Baor0Y",
+  authDomain: "medicross-cotizaciones-dac6e.firebaseapp.com",
+  projectId: "medicross-cotizaciones-dac6e",
+  storageBucket: "medicross-cotizaciones-dac6e.firebasestorage.app",
+  messagingSenderId: "794058220891",
+  appId: "1:794058220891:web:11817b13f41f056687e67e"
+};
+
+firebase.initializeApp(firebaseConfig);
+var auth = firebase.auth();
+var db = firebase.firestore();
+// ══ ESTADO GLOBAL ════════════════════════════════════════════════════════════
+var currentUser  = null;   // usuario Firebase logueado
+var currentDocId = null;   // ID Firestore del doc que estamos editando (null = nueva)
+var currentQuoteNum = null;// número correlativo asignado (null = aún no guardado)
+var renglones = [], nextId = 1;
+var isDesktop = window.innerWidth >= 1024;
+var allCotizaciones = []; // cache del historial para búsqueda local
+
+// ══ LOGO ════════════════════════════════════════════════════════════════════
+document.getElementById('loginLogo').src = LB;
+document.getElementById('appLogo').src   = LB;
+document.getElementById('fechaHdr').textContent =
+  new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+
+// ══ AUTENTICACIÓN ════════════════════════════════════════════════════════════
+auth.onAuthStateChanged(function(user){
+  if(user){
+    currentUser = user;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = '';
+    document.getElementById('userPillName').textContent = user.displayName || user.email.split('@')[0];
+    applyLayout();
+    if(renglones.length === 0) addRenglon();
+    presetVendedorFromUser(user);
+  } else {
+    currentUser = null;
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
+
+function presetVendedorFromUser(user){
+  // Preselecciona el vendedor según el email del usuario logueado
+  var name = user.displayName || '';
+  var sel  = document.getElementById('vendedor');
+  var selM = document.getElementById('vendedor_m');
+  var opts = ['Monica Somosa','Daniel Etchudez','Soledad Cantero'];
+  var match = opts.find(function(o){ return name && o.toLowerCase().indexOf(name.split(' ')[0].toLowerCase()) >= 0; });
+  if(match){
+    if(sel) sel.value = match;
+    if(selM) selM.value = match;
+  }
+}
+
+function doLogin(){
+  var email = document.getElementById('loginEmail').value.trim();
+  var pass  = document.getElementById('loginPass').value;
+  var btn   = document.getElementById('btnLogin');
+  var errEl = document.getElementById('loginErr');
+  var txt   = document.getElementById('loginBtnText');
+
+  if(!email || !pass){ showLoginErr('Ingresá email y contraseña.'); return; }
+  btn.disabled = true;
+  txt.innerHTML = '<span class="spin"></span>';
+  errEl.classList.remove('show');
+
+  auth.signInWithEmailAndPassword(email, pass)
+    .catch(function(e){
+      btn.disabled = false;
+      txt.textContent = 'Ingresar';
+      var msg = 'Email o contraseña incorrectos.';
+      if(e.code === 'auth/too-many-requests') msg = 'Demasiados intentos. Intentá más tarde.';
+      if(e.code === 'auth/user-disabled')     msg = 'Cuenta deshabilitada. Contactá al administrador.';
+      showLoginErr(msg);
+    });
+}
+document.getElementById('loginPass').addEventListener('keydown', function(e){
+  if(e.key === 'Enter') doLogin();
+});
+function showLoginErr(msg){
+  var el = document.getElementById('loginErr');
+  el.textContent = msg; el.classList.add('show');
+}
+function doLogout(){
+  if(!confirm('¿Salir de la aplicación?')) return;
+  auth.signOut();
+}
+
+// ══ LAYOUT ═══════════════════════════════════════════════════════════════════
+function applyLayout(){
+  isDesktop = window.innerWidth >= 1024;
+  var mp = document.getElementById('mobileParams');
+  var mb = document.getElementById('mobileBtns');
+  if(isDesktop){
+    if(mp) mp.style.display = 'none';
+    if(mb) mb.style.display = 'none';
+  } else {
+    if(mp) mp.style.display = '';
+    if(mb) mb.style.display = '';
+  }
+}
+applyLayout();
+window.addEventListener('resize', applyLayout);
+
+function syncMobile(destId, srcId){
+  var src = document.getElementById(srcId), dest = document.getElementById(destId);
+  if(src && dest) dest.value = src.value;
+}
+
+// ══ HELPERS ══════════════════════════════════════════════════════════════════
+var $ = function(id){ return document.getElementById(id); };
+var num = function(id){ var el=$(id); return el ? parseFloat(el.value)||0 : 0; };
+var fA = function(n){ return '$ '+n.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+var fU = function(n){ return 'U$D '+n.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+var fP = function(n){ return n.toFixed(1)+'%'; };
+
+function gv(id){
+  if(!isDesktop){ var mob=$(id+'_m'); if(mob) return mob.value; }
+  var el=$(id); return el ? el.value : '';
+}
+function gnv(id){ return parseFloat(gv(id))||0; }
+
+function normDec(el){
+  var v = el.value;
+  if(v.indexOf(',') >= 0) el.value = v.replace(',','.');
+}
+function applyNormDec(id){
+  var el = $('f_costo_'+id);
+  if(el) el.addEventListener('input', function(){ normDec(this); }, {capture:true});
+}
+
+// ══ CÁLCULO ══════════════════════════════════════════════════════════════════
+function calcR(r){
+  var tc=gnv('tc'), iva=gnv('iva')/100, mult=gnv('markup'), mon=gv('moneda');
+  var cr=parseFloat(r.costo)||0, ok=cr>0&&tc>0;
+  var cUSD=mon==='USD'?cr:cr/tc, cARS=cUSD*tc;
+  var cIvaARS=cARS*(1+iva), cIvaUSD=cUSD*(1+iva);
+  var pvARSs=cARS*mult, pvARSc=pvARSs*(1+iva);
+  var pvUSDs=pvARSs/tc, pvUSDc=pvARSc/tc;
+  var cant=parseInt(r.cant)||1, sub=pvARSc*cant;
+  var mkPct=pvARSs>0?(pvARSs-cARS)/cARS*100:0;
+  var gm=pvARSs>0?(pvARSs-cARS)/pvARSs*100:0;
+  return {ok:ok,cUSD:cUSD,cARS:cARS,cIvaARS:cIvaARS,cIvaUSD:cIvaUSD,
+          pvARSs:pvARSs,pvARSc:pvARSc,pvUSDs:pvUSDs,pvUSDc:pvUSDc,
+          sub:sub,mkPct:mkPct,gm:gm,cant:cant};
+}
+
+// ══ RENGLONES ════════════════════════════════════════════════════════════════
+function addRenglon(){
+  var id = nextId++;
+  var r = {id:id,empresa:'',renglon:'',subitem:'',codigo:'',marca:'',descr:'',costo:'',cant:1};
+  renglones.push(r);
+  createRenglonDOM(r, renglones.length-1);
+  updateResults(id);
+  updatePreview();
+  updateRenglonHeaders();
+}
+function removeRenglon(id){
+  if(renglones.length<=1){alert('Debe haber al menos un rengl\xf3n.');return;}
+  renglones=renglones.filter(function(r){return r.id!==id;});
+  var el=$('rb_'+id); if(el) el.parentNode.removeChild(el);
+  updatePreview(); updateRenglonHeaders();
+}
+function createRenglonDOM(r, idx){
+  var wrap=$('renglonesWrap');
+  var div=document.createElement('div');
+  div.className='rblock'; div.id='rb_'+r.id;
+  div.innerHTML=
+    '<div class="rblock-hdr">'+
+      '<span class="rblock-num" id="rbnum_'+r.id+'">Rengl\xf3n '+(idx+1)+'</span>'+
+      '<button class="rbtn-del" onclick="removeRenglon('+r.id+')">\xd7</button>'+
+    '</div>'+
+    '<div class="rblock-inner">'+
+      '<div class="rblock-col-left">'+
+        '<div class="sec-mini">Identificaci\xf3n del producto</div>'+
+        '<div class="g3">'+
+          '<div class="f"><label>Empresa / Proveedor</label><input type="text" placeholder="Proveedor" id="f_empresa_'+r.id+'"></div>'+
+          '<div class="f"><label>Rengl\xf3n</label><input type="number" placeholder="N\xba" id="f_renglon_'+r.id+'" inputmode="numeric"></div>'+
+          '<div class="f"><label>Sub \xedtem</label><input type="number" placeholder="N\xba" id="f_subitem_'+r.id+'" inputmode="numeric"></div>'+
+        '</div>'+
+        '<div class="g2" style="margin-top:10px">'+
+          '<div class="f"><label>C\xf3digo</label><input type="text" placeholder="SKU" id="f_codigo_'+r.id+'"></div>'+
+          '<div class="f"><label>Marca</label><input type="text" placeholder="Marca" id="f_marca_'+r.id+'"></div>'+
+        '</div>'+
+        '<div class="f" style="margin-top:10px"><label>Descripci\xf3n</label><input type="text" placeholder="Descripci\xf3n completa" id="f_descr_'+r.id+'"></div>'+
+        '<div class="hr"></div>'+
+        '<div class="sec-mini">Costo del producto</div>'+
+        '<div class="f" style="max-width:220px"><label>Costo unitario</label><input type="text" placeholder="0,00" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" id="f_costo_'+r.id+'"></div>'+
+        '<div style="margin-top:12px">'+
+          '<div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Costo en pesos argentinos</div>'+
+          '<div class="carsbox"><span class="carslbl" id="r_carsF_'+r.id+'">Ingres\xe1 el costo unitario</span><span class="carsval" id="r_carsV_'+r.id+'">\u2014</span></div>'+
+          '<div class="hint" id="r_carsH_'+r.id+'"></div>'+
+        '</div>'+
+        '<div class="g2" style="margin-top:10px">'+
+          '<div class="f"><label>Costo c/IVA (ARS)</label><input type="text" readonly class="compacc" id="r_cIvaARS_'+r.id+'"></div>'+
+          '<div class="f"><label>Costo c/IVA (USD)</label><input type="text" readonly class="comp" id="r_cIvaUSD_'+r.id+'"></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="rblock-col-right">'+
+        '<div class="sec-mini">Markup y margen</div>'+
+        '<div class="mrow">'+
+          '<div class="mc"><div class="ml">Markup % <span style="font-size:10px;opacity:.55">(base costo)</span></div><div class="mv" id="r_mk_'+r.id+'">\u2014</div></div>'+
+          '<div class="mc ok"><div class="ml">Gross Margin % <span style="font-size:10px;opacity:.55">(base venta)</span></div><div class="mv" id="r_gm_'+r.id+'">\u2014</div></div>'+
+        '</div>'+
+        '<div class="hr"></div>'+
+        '<div class="sec-mini">Precios de venta</div>'+
+        '<div class="rg2">'+
+          '<div class="rc acc"><div class="rl">Precio venta U$D s/IVA</div><div class="rv" id="r_pvUSDs_'+r.id+'">\u2014</div></div>'+
+          '<div class="rc acc"><div class="rl">Precio venta U$D c/IVA</div><div class="rv" id="r_pvUSDc_'+r.id+'">\u2014</div></div>'+
+          '<div class="rc"><div class="rl">Precio venta ARS s/IVA</div><div class="rv" id="r_pvARSs_'+r.id+'">\u2014</div></div>'+
+          '<div class="rc"><div class="rl">Precio venta ARS c/IVA</div><div class="rv" id="r_pvARSc_'+r.id+'">\u2014</div></div>'+
+        '</div>'+
+        '<div class="hr"></div>'+
+        '<div class="sec-mini">Cantidad de unidades</div>'+
+        '<div class="qrow"><label>Cantidad</label>'+
+          '<input class="qinp" type="number" placeholder="1" min="1" step="1" inputmode="numeric" value="1" id="f_cant_'+r.id+'">'+
+        '</div>'+
+        '<div class="subcard">'+
+          '<div><div class="sll">Precio subtotal c/IVA</div>'+
+            '<div class="sll" style="opacity:.5;font-size:11px;margin-top:2px" id="r_subDet_'+r.id+'"></div></div>'+
+          '<div class="slv" id="r_sub_'+r.id+'">\u2014</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  wrap.appendChild(div);
+  var fields=['empresa','renglon','subitem','codigo','marca','descr','costo','cant'];
+  fields.forEach(function(f){
+    var el=$('f_'+f+'_'+r.id);
+    if(el) el.addEventListener('input',function(){r[f]=this.value;updateResults(r.id);updatePreview();});
+  });
+  applyNormDec(r.id);
+}
+
+function updateResults(id){
+  var r=renglones.find(function(x){return x.id===id;}); if(!r) return;
+  var c=calcR(r), mon=gv('moneda');
+  if(c.ok){
+    var cr=parseFloat(r.costo)||0;
+    $('r_carsF_'+id).textContent=mon==='USD'
+      ?'U$D '+cr.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})+' \xd7 $ '+gnv('tc').toLocaleString('es-AR')
+      :'Costo ARS ingresado directamente';
+    $('r_carsV_'+id).textContent=fA(c.cARS);
+    $('r_carsH_'+id).textContent='+ IVA '+gnv('iva')+'% = '+fA(c.cIvaARS);
+  } else {
+    $('r_carsF_'+id).textContent='Ingres\xe1 el costo unitario';
+    $('r_carsV_'+id).textContent='\u2014'; $('r_carsH_'+id).textContent='';
+  }
+  $('r_cIvaARS_'+id).value=c.ok?fA(c.cIvaARS):''; $('r_cIvaUSD_'+id).value=c.ok?fU(c.cIvaUSD):'';
+  $('r_mk_'+id).textContent=c.ok?fP(c.mkPct):'\u2014'; $('r_gm_'+id).textContent=c.ok?fP(c.gm):'\u2014';
+  $('r_pvUSDs_'+id).textContent=c.ok?fU(c.pvUSDs):'\u2014'; $('r_pvUSDc_'+id).textContent=c.ok?fU(c.pvUSDc):'\u2014';
+  $('r_pvARSs_'+id).textContent=c.ok?fA(c.pvARSs):'\u2014'; $('r_pvARSc_'+id).textContent=c.ok?fA(c.pvARSc):'\u2014';
+  $('r_sub_'+id).textContent=c.ok?fA(c.sub):'\u2014';
+  $('r_subDet_'+id).textContent=c.ok?fA(c.pvARSc)+' \xd7 '+c.cant+' u.':'';
+}
+function recalcAll(){
+  renglones.forEach(function(r){updateResults(r.id);});
+  updatePreview();
+  var mult=gnv('markup');
+  if(mult>0){
+    var mk=(mult-1)*100, gm2=(mult-1)/mult*100;
+    var hint='Multiplicador \xd7'+mult+' \u2192 Markup '+mk.toFixed(1)+'% sobre costo \u00b7 Gross Margin '+gm2.toFixed(1)+'% sobre venta';
+    if($('mkHint')) $('mkHint').textContent=hint;
+    if($('mkHint_m')) $('mkHint_m').textContent=hint;
+  }
+}
+function updateRenglonHeaders(){
+  renglones.forEach(function(r,idx){
+    var el=$('rbnum_'+r.id); if(el) el.textContent='Rengl\xf3n '+(idx+1);
+  });
+}
+function updatePreview(){
+  var cont=$('prevWrap'); if(!cont) return;
+  if(renglones.length===0){cont.innerHTML='';return;}
+  var totalSub=0, rows='';
+  renglones.forEach(function(r,idx){
+    var c=calcR(r); totalSub+=c.sub;
+    var desc=(r.descr||r.codigo||'-').substring(0,28)+(r.descr&&r.descr.length>28?'\u2026':'');
+    rows+='<tr><td style="color:var(--btxt);font-weight:600">'+(idx+1)+'</td>'+
+      '<td>'+(r.empresa||'-').substring(0,12)+'</td>'+
+      '<td>'+(r.renglon||'-')+(r.subitem?'/'+r.subitem:'')+'</td>'+
+      '<td>'+desc+'</td><td>'+(r.marca||'-').substring(0,10)+'</td>'+
+      '<td class="nr">'+(c.ok?fU(c.pvUSDs):'-')+'</td>'+
+      '<td class="nr">'+(c.ok?fA(c.pvARSs):'-')+'</td>'+
+      '<td class="nb">'+(c.ok?fA(c.pvARSc):'-')+'</td>'+
+      '<td class="nr">'+(c.ok?String(c.cant):'-')+'</td>'+
+      '<td class="nb">'+(c.ok?fA(c.sub):'-')+'</td></tr>';
+  });
+  cont.innerHTML='<div class="prev-wrap">'+
+    '<table class="prev-table"><thead><tr><th>#</th><th>Empresa</th><th>Rengl.</th><th>Descripci\xf3n</th><th>Marca</th>'+
+    '<th>PV USD s/IVA</th><th>PV ARS s/IVA</th><th>PV ARS c/IVA</th><th>Cant.</th><th>Subtotal</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody></table>'+
+    '<div class="prev-foot"><span class="pfl">TOTAL GENERAL c/IVA (ARS)</span><span class="pfv">'+fA(totalSub)+'</span></div></div>';
+}
+
+// ══ FIREBASE: GUARDAR COTIZACIÓN ══════════════════════════════════════════════
+function buildSnapshot(){
+  // Construye el objeto a guardar en Firebase
+  var totalGeneral = renglones.reduce(function(s,r){return s+calcR(r).sub;},0);
+  return {
+    vendedor: gv('vendedor'),
+    tc: gnv('tc'), moneda: gv('moneda'), iva: gnv('iva'), markup: gnv('markup'),
+    fechaApert: gv('fechaApert'), nroLicit: gv('nroLicit'),
+    institucion: gv('institucion'), plazoVenta: gv('plazoVenta'),
+    mantOferta: gv('mantOferta'), formaCobro: gv('formaCobro'),
+    renglones: renglones.map(function(r){return {
+      empresa:r.empresa,renglon:r.renglon,subitem:r.subitem,
+      codigo:r.codigo,marca:r.marca,descr:r.descr,costo:r.costo,cant:r.cant
+    };}),
+    totalGeneral: totalGeneral,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedBy: currentUser ? currentUser.email : 'desconocido'
+  };
+}
+
+function saveCotizacion(){
+  if(!currentUser){ showToast('Sesión expirada. Recarg\xe1 la p\xe1gina.','err'); return; }
+  setSaveLoading(true);
+
+  if(currentDocId){
+    // Editar existente — no cambia el número correlativo
+    db.collection('cotizaciones').doc(currentDocId)
+      .update(buildSnapshot())
+      .then(function(){
+        setSaveLoading(false);
+        showToast('Cotizaci\xf3n actualizada \u2713','ok');
+        updateQuoteNumBadge(currentQuoteNum, true);
+      }).catch(function(e){
+        setSaveLoading(false);
+        showToast('Error al guardar: '+e.message,'err');
+      });
+  } else {
+    // Nueva cotización — obtener el próximo número atómicamente
+    var counterRef = db.collection('config').doc('counter');
+    db.runTransaction(function(tx){
+      return tx.get(counterRef).then(function(doc){
+        var next = doc.exists ? (doc.data().current || 0) + 1 : 1;
+        tx.set(counterRef, {current: next}, {merge: true});
+        var snap = buildSnapshot();
+        snap.quoteNumber = next;
+        snap.quoteNumFormatted = String(next).padStart(6,'0');
+        snap.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        snap.createdBy = currentUser.email;
+        var newRef = db.collection('cotizaciones').doc();
+        tx.set(newRef, snap);
+        return {docId: newRef.id, quoteNum: next, quoteNumFormatted: snap.quoteNumFormatted};
+      });
+    }).then(function(result){
+      currentDocId = result.docId;
+      currentQuoteNum = result.quoteNumFormatted;
+      setSaveLoading(false);
+      updateQuoteNumBadge(result.quoteNumFormatted, true);
+      showToast('Cotizaci\xf3n #'+result.quoteNumFormatted+' guardada \u2713','ok');
+    }).catch(function(e){
+      setSaveLoading(false);
+      showToast('Error al guardar: '+e.message,'err');
+    });
+  }
+}
+
+function setSaveLoading(loading){
+  ['btnSaveDesk','btnSaveMob'].forEach(function(id){
+    var btn=$(id); if(!btn) return;
+    btn.disabled = loading;
+    btn.innerHTML = loading
+      ? '<span class="spin"></span>'
+      : '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 7l3.5 3.5L12 3"/></svg> Guardar cotizaci\xf3n';
+  });
+}
+
+function updateQuoteNumBadge(numFormatted, saved){
+  var badge = $('quoteNumBadge');
+  var text  = $('quoteNumText');
+  if(!badge) return;
+  badge.style.display = 'inline-flex';
+  badge.className = 'quote-num-badge ' + (saved ? 'saved' : 'new');
+  text.textContent = saved ? 'Cotización #'+numFormatted+' — Guardada' : 'Cotización #'+numFormatted+' — Sin guardar';
+}
+
+// ══ NUEVA COTIZACIÓN ═══════════════════════════════════════════════════════
+function newCotizacion(){
+  if(currentDocId && !confirm('\xbfCre\xe1s una nueva cotizaci\xf3n? Los datos sin guardar se perder\xe1n.')) return;
+  currentDocId = null; currentQuoteNum = null;
+  var badge = $('quoteNumBadge'); if(badge) badge.style.display='none';
+  ['vendedor','fechaApert','nroLicit','institucion','plazoVenta','mantOferta','formaCobro'].forEach(function(id){
+    if($(id)) $(id).value='';
+    if($(id+'_m')) $(id+'_m').value='';
+  });
+  ['tc','moneda','iva','markup'].forEach(function(id){
+    var defs={tc:'1425',moneda:'USD',iva:'10.5',markup:'2'};
+    if($(id)) $(id).value=defs[id];
+    if($(id+'_m')) $(id+'_m').value=defs[id];
+  });
+  if($('mkHint')) $('mkHint').textContent='';
+  if($('mkHint_m')) $('mkHint_m').textContent='';
+  $('renglonesWrap').innerHTML=''; $('prevWrap').innerHTML='';
+  renglones=[]; nextId=1; addRenglon();
+  if(currentUser) presetVendedorFromUser(currentUser);
+  window.scrollTo(0,0);
+}
+
+// ══ HISTORIAL ════════════════════════════════════════════════════════════════
+function openHistorial(){
+  $('historialPanel').classList.add('open');
+  loadHistorial();
+}
+function closeHistorial(){ $('historialPanel').classList.remove('open'); }
+
+function loadHistorial(){
+  var listEl = $('histList');
+  listEl.innerHTML = '<div class="hist-loading">Cargando...</div>';
+  db.collection('cotizaciones')
+    .orderBy('createdAt','desc')
+    .limit(100)
+    .get()
+    .then(function(snap){
+      allCotizaciones = [];
+      snap.forEach(function(doc){
+        allCotizaciones.push(Object.assign({_id: doc.id}, doc.data()));
+      });
+      renderHistorial(allCotizaciones);
+    }).catch(function(e){
+      listEl.innerHTML = '<div class="hist-empty">Error al cargar: '+e.message+'</div>';
+    });
+}
+
+function renderHistorial(items){
+  var listEl = $('histList');
+  if(items.length === 0){ listEl.innerHTML='<div class="hist-empty">No hay cotizaciones guardadas aún.</div>'; return; }
+  var html = '';
+  items.forEach(function(c){
+    var fecha = c.createdAt && c.createdAt.toDate ? c.createdAt.toDate().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '-';
+    var total = c.totalGeneral ? fA(c.totalGeneral) : '-';
+    var descrs = (c.renglones||[]).map(function(r){return r.descr||r.codigo||r.marca||'';}).filter(Boolean).slice(0,3).join(' · ');
+    var inst = c.institucion ? ' — '+c.institucion.substring(0,30) : '';
+    html += '<div class="hist-item" onclick="loadCotizacion(\''+c._id+'\')">'+
+      '<div class="hist-item-top">'+
+        '<span class="hist-num">#'+(c.quoteNumFormatted||'???')+'</span>'+
+        (c.vendedor?'<span class="hist-vendedor">'+c.vendedor.split(' ')[0]+'</span>':'')+
+        '<span class="hist-date">'+fecha+inst+'</span>'+
+      '</div>'+
+      (descrs?'<div class="hist-descr">'+descrs+'</div>':'')+
+      '<div class="hist-total">Total: '+total+'</div>'+
+      '<div class="hist-actions">'+
+        '<button class="hist-btn primary" onclick="event.stopPropagation();loadCotizacion(\''+c._id+'\')">Editar</button>'+
+        '<button class="hist-btn" onclick="event.stopPropagation();loadAndExport(\''+c._id+'\')">Ver PDF</button>'+
+      '</div>'+
+    '</div>';
+  });
+  listEl.innerHTML = html;
+}
+
+function filterHistorial(query){
+  var q = query.toLowerCase().trim();
+  if(!q){ renderHistorial(allCotizaciones); return; }
+  var filtered = allCotizaciones.filter(function(c){
+    var haystack = [
+      c.quoteNumFormatted, c.vendedor, c.institucion, c.nroLicit,
+      (c.renglones||[]).map(function(r){return r.descr+' '+r.empresa+' '+r.marca+' '+r.codigo;}).join(' ')
+    ].join(' ').toLowerCase();
+    return haystack.indexOf(q) >= 0;
+  });
+  renderHistorial(filtered);
+}
+
+function loadCotizacion(docId){
+  db.collection('cotizaciones').doc(docId).get().then(function(doc){
+    if(!doc.exists){ showToast('No se encontr\xf3 la cotizaci\xf3n','err'); return; }
+    var data = doc.data();
+    currentDocId = docId;
+    currentQuoteNum = data.quoteNumFormatted || data.quoteNumber || '?';
+    closeHistorial();
+
+    // Restaurar parámetros globales
+    var setF = function(id, val){ if($(id)) $(id).value=val||''; if($(id+'_m')) $(id+'_m').value=val||''; };
+    setF('vendedor', data.vendedor); setF('fechaApert', data.fechaApert);
+    setF('nroLicit', data.nroLicit); setF('institucion', data.institucion);
+    setF('plazoVenta', data.plazoVenta); setF('mantOferta', data.mantOferta);
+    setF('formaCobro', data.formaCobro);
+    setF('tc', data.tc||'1425'); setF('moneda', data.moneda||'USD');
+    setF('iva', data.iva||'10.5'); setF('markup', data.markup||'2');
+
+    // Restaurar renglones
+    $('renglonesWrap').innerHTML=''; $('prevWrap').innerHTML='';
+    renglones=[]; nextId=1;
+    var raws = data.renglones || [];
+    raws.forEach(function(raw){
+      var id=nextId++;
+      var r={id:id,empresa:raw.empresa||'',renglon:raw.renglon||'',subitem:raw.subitem||'',
+             codigo:raw.codigo||'',marca:raw.marca||'',descr:raw.descr||'',
+             costo:raw.costo||'',cant:raw.cant||1};
+      renglones.push(r);
+      createRenglonDOM(r, renglones.length-1);
+      // Restaurar valores en los inputs
+      ['empresa','renglon','subitem','codigo','marca','descr','costo','cant'].forEach(function(f){
+        var el=$('f_'+f+'_'+id); if(el) el.value = r[f];
+      });
+      updateResults(id);
+    });
+    if(renglones.length===0) addRenglon();
+    updateRenglonHeaders();
+    updatePreview();
+    updateQuoteNumBadge(String(currentQuoteNum), true);
+    showToast('Cotizaci\xf3n #'+currentQuoteNum+' cargada','ok');
+    window.scrollTo(0,0);
+  }).catch(function(e){
+    showToast('Error al cargar: '+e.message,'err');
+  });
+}
+
+function loadAndExport(docId){
+  db.collection('cotizaciones').doc(docId).get().then(function(doc){
+    if(!doc.exists){showToast('No encontrada','err');return;}
+    // Carga silenciosamente y exporta
+    var prevDoc=currentDocId, prevNum=currentQuoteNum;
+    currentDocId=docId; currentQuoteNum=doc.data().quoteNumFormatted||'?';
+    loadCotizacion(docId);
+    setTimeout(function(){exportPDF();currentDocId=prevDoc;currentQuoteNum=prevNum;},800);
+  });
+}
+
+// ══ TOAST ════════════════════════════════════════════════════════════════════
+var toastTimer;
+function showToast(msg, type){
+  var t=$('toast'); t.textContent=msg;
+  t.className='toast '+(type||'')+' show';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show');},3000);
+}
+
+// ══ PDF (idéntico al anterior, agrega N° correlativo en header) ══════════════
+function exportPDF(){
+  if(!renglones.some(function(r){return parseFloat(r.costo)>0;})){
+    showToast('Ingres\xe1 el costo en al menos un rengl\xf3n','err');return;
+  }
+  var fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+  var fmtA=function(n){return 'ARS '+n.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});};
+  var fmtU=function(n){return 'USD '+n.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});};
+  var bin=atob(LB.split(',')[1]),jpg=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) jpg[i]=bin.charCodeAt(i);
+  function esc(t){
+    var m={'\xe1':'a','\xe9':'e','\xed':'i','\xf3':'o','\xfa':'u','\xf1':'n','\xfc':'u',
+           '\xc1':'A','\xc9':'E','\xcd':'I','\xd3':'O','\xda':'U','\xd1':'N','\xd7':'x','\u2013':'-','\u2014':'-'};
+    return String(t||'').replace(/[^\x20-\x7E]/g,function(c){return m[c]||'';})
+      .replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)').substring(0,110);
+  }
+  var W=595.28,H=841.89,ps=[];
+  var txt=function(x,yy,t,sz,b){ps.push('BT /'+(b?'F2':'F1')+' '+sz+' Tf '+x+' '+yy+' Td ('+esc(t)+') Tj ET');};
+  var fillR=function(x,yy,w,h,r,g,b){ps.push(r+' '+g+' '+b+' rg '+x+' '+yy+' '+w+' '+h+' re f 0 0 0 rg');};
+  var strkR=function(x,yy,w,h,r,g,b,lw){ps.push(r+' '+g+' '+b+' RG '+(lw||.5)+' w '+x+' '+yy+' '+w+' '+h+' re S 0 0 0 RG');};
+  var hln=function(x1,y1,x2,r,g,b,lw){ps.push(r+' '+g+' '+b+' RG '+(lw||.5)+' w '+x1+' '+y1+' m '+x2+' '+y1+' l S 0 0 0 RG');};
+  var tc=gnv('tc'),iva=gnv('iva'),mult=gnv('markup'),mon=gv('moneda');
+  var vendedor=gv('vendedor');
+  var fa=gv('fechaApert');
+  var faD=fa?new Date(fa+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}):'';
+  var nroLicit=gv('nroLicit'),institucion=gv('institucion');
+  var plazoVenta=gv('plazoVenta'),mantOferta=gv('mantOferta'),formaCobro=gv('formaCobro');
+  var hasLicit=nroLicit||institucion||faD;
+  var HDR=hasLicit?116:96;
+  fillR(0,H-HDR,W,HDR,1,1,1);hln(0,H-HDR-1,W,.055,.373,.659,2);
+  var LLW=180,LLH=Math.round(180*(LH/LW));
+  ps.push('q '+LLW+' 0 0 '+LLH+' 18 '+(H-HDR+(HDR-LLH)/2)+' cm /Img1 Do Q');
+  var TX=210;
+  ps.push('.055 .373 .659 rg');txt(TX,H-22,'ANALISIS DE PRECIOS',16,true);
+  ps.push('.28 .28 .28 rg');txt(TX,H-38,'Drogueria Medi-Cross S.R.L.',9.5,false);
+  // Número correlativo en el header del PDF
+  var numStr = currentQuoteNum ? 'Cotizacion #'+currentQuoteNum+'   |   ' : '';
+  ps.push('.55 .55 .55 rg');txt(TX,H-51,numStr+fecha+'   |   USD/ARS: $ '+tc.toLocaleString('es-AR')+'   |   Markup: x'+mult+'   |   IVA: '+iva+'%',7.5,false);
+  if(vendedor){var pH=13,pY=H-66;fillR(TX,pY,190,pH,.91,.95,.99);strkR(TX,pY,190,pH,.055,.373,.659,.4);ps.push('.055 .373 .659 rg');txt(TX+6,pY+4,'Vendedor: '+vendedor,7.5,true);}
+  if(hasLicit){
+    var RX=430;ps.push('.055 .373 .659 rg');txt(RX,H-20,'LICITACION',6.5,true);hln(RX,H-23,W-10,.055,.373,.659,.25);
+    var ly=H-33;
+    [[nroLicit,'N Licit.'],[faD,'Apertura'],[institucion,'Institucion'],[plazoVenta,'Plazo venta'],[mantOferta,'Mant. oferta'],[formaCobro,'Forma cobro']].forEach(function(item){
+      if(!item[0])return;ps.push('.58 .58 .58 rg');txt(RX,ly,item[1]+':',6.5,false);ps.push('.12 .12 .12 rg');txt(RX+55,ly,item[0].substring(0,24),6.5,true);ly-=10;
+    });
+  }
+  ps.push('0 0 0 rg');
+  var LX=20,CW=W-LX*2,y=H-HDR-16;
+  var cols=[{l:'#',w:16},{l:'Empresa',w:62},{l:'Reng.',w:28},{l:'Descripcion',w:105},{l:'Marca',w:52},
+            {l:'Costo ARS',w:65},{l:'PV USD s/IVA',w:65},{l:'PV ARS s/IVA',w:65},{l:'PV ARS c/IVA',w:65},{l:'Cant',w:20},{l:'Subtotal',w:72}];
+  var totW=cols.reduce(function(s,c){return s+c.w;},0),sc=CW/totW;
+  cols=cols.map(function(c){return{l:c.l,w:Math.round(c.w*sc)};});
+  var thH=14,rH=13;
+  fillR(LX,y-thH,CW,thH,.055,.373,.659);ps.push('1 1 1 rg');
+  var cx=LX;cols.forEach(function(c){txt(cx+2,y-thH+4,c.l,6,true);cx+=c.w;});ps.push('0 0 0 rg');y-=thH;
+  var totalG=0;
+  renglones.forEach(function(r,idx){
+    var c=calcR(r);totalG+=c.sub;
+    if(idx%2===0)fillR(LX,y-rH,CW,rH,.97,.97,.97);else fillR(LX,y-rH,CW,rH,1,1,1);
+    hln(LX,y-rH,LX+CW,.82,.82,.82,.3);
+    var cx2=LX;
+    [String(idx+1),(r.empresa||'-').substring(0,9),((r.renglon||'-')+(r.subitem?'/'+r.subitem:'')).substring(0,6),
+     (r.descr||'-').substring(0,17),(r.marca||'-').substring(0,8),
+     c.ok?fmtA(c.cARS):'-',c.ok?fmtU(c.pvUSDs):'-',c.ok?fmtA(c.pvARSs):'-',c.ok?fmtA(c.pvARSc):'-',
+     c.ok?String(c.cant):'-',c.ok?fmtA(c.sub):'-'].forEach(function(v,i){
+      var isAcc=i===8||i===10;ps.push(isAcc?'.055 .373 .659 rg':'0 0 0 rg');txt(cx2+2,y-rH+4,v,6,isAcc);cx2+=cols[i].w;
+    });ps.push('0 0 0 rg');y-=rH;
+  });
+  fillR(LX,y-14,CW,14,.055,.373,.659);ps.push('1 1 1 rg');
+  txt(LX+4,y-10,'TOTAL GENERAL c/IVA (ARS)',8,true);
+  var tStr=fmtA(totalG);txt(W-LX-4-tStr.length*5.1,y-10,tStr,9,true);
+  ps.push('0 0 0 rg');y-=20;
+  renglones.forEach(function(r,idx){
+    var c=calcR(r);if(!c.ok||y<80)return;
+    y-=6;ps.push('.055 .373 .659 rg');
+    txt(LX,y,'RENGLON '+(idx+1)+': '+(r.descr||r.codigo||'sin descripcion').substring(0,55),8,true);
+    hln(LX,y-3,W-LX,.055,.373,.659,.35);ps.push('0 0 0 rg');y-=14;
+    ps.push('.38 .38 .38 rg');txt(LX,y,'Empresa:',8.5,false);ps.push('0 0 0 rg');txt(LX+65,y,r.empresa||'-',8.5,false);
+    ps.push('.38 .38 .38 rg');txt(190,y,'Renglon/Sub:',8.5,false);ps.push('0 0 0 rg');txt(275,y,(r.renglon||'-')+(r.subitem?'/'+r.subitem:''),8.5,false);
+    ps.push('.38 .38 .38 rg');txt(330,y,'Codigo:',8.5,false);ps.push('0 0 0 rg');txt(370,y,r.codigo||'-',8.5,false);
+    ps.push('.38 .38 .38 rg');txt(440,y,'Marca:',8.5,false);ps.push('0 0 0 rg');txt(475,y,r.marca||'-',8.5,false);
+    y-=12;var boxH=26;y-=8;
+    fillR(LX-2,y-boxH,CW+4,boxH,.91,.95,.99);strkR(LX-2,y-boxH,CW+4,boxH,.055,.373,.659,.55);
+    ps.push('.055 .373 .659 rg');txt(LX+4,y-10,'Costo en ARS (USD x tipo de cambio):',8.5,true);
+    var aStr=fmtA(c.cARS);txt(W-LX-4-aStr.length*5.5,y-10,aStr,10,true);
+    ps.push('0 0 0 rg');y-=boxH+6;
+    ps.push('.38 .38 .38 rg');txt(LX,y,'% IVA:',8.5,false);ps.push('0 0 0 rg');txt(LX+55,y,iva+'%',8.5,false);
+    ps.push('.38 .38 .38 rg');txt(175,y,'Costo c/IVA ARS:',8.5,false);ps.push('0 0 0 rg');txt(280,y,fmtA(c.cIvaARS),8.5,false);
+    ps.push('.38 .38 .38 rg');txt(370,y,'Costo c/IVA USD:',8.5,false);ps.push('0 0 0 rg');txt(470,y,fmtU(c.cIvaUSD),8.5,false);
+    y-=12;var hW=(CW-8)/2,bxH=26;y-=6;
+    fillR(LX-2,y-bxH,hW,bxH,.94,.98,.94);strkR(LX-2,y-bxH,hW,bxH,.2,.55,.1,.4);
+    ps.push('.15 .43 .08 rg');txt(LX+4,y-10,'Markup % (base costo)',7.5,true);txt(LX+4,y-20,c.mkPct.toFixed(1)+'%',11,true);ps.push('0 0 0 rg');
+    var bx2=LX-2+hW+8;
+    fillR(bx2,y-bxH,hW,bxH,.91,.95,.99);strkR(bx2,y-bxH,hW,bxH,.055,.373,.659,.4);
+    ps.push('.055 .373 .659 rg');txt(bx2+6,y-10,'Gross Margin % (base venta)',7.5,true);txt(bx2+6,y-20,c.gm.toFixed(1)+'%',11,true);ps.push('0 0 0 rg');
+    y-=bxH+8;var cW=(CW-8)/2,cH=38;
+    [[fmtU(c.pvUSDs),'Precio venta USD s/IVA',true],[fmtU(c.pvUSDc),'Precio venta USD c/IVA',true]].forEach(function(cv,ci){
+      var cxx=LX-2+ci*(cW+8);fillR(cxx,y-cH,cW,cH,.91,.95,.99);strkR(cxx,y-cH,cW,cH,.055,.373,.659,.5);
+      ps.push('.055 .373 .659 rg');txt(cxx+8,y-7,cv[1],7.5,false);txt(cxx+8,y-cH+8,cv[0],10,true);ps.push('0 0 0 rg');
+    });y-=cH+5;
+    [[fmtA(c.pvARSs),'Precio venta ARS s/IVA'],[fmtA(c.pvARSc),'Precio venta ARS c/IVA']].forEach(function(cv,ci){
+      var cxx=LX-2+ci*(cW+8);fillR(cxx,y-cH,cW,cH,.96,.96,.96);strkR(cxx,y-cH,cW,cH,.78,.78,.78,.4);
+      ps.push('.12 .12 .12 rg');txt(cxx+8,y-7,cv[1],7.5,false);txt(cxx+8,y-cH+8,cv[0],10,true);ps.push('0 0 0 rg');
+    });y-=cH+8;
+    var sH=44;fillR(LX-2,y-sH,CW+4,sH,.055,.373,.659);fillR(LX-2,y-3,CW+4,3,.145,.588,.832);
+    ps.push('1 1 1 rg');txt(LX+8,y-13,'SUBTOTAL C/IVA (ARS)   |   Cantidad: '+c.cant+' u.',8,false);
+    txt(LX+8,y-sH+10,fmtA(c.sub),14,true);ps.push('0 0 0 rg');y-=sH+12;
+  });
+  hln(LX,52,W-LX,.78,.78,.78,.4);ps.push('.62 .62 .62 rg');
+  txt(LX,42,'Analisis de Precios - Medi-Cross S.R.L.',7.5,false);
+  if(vendedor)txt(LX,31,'Cotizacion realizada por: '+vendedor,7.5,false);
+  var fp=[];if(nroLicit)fp.push('Licit. '+nroLicit);if(institucion)fp.push(institucion.substring(0,28));
+  if(fp.length)txt(W-220,42,fp.join(' | '),7,false);txt(W-110,31,fecha,7.5,false);ps.push('0 0 0 rg');
+  var ss=ps.join('\n');
+  function s2u8(s){var u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i)&0xFF;return u;}
+  var offs={},pdf='%PDF-1.4\n%\xFF\xFF\n';
+  function obj(n,b){offs[n]=pdf.length;pdf+=n+' 0 obj\n'+b+'\nendobj\n';}
+  obj(1,'<< /Type /Catalog /Pages 2 0 R >>');obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  obj(3,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+W+' '+H+']\n /Contents 4 0 R\n /Resources << /Font << /F1 5 0 R /F2 6 0 R >> /XObject << /Img1 7 0 R >> >> >>');
+  obj(4,'<< /Length '+ss.length+' >>\nstream\n'+ss+'\nendstream');
+  obj(5,'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+  obj(6,'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  offs[7]=pdf.length;
+  var ih='7 0 obj\n<< /Type /XObject /Subtype /Image /Width '+LW+' /Height '+LH+'\n /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+jpg.length+' >>\nstream\n';
+  var iF='\nendstream\nendobj\n';
+  var pre=pdf+ih,xOff=pre.length+jpg.length+iF.length;
+  var N=8,xs='xref\n0 '+N+'\n0000000000 65535 f \n';
+  for(var ii=1;ii<N;ii++)xs+=String(offs[ii]).padStart(10,'0')+' 00000 n \n';
+  var tr='trailer\n<< /Size '+N+' /Root 1 0 R >>\nstartxref\n'+xOff+'\n%%EOF';
+  var p1=s2u8(pre),p2=s2u8(iF+xs+tr);
+  var fin=new Uint8Array(p1.length+jpg.length+p2.length);
+  fin.set(p1,0);fin.set(jpg,p1.length);fin.set(p2,p1.length+jpg.length);
+  var blob=new Blob([fin],{type:'application/pdf'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;
+  var fn='MC_'+( currentQuoteNum?currentQuoteNum+'_':'' )+(gv('institucion')||'cotizacion').substring(0,20).replace(/\s/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.pdf';
+  a.download=fn; a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);},8000);
+}
+
+// Cerrar historial con Escape
+document.addEventListener('keydown',function(e){if(e.key==='Escape') closeHistorial();});
+// Cerrar historial al click en el fondo
+$('historialPanel').addEventListener('click',function(e){if(e.target===this) closeHistorial();});
+</script>
+</body>
+</html>
